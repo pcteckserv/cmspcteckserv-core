@@ -62,6 +62,10 @@ class PackageUpdater
         $environment = [
             'PATH' => $this->pathWithPhp(),
             'Path' => $this->pathWithPhp(),
+            'SystemRoot' => getenv('SystemRoot') ?: 'C:\\Windows',
+            'WINDIR' => getenv('WINDIR') ?: getenv('SystemRoot') ?: 'C:\\Windows',
+            'COMSPEC' => getenv('COMSPEC') ?: 'C:\\Windows\\System32\\cmd.exe',
+            'PATHEXT' => getenv('PATHEXT') ?: '.COM;.EXE;.BAT;.CMD',
             'COMPOSER_HOME' => storage_path('framework/cache/composer'),
             'APPDATA' => storage_path('framework/cache/composer'),
             'TMP' => storage_path('framework/cache/composer-tmp'),
