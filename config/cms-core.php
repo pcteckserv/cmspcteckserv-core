@@ -16,7 +16,7 @@ return [
     'site_options' => [
         'site_title' => env('CMS_SITE_TITLE', 'CMS PCTECK'),
         'site_description' => env('CMS_SITE_DESCRIPTION', 'Site institucional gerido pelo CMS PCTECK.'),
-        'site_icon_url' => env('CMS_SITE_ICON_URL', '/favicon.ico'),
+        'site_icon_url' => env('CMS_SITE_ICON_URL', '/vendor/cms-core/images/favicon.png'),
         'wordpress_url' => env('CMS_WORDPRESS_URL', 'https://cliente.exemplo.pt/admin'),
         'site_url' => env('CMS_SITE_URL', 'https://cliente.exemplo.pt'),
         'admin_email' => env('CMS_ADMIN_EMAIL', 'admin@cliente.exemplo.pt'),

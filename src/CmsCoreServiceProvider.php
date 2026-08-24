@@ -27,6 +27,10 @@ class CmsCoreServiceProvider extends ServiceProvider
             __DIR__.'/../resources/views' => resource_path('views/vendor/cms-core'),
         ], 'cms-core-views');
 
+        $this->publishes([
+            __DIR__.'/../resources/images' => public_path('vendor/cms-core/images'),
+        ], 'cms-core-assets');
+
         if ($this->app->runningInConsole()) {
             $this->commands([
                 CheckUpdatesCommand::class,
