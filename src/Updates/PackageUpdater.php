@@ -20,6 +20,12 @@ class PackageUpdater
             return new UpdateResult(false, 'Migrations falharam: '.$this->processOutput($migrate));
         }
 
+        $cache = $this->run([PHP_BINARY, 'artisan', 'optimize:clear']);
+
+        if (! $cache->isSuccessful()) {
+            return new UpdateResult(false, 'Limpeza de cache falhou: '.$this->processOutput($cache));
+        }
+
         return new UpdateResult(true, 'Atualizacao concluida com sucesso.');
     }
 
