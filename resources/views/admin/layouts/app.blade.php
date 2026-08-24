@@ -14,7 +14,8 @@
         <aside class="admin-sidebar bg-dark text-white p-3">
             <div class="fw-semibold mb-4">CMS PCTECK</div>
             <nav class="nav nav-pills flex-column">
-                <a class="nav-link active" href="{{ route('admin.dashboard') }}">Dashboard</a>
+                <a @class(['nav-link', 'active' => request()->routeIs('admin.dashboard')]) href="{{ route('admin.dashboard') }}">Dashboard</a>
+                <a @class(['nav-link', 'active' => request()->routeIs('admin.updates.*')]) href="{{ route('admin.updates.index') }}">Atualizações</a>
             </nav>
         </aside>
 

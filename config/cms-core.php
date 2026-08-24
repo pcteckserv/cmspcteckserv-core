@@ -12,4 +12,15 @@ return [
         'email' => env('ADMIN_USER_EMAIL'),
         'password' => env('ADMIN_USER_PASSWORD'),
     ],
+
+    'updates' => [
+        'enabled' => env('CMS_UPDATER_ENABLED', true),
+        'channel' => env('CMS_UPDATE_CHANNEL', 'stable'),
+        'packages' => [
+            'pcteckserv/cms-core',
+        ],
+        'repositories' => [
+            'pcteckserv/cms-core' => env('CMS_CORE_REPOSITORY_URL', 'https://github.com/pcteckserv/cmspcteckserv-core.git'),
+        ],
+    ],
 ];

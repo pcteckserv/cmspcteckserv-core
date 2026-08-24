@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\DashboardController;
+use Pcteckserv\CmsCore\Http\Controllers\Admin\UpdatesController;
 use Pcteckserv\CmsCore\Http\Controllers\Auth\AuthenticatedSessionController;
 
 Route::middleware('web')->group(function (): void {
@@ -19,5 +20,6 @@ Route::middleware('web')->group(function (): void {
         ->name('admin.')
         ->group(function (): void {
             Route::get('/', DashboardController::class)->name('dashboard');
+            Route::get('/updates', UpdatesController::class)->name('updates.index');
         });
     });
