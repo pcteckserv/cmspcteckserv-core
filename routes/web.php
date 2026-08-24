@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\ArtisanCommandsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\DashboardController;
+use Pcteckserv\CmsCore\Http\Controllers\Admin\SiteOptionsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\UpdatesController;
 use Pcteckserv\CmsCore\Http\Controllers\Auth\AuthenticatedSessionController;
 
@@ -21,6 +22,8 @@ Route::middleware('web')->group(function (): void {
         ->name('admin.')
         ->group(function (): void {
             Route::get('/', DashboardController::class)->name('dashboard');
+            Route::get('/site-options', [SiteOptionsController::class, 'edit'])->name('site-options.edit');
+            Route::put('/site-options', [SiteOptionsController::class, 'update'])->name('site-options.update');
             Route::get('/laravel-commands', [ArtisanCommandsController::class, 'index'])->name('laravel-commands.index');
             Route::post('/laravel-commands/{command}/run', [ArtisanCommandsController::class, 'run'])->name('laravel-commands.run');
             Route::get('/updates', [UpdatesController::class, 'index'])->name('updates.index');
