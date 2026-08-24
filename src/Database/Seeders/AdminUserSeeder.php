@@ -1,0 +1,52 @@
+<?php
+
+namespace Pcteckserv\CmsCore\Database\Seeders;
+
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use InvalidArgumentException;
+
+class AdminUserSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $userModel = $this->userModel();
+        $email = config('cms-core.admin_user.email');
+        $password = config('cms-core.admin_user.password');
+
+        if (! is_string($email) || trim($email) === '') {
+            throw new InvalidArgumentException('Configure ADMIN_USER_EMAIL antes de criar o administrador inicial.');
+        }
+
+        if (! is_string($password) || trim($password) === '') {
+            throw new InvalidArgumentException('Configure ADMIN_USER_PASSWORD antes de criar o administrador inicial.');
+        }
+
+        $userModel::query()->updateOrCreate(
+            ['email' => $email],
+            [
+                'name' => config('cms-core.admin_user.name'),
+                'password' => Hash::make($password),
+            ],
+        );
+    }
+
+    /**
+     * @return class-string<Authenticatable>
+     */
+    private function userModel(): string
+    {
+        $userModel = config('cms-core.user_model') ?: config('auth.providers.users.model');
+
+        if (! is_string($userModel) || ! class_exists($userModel)) {
+            throw new InvalidArgumentException('Configure um model de utilizador válido para o CMS Core.');
+        }
+
+        if (! is_subclass_of($userModel, Authenticatable::class)) {
+            throw new InvalidArgumentException('O model de utilizador do CMS Core deve implementar Authenticatable.');
+        }
+
+        return $userModel;
+    }
+}
