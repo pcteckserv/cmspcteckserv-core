@@ -22,5 +22,6 @@ return [
         'repositories' => [
             'pcteckserv/cms-core' => env('CMS_CORE_REPOSITORY_URL', 'https://github.com/pcteckserv/cmspcteckserv-core.git'),
         ],
+        'github_token' => env('CMS_GITHUB_TOKEN'),
     ],
 ];

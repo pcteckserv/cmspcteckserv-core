@@ -14,7 +14,7 @@ class GitTagUpdateChecker
             return null;
         }
 
-        $process = new Process(['git', 'ls-remote', '--tags', '--refs', $repository]);
+        $process = new Process($this->command($repository));
         $process->setTimeout(30);
         $process->run();
 
@@ -46,5 +46,27 @@ class GitTagUpdateChecker
         return preg_match('/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/', $version) === 1
             ? $version
             : null;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function command(string $repository): array
+    {
+        $token = config('cms-core.updates.github_token');
+
+        if (! is_string($token) || $token === '' || ! str_starts_with($repository, 'https://github.com/')) {
+            return ['git', 'ls-remote', '--tags', '--refs', $repository];
+        }
+
+        return [
+            'git',
+            '-c',
+            "http.https://github.com/.extraheader=AUTHORIZATION: bearer {$token}",
+            'ls-remote',
+            '--tags',
+            '--refs',
+            $repository,
+        ];
     }
 }

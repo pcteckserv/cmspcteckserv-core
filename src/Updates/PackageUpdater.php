@@ -30,8 +30,29 @@ class PackageUpdater
     {
         $process = new Process($command, base_path());
         $process->setTimeout(300);
+        $process->setEnv($this->environment());
         $process->run();
 
         return $process;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function environment(): array
+    {
+        $token = config('cms-core.updates.github_token');
+
+        if (! is_string($token) || $token === '') {
+            return [];
+        }
+
+        return [
+            'COMPOSER_AUTH' => json_encode([
+                'github-oauth' => [
+                    'github.com' => $token,
+                ],
+            ], JSON_THROW_ON_ERROR),
+        ];
     }
 }
