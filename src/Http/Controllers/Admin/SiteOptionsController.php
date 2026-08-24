@@ -38,9 +38,7 @@ class SiteOptionsController extends Controller
             $this->deleteStoredSiteIcon($validated['site_icon_url'] ?? null);
             $validated['site_icon_url'] = '';
         } elseif ($request->hasFile('site_icon_file')) {
-            $validated['site_icon_url'] = Storage::disk('public')->url(
-                $request->file('site_icon_file')->store('cms/site-icons', 'public')
-            );
+            $validated['site_icon_url'] = '/storage/'.$request->file('site_icon_file')->store('cms/site-icons', 'public');
         }
 
         unset($validated['site_icon_file'], $validated['remove_site_icon']);
