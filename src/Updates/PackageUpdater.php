@@ -8,19 +8,19 @@ class PackageUpdater
 {
     public function update(string $package): UpdateResult
     {
-        $composer = $this->run(['composer', 'update', $package, '--with-dependencies']);
+        $composer = $this->run([$this->composerExecutable(), 'update', $package, '--with-dependencies']);
 
         if (! $composer->isSuccessful()) {
-            return new UpdateResult(false, 'A atualização falhou durante o Composer. Verifica permissões, autenticação GitHub e logs do servidor.');
+            return new UpdateResult(false, 'Composer falhou: '.$this->processOutput($composer));
         }
 
         $migrate = $this->run([PHP_BINARY, 'artisan', 'migrate', '--force']);
 
         if (! $migrate->isSuccessful()) {
-            return new UpdateResult(false, 'O package foi atualizado, mas as migrations falharam. Corre php artisan migrate --force no terminal.');
+            return new UpdateResult(false, 'Migrations falharam: '.$this->processOutput($migrate));
         }
 
-        return new UpdateResult(true, 'Atualização concluída com sucesso.');
+        return new UpdateResult(true, 'Atualizacao concluida com sucesso.');
     }
 
     /**
@@ -34,6 +34,22 @@ class PackageUpdater
         $process->run();
 
         return $process;
+    }
+
+    private function composerExecutable(): string
+    {
+        return PHP_OS_FAMILY === 'Windows' ? 'composer.bat' : 'composer';
+    }
+
+    private function processOutput(Process $process): string
+    {
+        $output = trim($process->getErrorOutput()) ?: trim($process->getOutput());
+
+        if ($output === '') {
+            return 'sem detalhe devolvido pelo processo.';
+        }
+
+        return mb_strimwidth($output, 0, 800, '...');
     }
 
     /**
