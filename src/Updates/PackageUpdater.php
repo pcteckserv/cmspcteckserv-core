@@ -111,12 +111,6 @@ class PackageUpdater
         $safeDirectory = str_replace('\\', '/', base_path());
         $gitConfig = "[safe]\n\tdirectory = {$safeDirectory}\n";
 
-        $token = config('cms-core.updates.github_token');
-
-        if (is_string($token) && $token !== '') {
-            $gitConfig .= "[url \"https://x-access-token:{$token}@github.com/\"]\n\tinsteadOf = https://github.com/\n";
-        }
-
         $gitConfigPath = $this->gitConfigPath();
         if (! is_file($gitConfigPath) || file_get_contents($gitConfigPath) !== $gitConfig) {
             file_put_contents($gitConfigPath, $gitConfig);
