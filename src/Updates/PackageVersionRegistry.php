@@ -56,10 +56,23 @@ class PackageVersionRegistry
             ->values();
 
         foreach ($packages as $package) {
+            $availableVersion = $this->updateChecker->latestVersion($package);
+
+            if ($availableVersion === null) {
+                DB::table('cms_installed_packages')
+                    ->where('name', $package)
+                    ->update([
+                        'checked_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+
+                continue;
+            }
+
             DB::table('cms_installed_packages')
                 ->where('name', $package)
                 ->update([
-                    'available_version' => $this->updateChecker->latestVersion($package),
+                    'available_version' => $availableVersion,
                     'checked_at' => now(),
                     'updated_at' => now(),
                 ]);

@@ -32,7 +32,7 @@
                         <tr>
                             <td class="fw-semibold">{{ $package->name }}</td>
                             <td>{{ $package->installedVersion ?? '-' }}</td>
-                            <td>{{ $package->availableVersion ?? '-' }}</td>
+                            <td>{{ $package->availableVersion ?? 'Não verificada' }}</td>
                             <td>{{ $package->checkedAt ?? '-' }}</td>
                             <td>
                                 @if ($package->hasUpdate())
