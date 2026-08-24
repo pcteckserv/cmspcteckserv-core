@@ -66,6 +66,7 @@ class PackageUpdater
             'APPDATA' => storage_path('framework/cache/composer'),
             'TMP' => storage_path('framework/cache/composer-tmp'),
             'TEMP' => storage_path('framework/cache/composer-tmp'),
+            'GIT_CONFIG_GLOBAL' => $this->gitConfigPath(),
         ];
 
         $token = config('cms-core.updates.github_token');
@@ -105,5 +106,18 @@ class PackageUpdater
                 mkdir($directory, 0775, true);
             }
         }
+
+        $gitConfigPath = $this->gitConfigPath();
+        $safeDirectory = str_replace('\\', '/', base_path());
+        $gitConfig = "[safe]\n\tdirectory = {$safeDirectory}\n";
+
+        if (! is_file($gitConfigPath) || file_get_contents($gitConfigPath) !== $gitConfig) {
+            file_put_contents($gitConfigPath, $gitConfig);
+        }
+    }
+
+    private function gitConfigPath(): string
+    {
+        return storage_path('framework/cache/composer-gitconfig');
     }
 }
