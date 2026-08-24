@@ -57,8 +57,15 @@ class PackageUpdater
      */
     private function environment(): array
     {
+        $this->ensureComposerDirectories();
+
         $environment = [
             'PATH' => $this->pathWithPhp(),
+            'Path' => $this->pathWithPhp(),
+            'COMPOSER_HOME' => storage_path('framework/cache/composer'),
+            'APPDATA' => storage_path('framework/cache/composer'),
+            'TMP' => storage_path('framework/cache/composer-tmp'),
+            'TEMP' => storage_path('framework/cache/composer-tmp'),
         ];
 
         $token = config('cms-core.updates.github_token');
@@ -86,5 +93,17 @@ class PackageUpdater
         }
 
         return $phpDirectory.PATH_SEPARATOR.$path;
+    }
+
+    private function ensureComposerDirectories(): void
+    {
+        foreach ([
+            storage_path('framework/cache/composer'),
+            storage_path('framework/cache/composer-tmp'),
+        ] as $directory) {
+            if (! is_dir($directory)) {
+                mkdir($directory, 0775, true);
+            }
+        }
     }
 }
