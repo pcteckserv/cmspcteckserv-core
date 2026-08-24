@@ -20,6 +20,9 @@ Route::middleware('web')->group(function (): void {
         ->name('admin.')
         ->group(function (): void {
             Route::get('/', DashboardController::class)->name('dashboard');
-            Route::get('/updates', UpdatesController::class)->name('updates.index');
+            Route::get('/updates', [UpdatesController::class, 'index'])->name('updates.index');
+            Route::post('/updates/{package}/run', [UpdatesController::class, 'update'])
+                ->where('package', '.*')
+                ->name('updates.run');
         });
     });
