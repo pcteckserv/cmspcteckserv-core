@@ -67,6 +67,7 @@ class PackageUpdater
             'TMP' => storage_path('framework/cache/composer-tmp'),
             'TEMP' => storage_path('framework/cache/composer-tmp'),
             'GIT_CONFIG_GLOBAL' => $this->gitConfigPath(),
+            'GIT_TERMINAL_PROMPT' => '0',
         ];
 
         $token = config('cms-core.updates.github_token');
@@ -107,10 +108,16 @@ class PackageUpdater
             }
         }
 
-        $gitConfigPath = $this->gitConfigPath();
         $safeDirectory = str_replace('\\', '/', base_path());
         $gitConfig = "[safe]\n\tdirectory = {$safeDirectory}\n";
 
+        $token = config('cms-core.updates.github_token');
+
+        if (is_string($token) && $token !== '') {
+            $gitConfig .= "[url \"https://x-access-token:{$token}@github.com/\"]\n\tinsteadOf = https://github.com/\n";
+        }
+
+        $gitConfigPath = $this->gitConfigPath();
         if (! is_file($gitConfigPath) || file_get_contents($gitConfigPath) !== $gitConfig) {
             file_put_contents($gitConfigPath, $gitConfig);
         }
