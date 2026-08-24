@@ -57,18 +57,34 @@ class PackageUpdater
      */
     private function environment(): array
     {
+        $environment = [
+            'PATH' => $this->pathWithPhp(),
+        ];
+
         $token = config('cms-core.updates.github_token');
 
         if (! is_string($token) || $token === '') {
-            return [];
+            return $environment;
         }
 
-        return [
+        return $environment + [
             'COMPOSER_AUTH' => json_encode([
                 'github-oauth' => [
                     'github.com' => $token,
                 ],
             ], JSON_THROW_ON_ERROR),
         ];
+    }
+
+    private function pathWithPhp(): string
+    {
+        $path = getenv('PATH') ?: getenv('Path') ?: '';
+        $phpDirectory = dirname(PHP_BINARY);
+
+        if (str_contains($path, $phpDirectory)) {
+            return $path;
+        }
+
+        return $phpDirectory.PATH_SEPARATOR.$path;
     }
 }
