@@ -4,7 +4,7 @@
     <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
         <div>
             <h1 class="h3 mb-1">Atualizações</h1>
-            <p class="text-secondary mb-0">Estado dos packages CMS instalados neste site e versões disponíveis no repositório.</p>
+            <p class="text-secondary mb-0">Estado dos packages CMS instalados neste site e novas versões disponíveis no repositório.</p>
         </div>
 
         <div class="d-flex align-items-start gap-2">
