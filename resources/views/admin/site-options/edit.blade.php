@@ -4,7 +4,7 @@
     <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
         <div>
             <h1 class="h3 mb-1">Opções gerais</h1>
-            <p class="text-secondary mb-0">Parametros globais usados como fallback nos sites dos clientes.</p>
+            <p class="text-secondary mb-0">Parâmetros globais usados como fallback nos sites dos clientes.</p>
         </div>
     </div>
 
@@ -44,19 +44,12 @@
                 @error('site_icon_file')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
-                <input id="site_icon_url" name="site_icon_url" type="text" class="form-control @error('site_icon_url') is-invalid @enderror" value="{{ old('site_icon_url', $options['site_icon_url']) }}" placeholder="/favicon.ico">
-                <div class="form-text">Escolha um ficheiro ou indique uma URL. O icone deve ser quadrado e ter pelo menos 512 por 512 pixeis.</div>
+                <div class="input-group">
+                    <input id="site_icon_url" name="site_icon_url" type="text" class="form-control @error('site_icon_url') is-invalid @enderror" value="{{ old('site_icon_url', $options['site_icon_url']) }}" placeholder="/favicon.ico">
+                    <button class="btn btn-outline-danger" type="submit" name="remove_site_icon" value="1">Remover</button>
+                </div>
+                <div class="form-text">Escolha um ficheiro ou indique uma URL. O ícone deve ser quadrado e ter pelo menos 512 por 512 píxeis.</div>
                 @error('site_icon_url')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
-            </div>
-        </div>
-
-        <div class="row g-3 align-items-start mb-4">
-            <label class="col-lg-2 col-form-label fw-semibold" for="wordpress_url">Endereço do WordPress (URL)</label>
-            <div class="col-lg-5">
-                <input id="wordpress_url" name="wordpress_url" type="url" class="form-control @error('wordpress_url') is-invalid @enderror" value="{{ old('wordpress_url', $options['wordpress_url']) }}" required>
-                @error('wordpress_url')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
@@ -66,7 +59,7 @@
             <label class="col-lg-2 col-form-label fw-semibold" for="site_url">Endereço do site (URL)</label>
             <div class="col-lg-5">
                 <input id="site_url" name="site_url" type="url" class="form-control @error('site_url') is-invalid @enderror" value="{{ old('site_url', $options['site_url']) }}" required>
-                <div class="form-text">Digite aqui o endereço publico principal do site do cliente.</div>
+                <div class="form-text">Digite aqui o endereço público principal do site do cliente.</div>
                 @error('site_url')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
