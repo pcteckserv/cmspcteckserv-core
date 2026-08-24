@@ -19,6 +19,11 @@ final readonly class InstalledPackage
             return false;
         }
 
-        return version_compare($this->availableVersion, $this->installedVersion, '>');
+        return version_compare($this->normalizeVersion($this->availableVersion), $this->normalizeVersion($this->installedVersion), '>');
+    }
+
+    private function normalizeVersion(string $version): string
+    {
+        return ltrim($version, 'v');
     }
 }
