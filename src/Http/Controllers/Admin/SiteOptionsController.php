@@ -32,14 +32,6 @@ class SiteOptionsController extends Controller
             'site_url' => ['required', 'url', 'max:2048'],
             'admin_email' => ['required', 'email', 'max:255'],
             'locale' => ['required', Rule::in(array_keys($this->locales()))],
-            'smtp_enabled' => ['nullable', 'boolean'],
-            'smtp_host' => ['nullable', 'required_if:smtp_enabled,1', 'string', 'max:255'],
-            'smtp_port' => ['nullable', 'required_if:smtp_enabled,1', 'integer', 'between:1,65535'],
-            'smtp_username' => ['nullable', 'string', 'max:255'],
-            'smtp_password' => ['nullable', 'string', 'max:255'],
-            'smtp_encryption' => ['nullable', Rule::in(array_keys($this->smtpEncryptions()))],
-            'smtp_from_address' => ['nullable', 'required_if:smtp_enabled,1', 'email', 'max:255'],
-            'smtp_from_name' => ['nullable', 'required_if:smtp_enabled,1', 'string', 'max:255'],
         ]);
 
         if ($request->boolean('remove_site_icon')) {
@@ -50,36 +42,20 @@ class SiteOptionsController extends Controller
         }
 
         unset($validated['site_icon_file'], $validated['remove_site_icon']);
-        $validated['smtp_enabled'] = $request->boolean('smtp_enabled') ? '1' : '0';
-
-        if (($validated['smtp_password'] ?? '') === '') {
-            unset($validated['smtp_password']);
-        }
 
         $siteOptions->setMany($validated);
         $this->syncAppUrlEnv($validated['site_url']);
-        $siteOptions->applyMailConfig();
-        app('mail.manager')->purge('smtp');
 
-        return back()->with('cms_site_options_success', 'Opções gerais guardadas com sucesso.');
+        return back()->with('cms_site_options_success', 'Opcoes gerais guardadas com sucesso.');
     }
 
     private function locales(): array
     {
         return [
-            'pt_PT' => 'Português',
-            'en_US' => 'Inglês',
+            'pt_PT' => 'Portugues',
+            'en_US' => 'Ingles',
             'es_ES' => 'Espanhol',
-            'fr_FR' => 'Francês',
-        ];
-    }
-
-    private function smtpEncryptions(): array
-    {
-        return [
-            '' => 'Sem encriptaÃ§Ã£o',
-            'tls' => 'TLS',
-            'ssl' => 'SSL',
+            'fr_FR' => 'Frances',
         ];
     }
 
