@@ -91,6 +91,94 @@
             </div>
         </div>
 
+        <hr class="my-4">
+
+        <div class="row g-3 align-items-start mb-4">
+            <div class="col-lg-2 fw-semibold">SMTP</div>
+            <div class="col-lg-6">
+                <div class="form-check form-switch">
+                    <input id="smtp_enabled" name="smtp_enabled" type="checkbox" class="form-check-input @error('smtp_enabled') is-invalid @enderror" value="1" @checked(old('smtp_enabled', $options['smtp_enabled']) == '1')>
+                    <label class="form-check-label" for="smtp_enabled">Ativar envio por SMTP</label>
+                    @error('smtp_enabled')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="form-text">Quando ativo, estes dados passam a ser a configuracao global de email do site.</div>
+            </div>
+        </div>
+
+        <div class="row g-3 align-items-start mb-4">
+            <label class="col-lg-2 col-form-label fw-semibold" for="smtp_host">Servidor SMTP</label>
+            <div class="col-lg-5">
+                <input id="smtp_host" name="smtp_host" type="text" class="form-control @error('smtp_host') is-invalid @enderror" value="{{ old('smtp_host', $options['smtp_host']) }}" placeholder="smtp.exemplo.pt">
+                @error('smtp_host')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+        </div>
+
+        <div class="row g-3 align-items-start mb-4">
+            <label class="col-lg-2 col-form-label fw-semibold" for="smtp_port">Porta</label>
+            <div class="col-lg-2">
+                <input id="smtp_port" name="smtp_port" type="number" min="1" max="65535" class="form-control @error('smtp_port') is-invalid @enderror" value="{{ old('smtp_port', $options['smtp_port']) }}">
+                @error('smtp_port')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+            <label class="col-lg-1 col-form-label fw-semibold" for="smtp_encryption">Seguranca</label>
+            <div class="col-lg-2">
+                <select id="smtp_encryption" name="smtp_encryption" class="form-select @error('smtp_encryption') is-invalid @enderror">
+                    @foreach (['' => 'Nenhuma', 'tls' => 'TLS', 'ssl' => 'SSL'] as $value => $label)
+                        <option value="{{ $value }}" @selected(old('smtp_encryption', $options['smtp_encryption']) === $value)>{{ $label }}</option>
+                    @endforeach
+                </select>
+                @error('smtp_encryption')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+        </div>
+
+        <div class="row g-3 align-items-start mb-4">
+            <label class="col-lg-2 col-form-label fw-semibold" for="smtp_username">Utilizador SMTP</label>
+            <div class="col-lg-5">
+                <input id="smtp_username" name="smtp_username" type="text" class="form-control @error('smtp_username') is-invalid @enderror" value="{{ old('smtp_username', $options['smtp_username']) }}" autocomplete="username">
+                @error('smtp_username')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+        </div>
+
+        <div class="row g-3 align-items-start mb-4">
+            <label class="col-lg-2 col-form-label fw-semibold" for="smtp_password">Password SMTP</label>
+            <div class="col-lg-5">
+                <input id="smtp_password" name="smtp_password" type="password" class="form-control @error('smtp_password') is-invalid @enderror" value="" autocomplete="new-password" placeholder="{{ empty($options['smtp_password']) ? '' : 'Password configurada' }}">
+                <div class="form-text">Deixe em branco para manter a password atual.</div>
+                @error('smtp_password')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+        </div>
+
+        <div class="row g-3 align-items-start mb-4">
+            <label class="col-lg-2 col-form-label fw-semibold" for="smtp_from_address">Email do remetente</label>
+            <div class="col-lg-5">
+                <input id="smtp_from_address" name="smtp_from_address" type="email" class="form-control @error('smtp_from_address') is-invalid @enderror" value="{{ old('smtp_from_address', $options['smtp_from_address']) }}">
+                @error('smtp_from_address')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+        </div>
+
+        <div class="row g-3 align-items-start mb-4">
+            <label class="col-lg-2 col-form-label fw-semibold" for="smtp_from_name">Nome do remetente</label>
+            <div class="col-lg-5">
+                <input id="smtp_from_name" name="smtp_from_name" type="text" class="form-control @error('smtp_from_name') is-invalid @enderror" value="{{ old('smtp_from_name', $options['smtp_from_name']) }}">
+                @error('smtp_from_name')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+        </div>
+
         <div class="row">
             <div class="offset-lg-2 col-lg-6">
                 <button class="btn btn-primary" type="submit">Guardar alterações</button>

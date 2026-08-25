@@ -5,6 +5,7 @@ namespace Pcteckserv\CmsCore;
 use Illuminate\Support\ServiceProvider;
 use Pcteckserv\CmsCore\Console\CheckUpdatesCommand;
 use Pcteckserv\CmsCore\Console\SyncVersionsCommand;
+use Pcteckserv\CmsCore\Support\SiteOptions;
 
 class CmsCoreServiceProvider extends ServiceProvider
 {
@@ -30,6 +31,8 @@ class CmsCoreServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../resources/images' => public_path('vendor/cms-core/images'),
         ], 'cms-core-assets');
+
+        $this->app->make(SiteOptions::class)->applyMailConfig();
 
         if ($this->app->runningInConsole()) {
             $this->commands([

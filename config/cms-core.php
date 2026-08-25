@@ -20,6 +20,14 @@ return [
         'site_url' => env('CMS_SITE_URL', env('APP_URL', 'https://cliente.exemplo.pt')),
         'admin_email' => env('CMS_ADMIN_EMAIL', 'admin@exemplo.pt'),
         'locale' => env('CMS_SITE_LOCALE', 'pt_PT'),
+        'smtp_enabled' => env('CMS_SMTP_ENABLED', false),
+        'smtp_host' => env('MAIL_HOST', '127.0.0.1'),
+        'smtp_port' => env('MAIL_PORT', 2525),
+        'smtp_username' => env('MAIL_USERNAME'),
+        'smtp_password' => env('MAIL_PASSWORD'),
+        'smtp_encryption' => env('CMS_SMTP_ENCRYPTION', env('MAIL_ENCRYPTION')),
+        'smtp_from_address' => env('MAIL_FROM_ADDRESS', env('CMS_ADMIN_EMAIL', 'admin@exemplo.pt')),
+        'smtp_from_name' => env('MAIL_FROM_NAME', env('APP_NAME', 'CMS PCTECK')),
     ],
 
     'updates' => [
