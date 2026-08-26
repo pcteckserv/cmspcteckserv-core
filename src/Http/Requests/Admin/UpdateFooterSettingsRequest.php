@@ -24,8 +24,7 @@ class UpdateFooterSettingsRequest extends FormRequest
             'footer_credit_text' => ['required', 'string', 'max:80'],
             'footer_pcteckserv_logo_media_id' => ['nullable', 'integer', 'exists:cms_media,id'],
             'footer_pcteckserv_logo_path' => ['nullable', 'string', 'max:255', 'not_regex:/^[A-Za-z]:\\\\/'],
-            'footer_pcteckserv_logo_height' => ['required', 'string', 'max:80', 'regex:'.CssLength::PATTERN],
-            'footer_pcteckserv_logo_max_width' => ['required', 'string', 'max:80', 'regex:'.CssLength::PATTERN],
+            'footer_pcteckserv_logo_scale' => ['required', 'integer', 'between:25,250'],
             'footer_pcteckserv_url' => ['required', 'url', 'max:2048'],
             'footer_padding_y' => ['required', 'string', 'max:80', 'regex:'.CssLength::PATTERN],
             'footer_padding_x' => ['required', 'string', 'max:80', 'regex:'.CssLength::PATTERN],
@@ -45,8 +44,7 @@ class UpdateFooterSettingsRequest extends FormRequest
         $validated['footer_show_pcteckserv_credit'] = $this->boolean('footer_show_pcteckserv_credit');
         $validated['footer_pcteckserv_logo_media_id'] = $validated['footer_pcteckserv_logo_media_id'] ?? null;
         $validated['footer_pcteckserv_logo_path'] = trim((string) ($validated['footer_pcteckserv_logo_path'] ?? ''), '/');
-        $validated['footer_pcteckserv_logo_height'] = trim((string) $validated['footer_pcteckserv_logo_height']);
-        $validated['footer_pcteckserv_logo_max_width'] = trim((string) $validated['footer_pcteckserv_logo_max_width']);
+        $validated['footer_pcteckserv_logo_scale'] = (int) $validated['footer_pcteckserv_logo_scale'];
         $validated['footer_padding_y'] = trim((string) $validated['footer_padding_y']);
         $validated['footer_padding_x'] = trim((string) $validated['footer_padding_x']);
         $validated['footer_max_width'] = trim((string) $validated['footer_max_width']);

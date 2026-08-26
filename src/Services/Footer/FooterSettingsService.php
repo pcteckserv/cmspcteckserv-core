@@ -33,8 +33,9 @@ class FooterSettingsService
             'show_pcteckserv_credit' => $this->truthy($options['footer_show_pcteckserv_credit'] ?? true),
             'credit_text' => (string) ($options['footer_credit_text'] ?? 'Desenvolvido por'),
             'pcteckserv_logo_url' => $this->logoUrl($options),
-            'pcteckserv_logo_height' => $this->cssSize($options['footer_pcteckserv_logo_height'] ?? null, '18px'),
-            'pcteckserv_logo_max_width' => $this->cssSize($options['footer_pcteckserv_logo_max_width'] ?? null, '140px'),
+            'pcteckserv_logo_scale' => $this->integer($options['footer_pcteckserv_logo_scale'] ?? null, 100, 25, 250),
+            'pcteckserv_logo_height' => $this->scaledPixels($options['footer_pcteckserv_logo_scale'] ?? null, 18, '18px'),
+            'pcteckserv_logo_max_width' => $this->scaledPixels($options['footer_pcteckserv_logo_scale'] ?? null, 140, '140px'),
             'pcteckserv_url' => $this->url($options['footer_pcteckserv_url'] ?? null),
             'padding_y' => $this->cssSize($options['footer_padding_y'] ?? null, '28px'),
             'padding_x' => $this->cssSize($options['footer_padding_x'] ?? null, '24px'),
@@ -93,6 +94,25 @@ class FooterSettingsService
     private function cssSize(mixed $value, string $fallback): string
     {
         return CssLength::normalize($value, $fallback);
+    }
+
+    private function integer(mixed $value, int $fallback, int $min, int $max): int
+    {
+        $value = filter_var($value, FILTER_VALIDATE_INT);
+
+        if ($value === false) {
+            return $fallback;
+        }
+
+        return min($max, max($min, $value));
+    }
+
+    private function scaledPixels(mixed $scale, int $basePixels, string $fallback): string
+    {
+        $scale = $this->integer($scale, 100, 25, 250);
+        $pixels = round($basePixels * ($scale / 100), 2);
+
+        return CssLength::normalize($pixels.'px', $fallback);
     }
 
     private function url(mixed $value): string

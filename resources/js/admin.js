@@ -152,8 +152,8 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
     const creditUrl = document.querySelector('#footer_pcteckserv_url');
     const logoMediaId = document.querySelector('#footer_pcteckserv_logo_media_id');
     const logoPath = document.querySelector('#footer_pcteckserv_logo_path');
-    const logoHeight = document.querySelector('#footer_pcteckserv_logo_height');
-    const logoMaxWidth = document.querySelector('#footer_pcteckserv_logo_max_width');
+    const logoScale = document.querySelector('#footer_pcteckserv_logo_scale');
+    const logoScaleOutput = document.querySelector('[data-cms-footer-logo-scale-output]');
     const backgroundColor = document.querySelector('#footer_background_color');
     const textColor = document.querySelector('#footer_text_color');
     const secondaryTextColor = document.querySelector('#footer_secondary_text_color');
@@ -182,6 +182,12 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
         }
 
         return path.startsWith('vendor/') ? `/${path}` : `/storage/${path}`;
+    };
+
+    const proportionalLogoSize = (basePixels) => {
+        const scale = Math.min(250, Math.max(25, Number.parseInt(logoScale?.value || '100', 10) || 100));
+
+        return `${Math.round(basePixels * scale) / 100}px`;
     };
 
     const renderLogo = (imageUrl = '') => {
@@ -214,8 +220,13 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
         preview.style.setProperty('--cms-footer-padding-y', cssSize(paddingY, '28px'));
         preview.style.setProperty('--cms-footer-padding-x', cssSize(paddingX, '24px'));
         preview.style.setProperty('--cms-footer-max-width', cssSize(maxWidth, '1320px'));
-        preview.style.setProperty('--cms-footer-logo-height', cssSize(logoHeight, '18px'));
-        preview.style.setProperty('--cms-footer-logo-max-width', cssSize(logoMaxWidth, '140px'));
+        preview.style.setProperty('--cms-footer-logo-height', proportionalLogoSize(18));
+        preview.style.setProperty('--cms-footer-logo-max-width', proportionalLogoSize(140));
+
+        if (logoScaleOutput) {
+            logoScaleOutput.value = `${logoScale?.value || 100}%`;
+            logoScaleOutput.textContent = `${logoScale?.value || 100}%`;
+        }
 
         if (credit) {
             credit.hidden = showCredit ? ! showCredit.checked : false;
@@ -244,7 +255,7 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
         renderLogo(selectedLogoUrl);
     });
 
-    [enabled, title, copyrightText, showCredit, creditText, creditUrl, logoPath, logoHeight, logoMaxWidth, backgroundColor, textColor, secondaryTextColor, paddingY, paddingX, maxWidth].forEach((input) => {
+    [enabled, title, copyrightText, showCredit, creditText, creditUrl, logoPath, logoScale, backgroundColor, textColor, secondaryTextColor, paddingY, paddingX, maxWidth].forEach((input) => {
         input?.addEventListener('input', updatePreview);
         input?.addEventListener('change', updatePreview);
     });

@@ -87,20 +87,15 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label" for="footer_pcteckserv_logo_height">Altura do logótipo</label>
-                        <input id="footer_pcteckserv_logo_height" name="footer_pcteckserv_logo_height" type="text" class="form-control @error('footer_pcteckserv_logo_height') is-invalid @enderror" value="{{ old('footer_pcteckserv_logo_height', $footerPreview['pcteckserv_logo_height']) }}" required>
-                        <div class="form-text">Aceita medidas CSS, por exemplo 18px, 1.5rem, 10% ou clamp(...).</div>
-                        @error('footer_pcteckserv_logo_height')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label" for="footer_pcteckserv_logo_max_width">Largura máxima do logótipo</label>
-                        <input id="footer_pcteckserv_logo_max_width" name="footer_pcteckserv_logo_max_width" type="text" class="form-control @error('footer_pcteckserv_logo_max_width') is-invalid @enderror" value="{{ old('footer_pcteckserv_logo_max_width', $footerPreview['pcteckserv_logo_max_width']) }}" required>
-                        <div class="form-text">Aceita medidas CSS, por exemplo 140px, 12rem, 30% ou max(...).</div>
-                        @error('footer_pcteckserv_logo_max_width')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                    <div class="col-md-12">
+                        <div class="d-flex align-items-center justify-content-between gap-3">
+                            <label class="form-label mb-0" for="footer_pcteckserv_logo_scale">Tamanho do logótipo</label>
+                            <output class="badge text-bg-light border" for="footer_pcteckserv_logo_scale" data-cms-footer-logo-scale-output>{{ old('footer_pcteckserv_logo_scale', $footerPreview['pcteckserv_logo_scale']) }}%</output>
+                        </div>
+                        <input id="footer_pcteckserv_logo_scale" name="footer_pcteckserv_logo_scale" type="range" min="25" max="250" step="5" class="form-range @error('footer_pcteckserv_logo_scale') is-invalid @enderror" value="{{ old('footer_pcteckserv_logo_scale', $footerPreview['pcteckserv_logo_scale']) }}" required>
+                        <div class="form-text">Aumenta ou reduz proporcionalmente a altura e a largura do logótipo.</div>
+                        @error('footer_pcteckserv_logo_scale')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
                         @enderror
                     </div>
                 </div>
