@@ -87,8 +87,13 @@
 
     <div class="cms-media-grid">
         @foreach ($mediaItems as $media)
-            <article class="cms-media-card bg-white border" data-cms-media-item data-url="{{ $mediaService->url($media) }}">
-                <button class="cms-media-preview" type="button" data-cms-media-copy="{{ $mediaService->url($media) }}" aria-label="Copiar URL de {{ $media->original_filename }}">
+            @php
+                $publicUrl = $media->media_type === 'image'
+                    ? $mediaService->url($media, 'optimized')
+                    : $mediaService->url($media);
+            @endphp
+            <article class="cms-media-card bg-white border" data-cms-media-item data-url="{{ $publicUrl }}">
+                <button class="cms-media-preview" type="button" data-cms-media-copy="{{ $publicUrl }}" aria-label="Copiar URL de {{ $media->original_filename }}">
                     @if ($media->media_type === 'image')
                         <img src="{{ $mediaService->url($media, 'thumbnail') }}" alt="{{ $media->alt_text ?: $media->original_filename }}">
                     @else
@@ -100,7 +105,7 @@
                     <div class="text-secondary small">{{ strtoupper($media->extension) }} · {{ $formatBytes($media->size) }}</div>
                     <div class="text-secondary small">{{ $media->width && $media->height ? $media->width.' × '.$media->height.' px' : 'Sem dimensões' }}</div>
                     <div class="d-flex flex-wrap gap-2 mt-3">
-                        <button class="btn btn-sm btn-outline-secondary" type="button" data-cms-media-copy="{{ $mediaService->url($media) }}">Copiar URL</button>
+                        <button class="btn btn-sm btn-outline-secondary" type="button" data-cms-media-copy="{{ $publicUrl }}">Copiar URL</button>
                         @if (! request()->boolean('deleted'))
                             <form method="POST" action="{{ route('admin.media.optimize', $media) }}">@csrf<button class="btn btn-sm btn-outline-primary" type="submit">Reoptimizar</button></form>
                             <form method="POST" action="{{ route('admin.media.destroy', $media) }}">@csrf @method('DELETE')<button class="btn btn-sm btn-outline-danger" type="submit">Eliminar</button></form>

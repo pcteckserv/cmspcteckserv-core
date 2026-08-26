@@ -138,7 +138,10 @@ class MediaController extends Controller
         return [
             'id' => $media->id,
             'uuid' => $media->uuid,
-            'url' => $mediaService->url($media),
+            'url' => $media->media_type === 'image'
+                ? $mediaService->url($media, 'optimized')
+                : $mediaService->url($media),
+            'original_url' => $mediaService->url($media),
             'thumbnail_url' => $mediaService->url($media, 'thumbnail'),
             'optimized_url' => $mediaService->url($media, 'optimized'),
             'alt_text' => $media->alt_text,
