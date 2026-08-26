@@ -111,7 +111,7 @@
                     <div class="col-md-6"><label class="form-label" for="type">Tipo</label><select id="type" name="type" class="form-select">@foreach(['full'=>'Completo','database'=>'Apenas base de dados','files'=>'Apenas ficheiros','media'=>'Apenas media/uploads'] as $value=>$label)<option value="{{ $value }}" @selected(old('type', $plan->type)===$value)>{{ $label }}</option>@endforeach</select></div>
                     <div class="col-md-6"><label class="form-label" for="frequency">Frequência</label><select id="frequency" name="frequency" class="form-select">@foreach(['daily'=>'Diário','weekly'=>'Semanal','weekdays'=>'Vários dias da semana','monthly'=>'Mensal','hourly'=>'De hora a hora','every_2_hours'=>'A cada 2 horas','every_3_hours'=>'A cada 3 horas','every_4_hours'=>'A cada 4 horas','every_6_hours'=>'A cada 6 horas','every_8_hours'=>'A cada 8 horas','every_12_hours'=>'A cada 12 horas'] as $value=>$label)<option value="{{ $value }}" @selected(old('frequency', $plan->frequency)===$value)>{{ $label }}</option>@endforeach</select></div>
                     <div class="col-md-3"><label class="form-label" for="run_at">Hora</label><input id="run_at" name="run_at" type="time" class="form-control" value="{{ old('run_at', substr((string) $plan->run_at, 0, 5)) }}" required></div>
-                    <div class="col-md-3"><label class="form-label" for="month_day">Dia do mês</label><input id="month_day" name="month_day" type="number" min="1" max="31" class="form-control" value="{{ old('month_day', $plan->month_day) }}"></div>
+                    <div class="col-md-3" data-monthly-field><label class="form-label" for="month_day">Dia do mês</label><input id="month_day" name="month_day" type="number" min="1" max="31" class="form-control" value="{{ old('month_day', $plan->month_day) }}"></div>
                     <div class="col-md-6"><label class="form-label" for="storage_mode">Guardar</label><select id="storage_mode" name="storage_mode" class="form-select">@foreach(['local_and_remote'=>'Local + remoto','local'=>'Apenas local','remote'=>'Apenas remoto'] as $value=>$label)<option value="{{ $value }}" @selected(old('storage_mode', $plan->storage_mode)===$value)>{{ $label }}</option>@endforeach</select></div>
                     <div class="col-md-3"><label class="form-label" for="retention_days">Retenção em dias</label><input id="retention_days" name="retention_days" type="number" min="1" max="3650" class="form-control" value="{{ old('retention_days', $plan->retention_days) }}"></div>
                     <div class="col-md-3"><label class="form-label" for="retention_count">Máximo</label><input id="retention_count" name="retention_count" type="number" min="1" class="form-control" value="{{ old('retention_count', $plan->retention_count) }}"></div>
@@ -199,4 +199,25 @@
         </div>
         {{ $runs->links() }}
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const frequency = document.getElementById('frequency');
+            const monthlyField = document.querySelector('[data-monthly-field]');
+            const monthDay = document.getElementById('month_day');
+
+            if (!frequency || !monthlyField || !monthDay) {
+                return;
+            }
+
+            const syncMonthlyField = () => {
+                const isMonthly = frequency.value === 'monthly';
+                monthlyField.classList.toggle('d-none', !isMonthly);
+                monthDay.disabled = !isMonthly;
+            };
+
+            frequency.addEventListener('change', syncMonthlyField);
+            syncMonthlyField();
+        });
+    </script>
 @endsection
