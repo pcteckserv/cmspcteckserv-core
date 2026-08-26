@@ -186,7 +186,7 @@ document.querySelectorAll('.cms-footer-preview').forEach((preview) => {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     let activePicker = null;
 
-    if (modal && pickers.length && close && search && file && grid && status && csrfToken) {
+    if (modal && pickers.length && close && search && file && grid && status) {
         const setStatus = (message, isError = false) => {
             status.textContent = message;
             status.classList.toggle('text-danger', isError);
@@ -258,6 +258,11 @@ document.querySelectorAll('.cms-footer-preview').forEach((preview) => {
 
         const uploadFile = async () => {
             if (! activePicker?.dataset.uploadUrl || ! file.files.length) {
+                return;
+            }
+
+            if (! csrfToken) {
+                setStatus('Não foi possível validar a sessão. Atualize a página e tente novamente.', true);
                 return;
             }
 
