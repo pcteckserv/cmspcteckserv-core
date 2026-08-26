@@ -128,8 +128,9 @@
                 </details>
 
                 <h3 class="h6 mt-4">Notificações e Alertas</h3>
-                <label class="form-label" for="notification_emails">Email(s) para alertas</label>
-                <textarea id="notification_emails" name="notification_emails" rows="3" class="form-control mb-3">{{ old('notification_emails', implode("\n", $plan->notification_emails ?: [])) }}</textarea>
+                <label class="form-label" for="notification_emails">Destinatários dos alertas</label>
+                <textarea id="notification_emails" name="notification_emails" rows="4" class="form-control" placeholder="admin@empresa.pt&#10;suporte@pcteckserv.com">{{ old('notification_emails', implode("\n", $plan->notification_emails ?: [])) }}</textarea>
+                <div class="form-text mb-3">Introduza um email por linha. Não utilize vírgulas.</div>
 
                 <div class="row g-2">
                     @foreach(['backup_failed'=>'Backup falhar','remote_upload_failed'=>'Upload remoto falhar','backup_missing'=>'Backup não executado','backup_corrupted'=>'Backup corrompido','backup_succeeded'=>'Backup concluído com sucesso','retention_deleted'=>'Retenção eliminar backups antigos','recovery'=>'Problema resolvido'] as $event=>$label)
