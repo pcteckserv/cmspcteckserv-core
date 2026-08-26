@@ -39,11 +39,13 @@ return [
         'footer_show_pcteckserv_credit' => env('CMS_FOOTER_SHOW_PCTECKSERV_CREDIT', true),
         'footer_credit_text' => env('CMS_FOOTER_CREDIT_TEXT', 'Desenvolvido por'),
         'footer_pcteckserv_logo_media_id' => env('CMS_FOOTER_PCTECKSERV_LOGO_MEDIA_ID'),
-        'footer_pcteckserv_logo_path' => env('CMS_FOOTER_PCTECKSERV_LOGO_PATH', 'cms/media/2026/08/logotipos-pcteckserv-texto.svg'),
+        'footer_pcteckserv_logo_path' => env('CMS_FOOTER_PCTECKSERV_LOGO_PATH', 'vendor/cms-core/images/logotipos-pcteckserv-texto.svg'),
+        'footer_pcteckserv_logo_height' => env('CMS_FOOTER_PCTECKSERV_LOGO_HEIGHT', '18px'),
+        'footer_pcteckserv_logo_max_width' => env('CMS_FOOTER_PCTECKSERV_LOGO_MAX_WIDTH', '140px'),
         'footer_pcteckserv_url' => env('CMS_FOOTER_PCTECKSERV_URL', 'https://pcteckserv.com'),
-        'footer_padding_y' => env('CMS_FOOTER_PADDING_Y', 28),
-        'footer_padding_x' => env('CMS_FOOTER_PADDING_X', 24),
-        'footer_max_width' => env('CMS_FOOTER_MAX_WIDTH', 1320),
+        'footer_padding_y' => env('CMS_FOOTER_PADDING_Y', '28px'),
+        'footer_padding_x' => env('CMS_FOOTER_PADDING_X', '24px'),
+        'footer_max_width' => env('CMS_FOOTER_MAX_WIDTH', '1320px'),
     ],
 
     'updates' => [

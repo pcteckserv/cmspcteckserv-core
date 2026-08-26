@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Pcteckserv\CmsCore\Models\Media;
 use Pcteckserv\CmsCore\Services\Media\MediaService;
+use Pcteckserv\CmsCore\Support\CssLength;
 use Pcteckserv\CmsCore\Support\SiteOptions;
 use Throwable;
 
@@ -32,10 +33,12 @@ class FooterSettingsService
             'show_pcteckserv_credit' => $this->truthy($options['footer_show_pcteckserv_credit'] ?? true),
             'credit_text' => (string) ($options['footer_credit_text'] ?? 'Desenvolvido por'),
             'pcteckserv_logo_url' => $this->logoUrl($options),
+            'pcteckserv_logo_height' => $this->cssSize($options['footer_pcteckserv_logo_height'] ?? null, '18px'),
+            'pcteckserv_logo_max_width' => $this->cssSize($options['footer_pcteckserv_logo_max_width'] ?? null, '140px'),
             'pcteckserv_url' => $this->url($options['footer_pcteckserv_url'] ?? null),
-            'padding_y' => $this->integer($options['footer_padding_y'] ?? null, 28, 8, 96),
-            'padding_x' => $this->integer($options['footer_padding_x'] ?? null, 24, 8, 96),
-            'max_width' => $this->integer($options['footer_max_width'] ?? null, 1320, 320, 1920),
+            'padding_y' => $this->cssSize($options['footer_padding_y'] ?? null, '28px'),
+            'padding_x' => $this->cssSize($options['footer_padding_x'] ?? null, '24px'),
+            'max_width' => $this->cssSize($options['footer_max_width'] ?? null, '1320px'),
         ];
     }
 
@@ -51,6 +54,10 @@ class FooterSettingsService
 
         if ($path !== '' && Storage::disk('public')->exists($path)) {
             return Storage::disk('public')->url($path);
+        }
+
+        if ($path !== '' && file_exists(public_path($path))) {
+            return asset($path);
         }
 
         return null;
@@ -83,15 +90,9 @@ class FooterSettingsService
         return preg_match('/^#[0-9A-Fa-f]{6}$/', $value) === 1 ? $value : $fallback;
     }
 
-    private function integer(mixed $value, int $fallback, int $min, int $max): int
+    private function cssSize(mixed $value, string $fallback): string
     {
-        $value = filter_var($value, FILTER_VALIDATE_INT);
-
-        if ($value === false) {
-            return $fallback;
-        }
-
-        return min($max, max($min, $value));
+        return CssLength::normalize($value, $fallback);
     }
 
     private function url(mixed $value): string
@@ -105,4 +106,5 @@ class FooterSettingsService
 
         return 'https://pcteckserv.com';
     }
+
 }

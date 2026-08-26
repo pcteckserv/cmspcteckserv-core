@@ -87,6 +87,22 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="footer_pcteckserv_logo_height">Altura do logótipo</label>
+                        <input id="footer_pcteckserv_logo_height" name="footer_pcteckserv_logo_height" type="text" class="form-control @error('footer_pcteckserv_logo_height') is-invalid @enderror" value="{{ old('footer_pcteckserv_logo_height', $footerPreview['pcteckserv_logo_height']) }}" required>
+                        <div class="form-text">Aceita medidas CSS, por exemplo 18px, 1.5rem, 10% ou clamp(...).</div>
+                        @error('footer_pcteckserv_logo_height')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="footer_pcteckserv_logo_max_width">Largura máxima do logótipo</label>
+                        <input id="footer_pcteckserv_logo_max_width" name="footer_pcteckserv_logo_max_width" type="text" class="form-control @error('footer_pcteckserv_logo_max_width') is-invalid @enderror" value="{{ old('footer_pcteckserv_logo_max_width', $footerPreview['pcteckserv_logo_max_width']) }}" required>
+                        <div class="form-text">Aceita medidas CSS, por exemplo 140px, 12rem, 30% ou max(...).</div>
+                        @error('footer_pcteckserv_logo_max_width')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
                 </div>
             </div>
         </div>
@@ -130,21 +146,24 @@
                 <div class="row g-3">
                     <div class="col-md-4">
                         <label class="form-label" for="footer_padding_y">Padding vertical</label>
-                        <input id="footer_padding_y" name="footer_padding_y" type="number" min="8" max="96" class="form-control @error('footer_padding_y') is-invalid @enderror" value="{{ old('footer_padding_y', $options['footer_padding_y']) }}" required>
+                        <input id="footer_padding_y" name="footer_padding_y" type="text" class="form-control @error('footer_padding_y') is-invalid @enderror" value="{{ old('footer_padding_y', $footerPreview['padding_y']) }}" required>
+                        <div class="form-text">Ex.: 28px, 2rem, 5% ou calc(...).</div>
                         @error('footer_padding_y')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
                     <div class="col-md-4">
                         <label class="form-label" for="footer_padding_x">Padding horizontal</label>
-                        <input id="footer_padding_x" name="footer_padding_x" type="number" min="8" max="96" class="form-control @error('footer_padding_x') is-invalid @enderror" value="{{ old('footer_padding_x', $options['footer_padding_x']) }}" required>
+                        <input id="footer_padding_x" name="footer_padding_x" type="text" class="form-control @error('footer_padding_x') is-invalid @enderror" value="{{ old('footer_padding_x', $footerPreview['padding_x']) }}" required>
+                        <div class="form-text">Ex.: 24px, 1.5rem, 4vw ou clamp(...).</div>
                         @error('footer_padding_x')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
                     <div class="col-md-4">
                         <label class="form-label" for="footer_max_width">Largura máxima</label>
-                        <input id="footer_max_width" name="footer_max_width" type="number" min="320" max="1920" class="form-control @error('footer_max_width') is-invalid @enderror" value="{{ old('footer_max_width', $options['footer_max_width']) }}" required>
+                        <input id="footer_max_width" name="footer_max_width" type="text" class="form-control @error('footer_max_width') is-invalid @enderror" value="{{ old('footer_max_width', $footerPreview['max_width']) }}" required>
+                        <div class="form-text">Ex.: 1320px, 90%, 80rem ou min(...).</div>
                         @error('footer_max_width')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -158,21 +177,12 @@
                 <h2 class="h5 mb-1">Preview</h2>
             </div>
             <div class="col-lg-8">
-                <div class="cms-footer-preview">
-                    <div class="cms-footer-preview__copyright">
-                        &copy; {{ now()->year }}. {{ $options['site_title'] }} - {{ old('footer_copyright_text', $options['footer_copyright_text']) }}
-                    </div>
-                    <div class="cms-footer-preview__credit">
-                        {{ old('footer_credit_text', $options['footer_credit_text']) }}
-                        <span class="cms-footer-preview__brand" data-cms-footer-preview-brand>
-                            @if ($footerPreview['pcteckserv_logo_url'])
-                                <img class="cms-footer-preview__logo" src="{{ $footerPreview['pcteckserv_logo_url'] }}" alt="PCTECKSERV">
-                            @else
-                                <strong>PCTECKSERV</strong>
-                            @endif
-                        </span>
-                    </div>
-                </div>
+                @include('cms-core::components.partials.footer-markup', [
+                    'footer' => $footerPreview,
+                    'forceRender' => true,
+                    'extraClass' => 'cms-footer-preview',
+                    'attributes' => 'data-cms-footer-preview',
+                ])
             </div>
         </div>
 

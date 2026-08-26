@@ -1,6 +1,5 @@
-@if ($footer['enabled'])
-    @once
-        <style>
+@once
+    <style>
             .cms-public-footer {
                 background: var(--cms-footer-background);
                 color: var(--cms-footer-text);
@@ -37,8 +36,8 @@
 
             .cms-public-footer__logo {
                 display: block;
-                height: 18px;
-                max-width: 140px;
+                height: var(--cms-footer-logo-height);
+                max-width: var(--cms-footer-logo-max-width);
                 object-fit: contain;
                 width: auto;
             }
@@ -54,28 +53,7 @@
                     flex-direction: column;
                 }
             }
-        </style>
-    @endonce
+    </style>
+@endonce
 
-    <footer
-        class="cms-public-footer"
-        style="--cms-footer-background: {{ $footer['background_color'] }}; --cms-footer-text: {{ $footer['text_color'] }}; --cms-footer-secondary-text: {{ $footer['secondary_text_color'] }}; --cms-footer-padding-y: {{ $footer['padding_y'] }}px; --cms-footer-padding-x: {{ $footer['padding_x'] }}px; --cms-footer-max-width: {{ $footer['max_width'] }}px;"
-    >
-        <div class="cms-public-footer__inner">
-            <p class="cms-public-footer__copyright">
-                &copy; {{ $footer['year'] }}. {{ $footer['site_title'] }} - {{ $footer['copyright_text'] }}
-            </p>
-
-            @if ($footer['show_pcteckserv_credit'])
-                <a class="cms-public-footer__credit" href="{{ $footer['pcteckserv_url'] }}" target="_blank" rel="noopener noreferrer" aria-label="{{ $footer['credit_text'] }} PCTECKSERV">
-                    <span>{{ $footer['credit_text'] }}</span>
-                    @if ($footer['pcteckserv_logo_url'])
-                        <img class="cms-public-footer__logo" src="{{ $footer['pcteckserv_logo_url'] }}" alt="PCTECKSERV">
-                    @else
-                        <span class="cms-public-footer__fallback">PCTECKSERV</span>
-                    @endif
-                </a>
-            @endif
-        </div>
-    </footer>
-@endif
+@include('cms-core::components.partials.footer-markup', ['footer' => $footer])

@@ -143,28 +143,95 @@ document.querySelectorAll('[data-cms-media-upload-url]').forEach((dropzone) => {
     });
 });
 
-document.querySelectorAll('.cms-footer-preview').forEach((preview) => {
+document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
+    const enabled = document.querySelector('#footer_enabled');
     const title = document.querySelector('#site_title');
     const copyrightText = document.querySelector('#footer_copyright_text');
+    const showCredit = document.querySelector('#footer_show_pcteckserv_credit');
     const creditText = document.querySelector('#footer_credit_text');
+    const creditUrl = document.querySelector('#footer_pcteckserv_url');
+    const logoMediaId = document.querySelector('#footer_pcteckserv_logo_media_id');
+    const logoPath = document.querySelector('#footer_pcteckserv_logo_path');
+    const logoHeight = document.querySelector('#footer_pcteckserv_logo_height');
+    const logoMaxWidth = document.querySelector('#footer_pcteckserv_logo_max_width');
     const backgroundColor = document.querySelector('#footer_background_color');
     const textColor = document.querySelector('#footer_text_color');
     const secondaryTextColor = document.querySelector('#footer_secondary_text_color');
-    const copyright = preview.querySelector('.cms-footer-preview__copyright');
-    const credit = preview.querySelector('.cms-footer-preview__credit');
+    const paddingY = document.querySelector('#footer_padding_y');
+    const paddingX = document.querySelector('#footer_padding_x');
+    const maxWidth = document.querySelector('#footer_max_width');
+    const copyright = preview.querySelector('.cms-public-footer__copyright');
+    const credit = preview.querySelector('[data-cms-footer-preview-credit]');
+    const creditTextPreview = preview.querySelector('[data-cms-footer-preview-credit-text]');
+    const brand = preview.querySelector('[data-cms-footer-preview-brand]');
     const year = new Date().getFullYear();
+    let selectedLogoUrl = preview.querySelector('.cms-public-footer__logo')?.getAttribute('src') || '';
+    const cssSizePattern = /^(?:0|\d+(?:\.\d+)?(?:px|%|rem|em|vh|vw|vmin|vmax|ch|ex|cm|mm|in|pt|pc)|(?:auto|min-content|max-content|fit-content)|(?:calc|clamp|min|max)\([A-Za-z0-9\s+\-*\/().,%]+\))$/;
+
+    const cssSize = (input, fallback) => {
+        const value = input?.value?.trim() || '';
+
+        return cssSizePattern.test(value) ? value : fallback;
+    };
+
+    const fallbackLogoUrl = () => {
+        const path = logoPath?.value?.trim().replace(/^\/+/, '');
+
+        if (! path) {
+            return '';
+        }
+
+        return path.startsWith('vendor/') ? `/${path}` : `/storage/${path}`;
+    };
+
+    const renderLogo = (imageUrl = '') => {
+        if (! brand) {
+            return;
+        }
+
+        brand.replaceChildren();
+
+        if (imageUrl) {
+            const image = document.createElement('img');
+            image.className = 'cms-public-footer__logo';
+            image.src = imageUrl;
+            image.alt = 'PCTECKSERV';
+            brand.append(image);
+            return;
+        }
+
+        const fallback = document.createElement('span');
+        fallback.className = 'cms-public-footer__fallback';
+        fallback.textContent = 'PCTECKSERV';
+        brand.append(fallback);
+    };
 
     const updatePreview = () => {
-        preview.style.backgroundColor = backgroundColor?.value || '#0c0c0c';
-        preview.style.color = textColor?.value || '#ffffff';
+        preview.hidden = enabled ? ! enabled.checked : false;
+        preview.style.setProperty('--cms-footer-background', backgroundColor?.value || '#0c0c0c');
+        preview.style.setProperty('--cms-footer-text', textColor?.value || '#ffffff');
+        preview.style.setProperty('--cms-footer-secondary-text', secondaryTextColor?.value || '#ffffff');
+        preview.style.setProperty('--cms-footer-padding-y', cssSize(paddingY, '28px'));
+        preview.style.setProperty('--cms-footer-padding-x', cssSize(paddingX, '24px'));
+        preview.style.setProperty('--cms-footer-max-width', cssSize(maxWidth, '1320px'));
+        preview.style.setProperty('--cms-footer-logo-height', cssSize(logoHeight, '18px'));
+        preview.style.setProperty('--cms-footer-logo-max-width', cssSize(logoMaxWidth, '140px'));
 
         if (credit) {
-            credit.style.color = secondaryTextColor?.value || '#ffffff';
-            credit.firstChild.textContent = `${creditText?.value || 'Desenvolvido por'} `;
+            credit.hidden = showCredit ? ! showCredit.checked : false;
+            credit.href = creditUrl?.value || 'https://pcteckserv.com';
+        }
+
+        if (creditTextPreview) {
+            creditTextPreview.textContent = creditText?.value || 'Desenvolvido por';
         }
 
         if (copyright) {
             copyright.textContent = `© ${year}. ${title?.value || 'CMS PCTECK'} - ${copyrightText?.value || 'Todos os direitos reservados'}`;
+        }
+
+        if (! logoMediaId?.value) {
+            renderLogo(fallbackLogoUrl());
         }
     };
 
@@ -173,24 +240,13 @@ document.querySelectorAll('.cms-footer-preview').forEach((preview) => {
             return;
         }
 
-        const brand = preview.querySelector('[data-cms-footer-preview-brand]');
-        const imageUrl = event.detail?.item?.original_url || event.detail?.item?.url;
-
-        if (! brand || ! imageUrl) {
-            return;
-        }
-
-        brand.innerHTML = '';
-
-        const image = document.createElement('img');
-        image.className = 'cms-footer-preview__logo';
-        image.src = imageUrl;
-        image.alt = 'PCTECKSERV';
-        brand.append(image);
+        selectedLogoUrl = event.detail?.item?.original_url || event.detail?.item?.url || '';
+        renderLogo(selectedLogoUrl);
     });
 
-    [title, copyrightText, creditText, backgroundColor, textColor, secondaryTextColor].forEach((input) => {
+    [enabled, title, copyrightText, showCredit, creditText, creditUrl, logoPath, logoHeight, logoMaxWidth, backgroundColor, textColor, secondaryTextColor, paddingY, paddingX, maxWidth].forEach((input) => {
         input?.addEventListener('input', updatePreview);
+        input?.addEventListener('change', updatePreview);
     });
 
     updatePreview();
