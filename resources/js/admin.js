@@ -78,8 +78,10 @@ document.querySelectorAll('[data-cms-media-copy]').forEach((button) => {
                     button.textContent = original;
                 }, 1400);
             } else {
+                button.classList.add('is-copied');
                 button.setAttribute('aria-label', 'URL copiado');
                 window.setTimeout(() => {
+                    button.classList.remove('is-copied');
                     button.setAttribute('aria-label', 'Copiar URL');
                 }, 1400);
             }
