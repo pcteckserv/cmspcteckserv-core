@@ -47,6 +47,7 @@ Route::middleware('web')->group(function (): void {
             Route::delete('/backups/runs/{run}', [BackupsController::class, 'destroy'])->name('backups.runs.destroy');
             Route::get('/media', [MediaController::class, 'index'])->name('media.index');
             Route::post('/media', [MediaController::class, 'store'])->middleware('throttle:media-upload')->name('media.store');
+            Route::get('/media-library', [MediaController::class, 'library'])->name('media.library');
             Route::get('/media/{media}', [MediaController::class, 'show'])->name('media.show');
             Route::put('/media/{media}', [MediaController::class, 'update'])->name('media.update');
             Route::delete('/media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');

@@ -64,6 +64,22 @@ class MediaController extends Controller
         return response()->json($this->payload($media, $mediaService));
     }
 
+    public function library(Request $request, MediaService $mediaService): JsonResponse
+    {
+        Gate::authorize('media.view');
+
+        $media = Media::query()
+            ->search($request->string('q')->toString())
+            ->type($request->string('type')->toString() ?: 'image')
+            ->latest()
+            ->limit(48)
+            ->get();
+
+        return response()->json([
+            'items' => $media->map(fn (Media $media): array => $this->payload($media, $mediaService))->values(),
+        ]);
+    }
+
     public function update(UpdateMediaRequest $request, Media $media): RedirectResponse
     {
         $media->update($request->validated());
