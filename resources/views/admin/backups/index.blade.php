@@ -84,13 +84,13 @@
 
                 <div class="d-flex flex-wrap align-items-center gap-2 mt-4">
                     <button class="btn btn-primary" type="submit">Guardar destino</button>
+                    <button class="btn btn-outline-primary" type="submit" form="backup-destination-test-form">Testar ligação</button>
+                    <span class="small text-secondary">Estado: {{ $destination->connection_status }} @if($destination->last_tested_at) · {{ $destination->last_tested_at->format('d/m/Y H:i') }} @endif</span>
                 </div>
             </form>
 
-            <form method="POST" class="mt-2" action="{{ route('admin.backups.destinations.test', $destination) }}">
+            <form id="backup-destination-test-form" method="POST" class="d-none" action="{{ route('admin.backups.destinations.test', $destination) }}">
                 @csrf
-                <button class="btn btn-outline-primary" type="submit">Testar ligação</button>
-                <span class="ms-2 small text-secondary">Estado: {{ $destination->connection_status }} @if($destination->last_tested_at) · {{ $destination->last_tested_at->format('d/m/Y H:i') }} @endif</span>
             </form>
         </div>
 
