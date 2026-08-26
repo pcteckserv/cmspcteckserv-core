@@ -161,8 +161,19 @@ body {
 }
 
 .cms-footer-preview__credit {
+    align-items: center;
     color: inherit;
+    display: inline-flex;
+    gap: .5rem;
     white-space: nowrap;
+}
+
+.cms-footer-preview__logo {
+    display: block;
+    height: 18px;
+    max-width: 140px;
+    object-fit: contain;
+    width: auto;
 }
 
 .cms-media-picker {

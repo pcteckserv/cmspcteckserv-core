@@ -168,6 +168,27 @@ document.querySelectorAll('.cms-footer-preview').forEach((preview) => {
         }
     };
 
+    document.addEventListener('cms:media-picker-selected', (event) => {
+        if (event.detail?.inputName !== 'footer_pcteckserv_logo_media_id') {
+            return;
+        }
+
+        const brand = preview.querySelector('[data-cms-footer-preview-brand]');
+        const imageUrl = event.detail?.item?.original_url || event.detail?.item?.url;
+
+        if (! brand || ! imageUrl) {
+            return;
+        }
+
+        brand.innerHTML = '';
+
+        const image = document.createElement('img');
+        image.className = 'cms-footer-preview__logo';
+        image.src = imageUrl;
+        image.alt = 'PCTECKSERV';
+        brand.append(image);
+    });
+
     [title, copyrightText, creditText, backgroundColor, textColor, secondaryTextColor].forEach((input) => {
         input?.addEventListener('input', updatePreview);
     });
@@ -227,6 +248,13 @@ document.querySelectorAll('.cms-footer-preview').forEach((preview) => {
                     input.value = item.id;
                     display.value = label.textContent;
                     selected.textContent = `Selecionado: ${label.textContent}`;
+                    activePicker.dispatchEvent(new CustomEvent('cms:media-picker-selected', {
+                        bubbles: true,
+                        detail: {
+                            inputName: input.name,
+                            item,
+                        },
+                    }));
                     modal.hidden = true;
                 });
 

@@ -163,7 +163,14 @@
                         &copy; {{ now()->year }}. {{ $options['site_title'] }} - {{ old('footer_copyright_text', $options['footer_copyright_text']) }}
                     </div>
                     <div class="cms-footer-preview__credit">
-                        {{ old('footer_credit_text', $options['footer_credit_text']) }} <strong>PCTECKSERV</strong>
+                        {{ old('footer_credit_text', $options['footer_credit_text']) }}
+                        <span class="cms-footer-preview__brand" data-cms-footer-preview-brand>
+                            @if ($footerPreview['pcteckserv_logo_url'])
+                                <img class="cms-footer-preview__logo" src="{{ $footerPreview['pcteckserv_logo_url'] }}" alt="PCTECKSERV">
+                            @else
+                                <strong>PCTECKSERV</strong>
+                            @endif
+                        </span>
                     </div>
                 </div>
             </div>

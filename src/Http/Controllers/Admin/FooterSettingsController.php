@@ -7,16 +7,18 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
 use Pcteckserv\CmsCore\Http\Requests\Admin\UpdateFooterSettingsRequest;
+use Pcteckserv\CmsCore\Services\Footer\FooterSettingsService;
 use Pcteckserv\CmsCore\Support\SiteOptions;
 
 class FooterSettingsController extends Controller
 {
-    public function edit(SiteOptions $siteOptions): View
+    public function edit(SiteOptions $siteOptions, FooterSettingsService $footerSettings): View
     {
         Gate::authorize('footer.view-settings');
 
         return view('cms-core::admin.footer.edit', [
             'options' => $siteOptions->all(),
+            'footerPreview' => $footerSettings->settings(),
         ]);
     }
 
