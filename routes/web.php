@@ -5,9 +5,11 @@ use Pcteckserv\CmsCore\Http\Controllers\Admin\ArtisanCommandsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\BackupsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\DashboardController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\MediaController;
+use Pcteckserv\CmsCore\Http\Controllers\Admin\RolesController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\SiteOptionsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\SmtpSettingsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\UpdatesController;
+use Pcteckserv\CmsCore\Http\Controllers\Admin\UsersController;
 use Pcteckserv\CmsCore\Http\Controllers\Auth\AuthenticatedSessionController;
 
 Route::middleware('web')->group(function (): void {
@@ -52,5 +54,7 @@ Route::middleware('web')->group(function (): void {
             Route::post('/updates/{package}/run', [UpdatesController::class, 'update'])
                 ->where('package', '.*')
                 ->name('updates.run');
+            Route::resource('users', UsersController::class)->except(['show']);
+            Route::resource('roles', RolesController::class)->except(['show']);
         });
     });

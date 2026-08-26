@@ -8,10 +8,25 @@ class PackageUpdater
 {
     public function update(string $package): UpdateResult
     {
+        $installedPackage = $this->installedComposerPackage($package);
+
+        $previousVersion = $installedPackage['version'] ?? null;
+
         $composer = $this->run([$this->composerExecutable(), 'update', $package, '--with-dependencies']);
 
         if (! $composer->isSuccessful()) {
             return new UpdateResult(false, 'Composer falhou: '.$this->processOutput($composer));
+        }
+
+        $updatedPackage = $this->installedComposerPackage($package);
+        $updatedVersion = $updatedPackage['version'] ?? null;
+
+        if ($previousVersion !== null && $updatedVersion === $previousVersion) {
+            $repositoryHint = ($installedPackage['dist']['type'] ?? null) === 'path'
+                ? ' A package continua instalada a partir do repositório local path '.($installedPackage['dist']['url'] ?? 'sem caminho').'.'
+                : '';
+
+            return new UpdateResult(false, 'O Composer terminou sem alterar a versão instalada (continua em '.$previousVersion.'). Verifique se o composer.json permite instalar a versão disponível.'.$repositoryHint);
         }
 
         $migrate = $this->run([PHP_BINARY, 'artisan', 'migrate', '--force']);
@@ -26,7 +41,23 @@ class PackageUpdater
             return new UpdateResult(false, 'Limpeza de cache falhou: '.$this->processOutput($cache));
         }
 
-        return new UpdateResult(true, 'Atualizacao concluida com sucesso.');
+        return new UpdateResult(true, 'Atualização concluída com sucesso.');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function installedComposerPackage(string $package): array
+    {
+        $process = $this->run([$this->composerExecutable(), 'show', $package, '--format=json']);
+
+        if (! $process->isSuccessful()) {
+            return [];
+        }
+
+        $packageData = json_decode($process->getOutput(), true);
+
+        return is_array($packageData) ? $packageData : [];
     }
 
     /**

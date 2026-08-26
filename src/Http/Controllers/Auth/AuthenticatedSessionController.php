@@ -28,6 +28,23 @@ class AuthenticatedSessionController extends Controller
                 ->onlyInput('email');
         }
 
+        $user = Auth::user();
+
+        if (method_exists($user, 'isCmsActive') && ! $user->isCmsActive()) {
+            Auth::guard('web')->logout();
+
+            return back()
+                ->withErrors(['email' => 'Esta conta encontra-se inativa.'])
+                ->onlyInput('email');
+        }
+
+        if (method_exists($user, 'cmsState')) {
+            $user->cmsState()->updateOrCreate([], [
+                'state' => method_exists($user, 'cmsAccessState') ? $user->cmsAccessState() : 'active',
+                'last_login_at' => now(),
+            ]);
+        }
+
         $request->session()->regenerate();
 
         return redirect()->intended(route('admin.dashboard'));

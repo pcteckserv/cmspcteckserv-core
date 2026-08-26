@@ -6,6 +6,9 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use InvalidArgumentException;
+use Pcteckserv\CmsCore\Models\Permission;
+use Pcteckserv\CmsCore\Models\Role;
+use Pcteckserv\CmsCore\Services\PermissionSynchronizer;
 
 class AdminUserSeeder extends Seeder
 {
@@ -15,6 +18,8 @@ class AdminUserSeeder extends Seeder
         $email = config('cms-core.admin_user.email');
         $password = config('cms-core.admin_user.password');
 
+        app(PermissionSynchronizer::class)->sync();
+
         if (! is_string($email) || trim($email) === '') {
             throw new InvalidArgumentException('Configure ADMIN_USER_EMAIL antes de criar o administrador inicial.');
         }
@@ -23,12 +28,48 @@ class AdminUserSeeder extends Seeder
             throw new InvalidArgumentException('Configure ADMIN_USER_PASSWORD antes de criar o administrador inicial.');
         }
 
-        $userModel::query()->updateOrCreate(
+        $user = $userModel::query()->updateOrCreate(
             ['email' => $email],
             [
                 'name' => config('cms-core.admin_user.name'),
                 'password' => Hash::make($password),
             ],
+        );
+
+        $role = Role::query()->firstOrCreate(
+            ['key' => config('cms-core.super_admin_role', 'core.super_admin')],
+            ['name' => 'Super Admin', 'is_protected' => true],
+        );
+
+        $this->createDefaultRoles();
+
+        if (method_exists($user, 'cmsRoles')) {
+            $user->cmsRoles()->syncWithoutDetaching([$role->id]);
+        }
+
+        if (method_exists($user, 'cmsState')) {
+            $user->cmsState()->updateOrCreate([], ['state' => 'active']);
+        }
+    }
+
+    private function createDefaultRoles(): void
+    {
+        $admin = Role::query()->firstOrCreate(
+            ['key' => 'core.admin'],
+            ['name' => 'Administrador', 'is_protected' => false],
+        );
+
+        $editor = Role::query()->firstOrCreate(
+            ['key' => 'core.editor'],
+            ['name' => 'Editor', 'is_protected' => false],
+        );
+
+        $admin->permissions()->syncWithoutDetaching(
+            Permission::query()->where('key', '!=', 'core.users.manage_roles')->pluck('id')->all(),
+        );
+
+        $editor->permissions()->syncWithoutDetaching(
+            Permission::query()->whereIn('key', ['core.users.view'])->pluck('id')->all(),
         );
     }
 

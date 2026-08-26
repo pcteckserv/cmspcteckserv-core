@@ -7,7 +7,7 @@
             <p class="text-secondary mb-0">Executa comandos essenciais do Laravel atraves de uma rota protegida do painel.</p>
         </div>
 
-        <span class="badge text-bg-success align-self-start">Protegido por autenticacao</span>
+        <span class="badge text-bg-success align-self-start">Protegido por autenticação</span>
     </div>
 
     @if (session('artisan_command_success'))

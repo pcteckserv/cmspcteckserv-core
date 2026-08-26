@@ -3,7 +3,6 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'Administração' }}</title>
     <link rel="icon" href="{{ app(\Pcteckserv\CmsCore\Support\SiteOptions::class)->get('site_icon_url') }}">
     @vite([
@@ -17,7 +16,12 @@
             <div class="fw-semibold mb-4">CMS PCTECK</div>
             <nav class="nav nav-pills flex-column">
                 <a @class(['nav-link', 'active' => request()->routeIs('admin.dashboard')]) href="{{ route('admin.dashboard') }}">Dashboard</a>
-                <a @class(['nav-link', 'active' => request()->routeIs('admin.media.*')]) href="{{ route('admin.media.index') }}">Media</a>
+                @can('core.users.view')
+                    <a @class(['nav-link', 'active' => request()->routeIs('admin.users.*')]) href="{{ route('admin.users.index') }}">Utilizadores</a>
+                @endcan
+                @can('core.roles.view')
+                    <a @class(['nav-link', 'active' => request()->routeIs('admin.roles.*')]) href="{{ route('admin.roles.index') }}">Roles</a>
+                @endcan
                 <a @class(['nav-link', 'active' => request()->routeIs('admin.site-options.*')]) href="{{ route('admin.site-options.edit') }}">Opções gerais</a>
                 <a @class(['nav-link', 'active' => request()->routeIs('admin.smtp-settings.*')]) href="{{ route('admin.smtp-settings.edit') }}">SMTP</a>
                 @can('backups.view')
@@ -28,7 +32,7 @@
             </nav>
         </aside>
 
-        <div class="admin-content flex-grow-1">
+        <div class="flex-grow-1">
             <header class="bg-white border-bottom">
                 <div class="container-fluid py-3 d-flex justify-content-between align-items-center gap-3">
                     <div>
@@ -48,5 +52,6 @@
             </main>
         </div>
     </div>
+    @include('cms-core::admin.partials.help-widget')
 </body>
 </html>

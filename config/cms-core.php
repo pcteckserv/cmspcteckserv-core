@@ -2,6 +2,9 @@
 
 return [
     'user_model' => env('CMS_CORE_USER_MODEL'),
+    'super_admin_role' => env('CMS_CORE_SUPER_ADMIN_ROLE', 'core.super_admin'),
+    'user_states' => ['active', 'inactive'],
+    'users_per_page' => env('CMS_CORE_USERS_PER_PAGE', 15),
 
     'auth' => [
         'logout_redirect' => env('CMS_CORE_LOGOUT_REDIRECT', '/'),

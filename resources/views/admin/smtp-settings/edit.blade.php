@@ -4,7 +4,7 @@
     <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
         <div>
             <h1 class="h3 mb-1">SMTP</h1>
-            <p class="text-secondary mb-0">Configuracao global de email usada pelos elementos do site.</p>
+            <p class="text-secondary mb-0">Configuração global de email usada pelos elementos do site.</p>
         </div>
     </div>
 
@@ -30,7 +30,7 @@
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
-                <div class="form-text">Quando ativo, estes dados passam a ser a configuracao global de email do site.</div>
+                <div class="form-text">Quando ativo, estes dados passam a ser a configuração global de email do site.</div>
             </div>
         </div>
 
@@ -53,7 +53,7 @@
                 @enderror
             </div>
 
-            <label class="col-lg-1 col-form-label fw-semibold" for="smtp_encryption">Seguranca</label>
+            <label class="col-lg-1 col-form-label fw-semibold" for="smtp_encryption">Segurança</label>
             <div class="col-lg-2">
                 <select id="smtp_encryption" name="smtp_encryption" class="form-select @error('smtp_encryption') is-invalid @enderror">
                     @foreach ($encryptions as $value => $label)
@@ -109,7 +109,7 @@
 
         <div class="row">
             <div class="offset-lg-2 col-lg-6">
-                <button class="btn btn-primary" type="submit">Guardar configuracao</button>
+                <button class="btn btn-primary" type="submit">Guardar configuração</button>
             </div>
         </div>
     </form>
@@ -121,7 +121,7 @@
             <label class="col-lg-2 col-form-label fw-semibold" for="test_recipient">Email de teste</label>
             <div class="col-lg-5">
                 <input id="test_recipient" name="test_recipient" type="email" class="form-control @error('test_recipient') is-invalid @enderror" value="{{ old('test_recipient', $options['admin_email']) }}" required>
-                <div class="form-text">Guarde a configuracao antes de testar.</div>
+                <div class="form-text">Guarde a configuração antes de testar.</div>
                 @error('test_recipient')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror

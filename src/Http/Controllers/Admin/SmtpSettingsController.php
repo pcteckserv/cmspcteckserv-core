@@ -29,7 +29,7 @@ class SmtpSettingsController extends Controller
         $siteOptions->applyMailConfig();
         app('mail.manager')->purge('smtp');
 
-        return back()->with('cms_smtp_success', 'Configuracao SMTP guardada com sucesso.');
+        return back()->with('cms_smtp_success', 'Configuração SMTP guardada com sucesso.');
     }
 
     public function test(Request $request, SiteOptions $siteOptions): RedirectResponse
@@ -48,7 +48,7 @@ class SmtpSettingsController extends Controller
             $siteOptions->applyMailConfig();
             app('mail.manager')->purge('smtp');
 
-            Mail::raw('Este email confirma que a configuracao SMTP do CMS PCTECK esta operacional.', function ($message) use ($validated): void {
+            Mail::raw('Este email confirma que a configuração SMTP do CMS PCTECK está operacional.', function ($message) use ($validated): void {
                 $message
                     ->to($validated['test_recipient'])
                     ->subject('Teste SMTP - CMS PCTECK');

@@ -46,16 +46,16 @@ class SiteOptionsController extends Controller
         $siteOptions->setMany($validated);
         $this->syncAppUrlEnv($validated['site_url']);
 
-        return back()->with('cms_site_options_success', 'Opcoes gerais guardadas com sucesso.');
+        return back()->with('cms_site_options_success', 'Opções gerais guardadas com sucesso.');
     }
 
     private function locales(): array
     {
         return [
-            'pt_PT' => 'Portugues',
-            'en_US' => 'Ingles',
+            'pt_PT' => 'Português',
+            'en_US' => 'Inglês',
             'es_ES' => 'Espanhol',
-            'fr_FR' => 'Frances',
+            'fr_FR' => 'Francês',
         ];
     }
 
