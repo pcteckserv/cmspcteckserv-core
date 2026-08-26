@@ -141,7 +141,7 @@
 
                 <div class="row g-3 mt-2">
                     <div class="col-md-6"><label class="form-label" for="alert_timing">Enviar alerta</label><select id="alert_timing" name="alert_timing" class="form-select"><option value="after_retries" @selected($plan->alert_timing==='after_retries')>Após esgotar tentativas</option><option value="first_failure" @selected($plan->alert_timing==='first_failure')>Na primeira falha</option></select></div>
-                    <div class="col-md-6"><label class="form-label" for="repeat_alert_after_minutes">Repetir alerta após</label><input id="repeat_alert_after_minutes" name="repeat_alert_after_minutes" type="number" min="15" class="form-control" value="{{ old('repeat_alert_after_minutes', $plan->repeat_alert_after_minutes) }}"></div>
+                    <div class="col-md-6"><label class="form-label" for="repeat_alert_after_minutes">Repetir alerta após</label><select id="repeat_alert_after_minutes" name="repeat_alert_after_minutes" class="form-select">@foreach([60 => '1 hora', 360 => '6 horas', 720 => '12 horas', 1440 => '24 horas', 2880 => '2 dias', 10080 => '7 dias'] as $value => $label)<option value="{{ $value }}" @selected((int) old('repeat_alert_after_minutes', $plan->repeat_alert_after_minutes) === $value)>{{ $label }}</option>@endforeach</select></div>
                 </div>
 
                 <div class="d-flex flex-wrap gap-2 mt-4">
