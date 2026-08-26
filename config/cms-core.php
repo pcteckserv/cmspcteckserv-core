@@ -41,4 +41,48 @@ return [
         ],
         'github_token' => env('CMS_GITHUB_TOKEN'),
     ],
+
+    'media' => [
+        'disk' => env('CMS_MEDIA_DISK', 'public'),
+        'directory' => env('CMS_MEDIA_DIRECTORY', 'cms/media'),
+        'max_size' => env('CMS_MEDIA_MAX_SIZE', 10 * 1024),
+        'allow_svg' => env('CMS_MEDIA_ALLOW_SVG', false),
+        'allowed_extensions' => ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'pdf'],
+        'allowed_mimes' => [
+            'image/jpeg',
+            'image/png',
+            'image/webp',
+            'image/gif',
+            'image/svg+xml',
+            'application/pdf',
+        ],
+        'optimization' => [
+            'enabled' => env('CMS_MEDIA_OPTIMIZATION_ENABLED', true),
+            'webp' => env('CMS_MEDIA_WEBP_ENABLED', true),
+            'quality' => env('CMS_MEDIA_WEBP_QUALITY', 82),
+            'keep_original' => env('CMS_MEDIA_KEEP_ORIGINAL', true),
+            'variants' => [320, 640, 1280, 1920],
+            'thumbnail' => [
+                'width' => 300,
+                'height' => 300,
+            ],
+        ],
+        'size_warnings' => [
+            'warning' => 500 * 1024,
+            'critical' => 2 * 1024 * 1024,
+        ],
+        'resolution_warning' => [
+            'width' => 2560,
+            'height' => 1440,
+        ],
+        'permissions' => [
+            'media.view',
+            'media.upload',
+            'media.edit',
+            'media.delete',
+            'media.restore',
+            'media.force-delete',
+            'media.optimize',
+        ],
+    ],
 ];

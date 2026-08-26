@@ -3,7 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $title ?? 'Administracao' }}</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{{ $title ?? 'Administração' }}</title>
     <link rel="icon" href="{{ app(\Pcteckserv\CmsCore\Support\SiteOptions::class)->get('site_icon_url') }}">
     @vite([
         'vendor/pcteckserv/cms-core/resources/css/admin.scss',
@@ -16,10 +17,11 @@
             <div class="fw-semibold mb-4">CMS PCTECK</div>
             <nav class="nav nav-pills flex-column">
                 <a @class(['nav-link', 'active' => request()->routeIs('admin.dashboard')]) href="{{ route('admin.dashboard') }}">Dashboard</a>
-                <a @class(['nav-link', 'active' => request()->routeIs('admin.site-options.*')]) href="{{ route('admin.site-options.edit') }}">Opcoes gerais</a>
+                <a @class(['nav-link', 'active' => request()->routeIs('admin.media.*')]) href="{{ route('admin.media.index') }}">Media</a>
+                <a @class(['nav-link', 'active' => request()->routeIs('admin.site-options.*')]) href="{{ route('admin.site-options.edit') }}">Opções gerais</a>
                 <a @class(['nav-link', 'active' => request()->routeIs('admin.smtp-settings.*')]) href="{{ route('admin.smtp-settings.edit') }}">SMTP</a>
                 <a @class(['nav-link', 'active' => request()->routeIs('admin.laravel-commands.*')]) href="{{ route('admin.laravel-commands.index') }}">Comandos Laravel</a>
-                <a @class(['nav-link', 'active' => request()->routeIs('admin.updates.*')]) href="{{ route('admin.updates.index') }}">Atualizacoes</a>
+                <a @class(['nav-link', 'active' => request()->routeIs('admin.updates.*')]) href="{{ route('admin.updates.index') }}">Atualizações</a>
             </nav>
         </aside>
 
@@ -33,7 +35,7 @@
 
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button class="btn btn-outline-secondary btn-sm" type="submit">Terminar sessao</button>
+                        <button class="btn btn-outline-secondary btn-sm" type="submit">Terminar sessão</button>
                     </form>
                 </div>
             </header>
