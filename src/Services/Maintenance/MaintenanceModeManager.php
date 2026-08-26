@@ -28,7 +28,7 @@ class MaintenanceModeManager
 
     public function settings(): array
     {
-        $options = $this->siteOptions->all();
+        $options = $this->options();
         $template = $this->templates->get((string) ($options['maintenance_template'] ?? 'minimal'));
 
         return [
@@ -65,6 +65,11 @@ class MaintenanceModeManager
             'load_analytics' => $this->truthy($options['maintenance_load_analytics'] ?? false),
             'timezone' => config('app.timezone', 'Europe/Lisbon'),
         ];
+    }
+
+    public function options(): array
+    {
+        return array_replace($this->fallbackOptions(), $this->siteOptions->all());
     }
 
     public function isActive(): bool
@@ -251,5 +256,36 @@ class MaintenanceModeManager
     private function audit(string $action, ?int $userId = null): void
     {
         Log::info('CMS maintenance mode action', ['action' => $action, 'user_id' => $userId]);
+    }
+
+    private function fallbackOptions(): array
+    {
+        return [
+            'maintenance_enabled' => false,
+            'maintenance_template' => 'minimal',
+            'maintenance_show_logo' => true,
+            'maintenance_logo_media_id' => null,
+            'maintenance_title' => 'Estamos a preparar algo novo.',
+            'maintenance_message' => 'O nosso site encontra-se temporariamente em manutenção. Voltamos em breve.',
+            'maintenance_secondary_text' => 'Agradecemos a sua compreensão.',
+            'maintenance_start_at' => null,
+            'maintenance_end_at' => null,
+            'maintenance_auto_disable' => true,
+            'maintenance_show_countdown' => true,
+            'maintenance_show_footer' => true,
+            'maintenance_hero_media_id' => null,
+            'maintenance_background_color' => '#0C0C0C',
+            'maintenance_text_color' => '#FFFFFF',
+            'maintenance_accent_color' => '#0D6EFD',
+            'maintenance_button_color' => '#0D6EFD',
+            'maintenance_access_enabled' => false,
+            'maintenance_access_code_hash' => null,
+            'maintenance_access_version' => 1,
+            'maintenance_access_duration' => '24h',
+            'maintenance_admin_bypass' => true,
+            'maintenance_allowed_ips' => '',
+            'maintenance_allowed_paths' => '',
+            'maintenance_load_analytics' => false,
+        ];
     }
 }

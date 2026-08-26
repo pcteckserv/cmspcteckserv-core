@@ -94,7 +94,10 @@ class CmsCoreServiceProvider extends ServiceProvider
 
             Schedule::command('cms:backup:run-due')->everyMinute()->withoutOverlapping();
             Schedule::command('cms:backup:cleanup')->dailyAt('03:30')->withoutOverlapping();
-            Schedule::call(fn () => app(MaintenanceModeManager::class)->applySchedule())->everyMinute()->withoutOverlapping();
+            Schedule::call(fn () => app(MaintenanceModeManager::class)->applySchedule())
+                ->name('cms-maintenance-schedule')
+                ->everyMinute()
+                ->withoutOverlapping();
         }
     }
 

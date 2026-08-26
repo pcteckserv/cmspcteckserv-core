@@ -9,19 +9,17 @@ use Illuminate\Support\Facades\Gate;
 use Pcteckserv\CmsCore\Http\Requests\Admin\UpdateMaintenanceSettingsRequest;
 use Pcteckserv\CmsCore\Services\Maintenance\MaintenanceModeManager;
 use Pcteckserv\CmsCore\Services\Maintenance\MaintenanceTemplateRegistry;
-use Pcteckserv\CmsCore\Support\SiteOptions;
 
 class MaintenanceSettingsController extends Controller
 {
     public function edit(
-        SiteOptions $siteOptions,
         MaintenanceModeManager $maintenance,
         MaintenanceTemplateRegistry $templates,
     ): View {
         Gate::authorize('maintenance.view');
 
         return view('cms-core::admin.maintenance.edit', [
-            'options' => $siteOptions->all(),
+            'options' => $maintenance->options(),
             'maintenance' => $maintenance->settings(),
             'templates' => $templates->all(),
         ]);
