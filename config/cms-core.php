@@ -94,6 +94,7 @@ return [
         'permissions' => [
             'media.view',
             'media.upload',
+            'media.upload-svg',
             'media.edit',
             'media.delete',
             'media.restore',

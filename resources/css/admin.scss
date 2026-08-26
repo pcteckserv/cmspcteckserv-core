@@ -203,6 +203,17 @@ body {
     align-items: stretch;
 }
 
+.cms-media-picker__upload-button {
+    align-items: center;
+    aspect-ratio: 1;
+    display: inline-flex;
+    flex: 0 0 auto;
+    font-size: 1.25rem;
+    justify-content: center;
+    line-height: 1;
+    min-width: 2.75rem;
+}
+
 .cms-media-picker__status {
     padding: .75rem 1rem 0;
 }

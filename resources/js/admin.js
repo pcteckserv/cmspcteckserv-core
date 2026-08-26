@@ -217,13 +217,15 @@ document.querySelectorAll('.cms-footer-preview').forEach((preview) => {
                 button.append(image, label);
                 button.addEventListener('click', () => {
                     const input = activePicker?.querySelector('[data-cms-media-picker-input]');
+                    const display = activePicker?.querySelector('[data-cms-media-picker-display]');
                     const selected = activePicker?.querySelector('[data-cms-media-picker-selected]');
 
-                    if (! input || ! selected) {
+                    if (! input || ! display || ! selected) {
                         return;
                     }
 
                     input.value = item.id;
+                    display.value = label.textContent;
                     selected.textContent = `Selecionado: ${label.textContent}`;
                     modal.hidden = true;
                 });

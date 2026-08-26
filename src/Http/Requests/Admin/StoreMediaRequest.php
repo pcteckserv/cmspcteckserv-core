@@ -23,10 +23,10 @@ class StoreMediaRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'files.required' => 'Seleccione pelo menos um ficheiro.',
+            'files.required' => 'Selecione pelo menos um ficheiro.',
             'files.*.file' => 'O envio contém um ficheiro inválido.',
             'files.*.max' => 'O ficheiro excede o tamanho máximo permitido.',
-            'collection_id.exists' => 'A colecção seleccionada não existe.',
+            'collection_id.exists' => 'A coleção selecionada não existe.',
         ];
     }
 }

@@ -111,6 +111,7 @@ class CmsCoreServiceProvider extends ServiceProvider
             'backups.manage-notifications' => ['label' => 'Gerir alertas de backup', 'group' => 'Backups'],
             'media.view' => ['label' => 'Ver media', 'group' => 'Media'],
             'media.upload' => ['label' => 'Enviar media', 'group' => 'Media'],
+            'media.upload-svg' => ['label' => 'Enviar SVG', 'group' => 'Media'],
             'media.edit' => ['label' => 'Editar media', 'group' => 'Media'],
             'media.delete' => ['label' => 'Eliminar media', 'group' => 'Media'],
             'media.restore' => ['label' => 'Restaurar media', 'group' => 'Media'],

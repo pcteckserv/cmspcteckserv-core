@@ -4,6 +4,7 @@ namespace Pcteckserv\CmsCore\View\Components;
 
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
+use Pcteckserv\CmsCore\Models\Media;
 
 class CmsMediaPicker extends Component
 {
@@ -22,6 +23,22 @@ class CmsMediaPicker extends Component
     public function inputId(): string
     {
         return $this->id ?: str_replace(['[', ']'], ['_', ''], $this->name);
+    }
+
+    public function displayId(): string
+    {
+        return $this->inputId().'_display';
+    }
+
+    public function displayValue(mixed $selectedValue = null): string
+    {
+        $selectedValue ??= $this->value;
+
+        if (! $selectedValue) {
+            return '';
+        }
+
+        return Media::query()->whereKey($selectedValue)->value('original_filename') ?: '';
     }
 
     public function render(): View

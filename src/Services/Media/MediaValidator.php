@@ -8,7 +8,7 @@ use Illuminate\Validation\ValidationException;
 
 class MediaValidator
 {
-    public function validate(UploadedFile $file): void
+    public function validate(UploadedFile $file, bool $allowSvgUpload = false): void
     {
         $extension = Str::lower($file->getClientOriginalExtension());
         $mimeType = $file->getMimeType();
@@ -39,7 +39,7 @@ class MediaValidator
             ]);
         }
 
-        if ($extension === 'svg' && ! config('cms-core.media.allow_svg', false)) {
+        if ($extension === 'svg' && ! $allowSvgUpload && ! config('cms-core.media.allow_svg', false)) {
             throw ValidationException::withMessages([
                 'files' => 'SVG está bloqueado por defeito por motivos de segurança.',
             ]);

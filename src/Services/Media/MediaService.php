@@ -18,9 +18,9 @@ class MediaService
     ) {
     }
 
-    public function upload(UploadedFile $file, ?int $userId = null, ?int $collectionId = null): Media
+    public function upload(UploadedFile $file, ?int $userId = null, ?int $collectionId = null, bool $allowSvgUpload = false): Media
     {
-        $this->validator->validate($file);
+        $this->validator->validate($file, $allowSvgUpload);
 
         $checksum = hash_file('sha256', $file->getRealPath());
         $existing = Media::query()->where('checksum', $checksum)->first();

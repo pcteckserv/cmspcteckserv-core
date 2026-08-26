@@ -48,9 +48,15 @@ class MediaController extends Controller
     public function store(StoreMediaRequest $request, MediaService $mediaService): JsonResponse
     {
         $items = [];
+        $allowSvgUpload = $request->user()?->can('media.upload-svg') ?? false;
 
         foreach ($request->file('files', []) as $file) {
-            $media = $mediaService->upload($file, $request->user()?->getAuthIdentifier(), $request->integer('collection_id') ?: null);
+            $media = $mediaService->upload(
+                $file,
+                $request->user()?->getAuthIdentifier(),
+                $request->integer('collection_id') ?: null,
+                $allowSvgUpload,
+            );
             $items[] = $this->payload($media, $mediaService);
         }
 

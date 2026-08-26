@@ -5,20 +5,28 @@
     data-upload-url="{{ route('admin.media.store') }}"
     data-type="{{ $type }}"
 >
+    @php($selectedMediaId = old($name, $value))
+
     @if ($label)
-        <label class="form-label" for="{{ $inputId() }}">{{ $label }}</label>
+        <label class="form-label" for="{{ $displayId() }}">{{ $label }}</label>
     @endif
 
     <div class="input-group">
         <input
             id="{{ $inputId() }}"
             name="{{ $name }}"
-            type="number"
-            min="1"
-            class="form-control @error($name) is-invalid @enderror"
-            value="{{ old($name, $value) }}"
-            placeholder="{{ $emptyLabel }}"
+            type="hidden"
+            value="{{ $selectedMediaId }}"
             data-cms-media-picker-input
+        >
+        <input
+            id="{{ $displayId() }}"
+            type="text"
+            class="form-control @error($name) is-invalid @enderror"
+            value="{{ $displayValue($selectedMediaId) }}"
+            placeholder="{{ $emptyLabel }}"
+            readonly
+            data-cms-media-picker-display
         >
         <button class="btn btn-outline-primary" type="button" data-cms-media-picker-open>{{ $buttonLabel }}</button>
     </div>
