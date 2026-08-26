@@ -8,14 +8,25 @@
 body {
     background: var(--cms-admin-body-bg);
     color: var(--cms-admin-text);
+    overflow: hidden;
 }
 
 .admin-shell {
-    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
 }
 
 .admin-sidebar {
+    flex: 0 0 16rem;
+    height: 100vh;
+    overflow-y: auto;
     width: 16rem;
+}
+
+.admin-content {
+    height: 100vh;
+    min-width: 0;
+    overflow-y: auto;
 }
 
 .cms-settings-form {
@@ -129,8 +140,26 @@ body {
 }
 
 @media (max-width: 767.98px) {
+    body {
+        overflow: auto;
+    }
+
+    .admin-shell {
+        height: auto;
+        min-height: 100vh;
+        overflow: visible;
+    }
+
     .admin-sidebar {
+        flex-basis: auto;
+        height: auto;
+        overflow: visible;
         width: 100%;
+    }
+
+    .admin-content {
+        height: auto;
+        overflow: visible;
     }
 
     .cms-media-grid {

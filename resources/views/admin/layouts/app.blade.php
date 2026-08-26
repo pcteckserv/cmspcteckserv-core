@@ -25,7 +25,7 @@
             </nav>
         </aside>
 
-        <div class="flex-grow-1">
+        <div class="admin-content flex-grow-1">
             <header class="bg-white border-bottom">
                 <div class="container-fluid py-3 d-flex justify-content-between align-items-center gap-3">
                     <div>
