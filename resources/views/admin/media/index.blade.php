@@ -107,8 +107,19 @@
                     <div class="d-flex flex-wrap gap-2 mt-3">
                         <button class="btn btn-sm btn-outline-secondary" type="button" data-cms-media-copy="{{ $publicUrl }}">Copiar URL</button>
                         @if (! request()->boolean('deleted'))
-                            <form method="POST" action="{{ route('admin.media.optimize', $media) }}">@csrf<button class="btn btn-sm btn-outline-primary" type="submit">Reoptimizar</button></form>
-                            <form method="POST" action="{{ route('admin.media.destroy', $media) }}">@csrf @method('DELETE')<button class="btn btn-sm btn-outline-danger" type="submit">Eliminar</button></form>
+                            <form method="POST" action="{{ route('admin.media.optimize', $media) }}">
+                                @csrf
+                                <button class="btn btn-sm btn-outline-primary cms-media-icon-button" type="submit" title="Reoptimizar" aria-label="Reoptimizar">
+                                    <span aria-hidden="true">↻</span>
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ route('admin.media.destroy', $media) }}">
+                                @csrf
+                                @method('DELETE')
+                                <button class="btn btn-sm btn-outline-danger cms-media-icon-button" type="submit" title="Eliminar" aria-label="Eliminar">
+                                    <span aria-hidden="true">×</span>
+                                </button>
+                            </form>
                         @else
                             <form method="POST" action="{{ route('admin.media.restore', $media->id) }}">@csrf<button class="btn btn-sm btn-outline-primary" type="submit">Restaurar</button></form>
                             <form method="POST" action="{{ route('admin.media.force-delete', $media->id) }}">@csrf @method('DELETE')<button class="btn btn-sm btn-outline-danger" type="submit">Eliminar definitivamente</button></form>
