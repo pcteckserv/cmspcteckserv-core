@@ -175,141 +175,152 @@ document.querySelectorAll('.cms-footer-preview').forEach((preview) => {
     updatePreview();
 });
 
-document.querySelectorAll('[data-cms-media-picker]').forEach((picker) => {
+{
     const modal = document.querySelector('[data-cms-media-picker-modal]');
-    const input = picker.querySelector('[data-cms-media-picker-input]');
-    const open = picker.querySelector('[data-cms-media-picker-open]');
+    const pickers = document.querySelectorAll('[data-cms-media-picker]');
     const close = modal?.querySelector('[data-cms-media-picker-close]');
     const search = modal?.querySelector('[data-cms-media-picker-search]');
     const file = modal?.querySelector('[data-cms-media-picker-file]');
     const grid = modal?.querySelector('[data-cms-media-picker-grid]');
     const status = modal?.querySelector('[data-cms-media-picker-status]');
-    const libraryUrl = picker.dataset.libraryUrl;
-    const uploadUrl = picker.dataset.uploadUrl;
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    let activePicker = null;
 
-    if (! modal || ! input || ! open || ! close || ! search || ! file || ! grid || ! status || ! libraryUrl || ! uploadUrl || ! csrfToken) {
-        return;
-    }
+    if (modal && pickers.length && close && search && file && grid && status && csrfToken) {
+        const setStatus = (message, isError = false) => {
+            status.textContent = message;
+            status.classList.toggle('text-danger', isError);
+            status.classList.toggle('text-secondary', ! isError);
+        };
 
-    const setStatus = (message, isError = false) => {
-        status.textContent = message;
-        status.classList.toggle('text-danger', isError);
-        status.classList.toggle('text-secondary', ! isError);
-    };
+        const renderItems = (items) => {
+            grid.replaceChildren();
 
-    const renderItems = (items) => {
-        grid.replaceChildren();
+            if (! items.length) {
+                setStatus('Não foram encontradas imagens.');
+                return;
+            }
 
-        if (! items.length) {
-            setStatus('Não foram encontradas imagens.');
-            return;
-        }
+            setStatus('');
 
-        setStatus('');
+            items.forEach((item) => {
+                const button = document.createElement('button');
+                const image = document.createElement('img');
+                const label = document.createElement('span');
 
-        items.forEach((item) => {
-            const button = document.createElement('button');
-            const image = document.createElement('img');
-            const label = document.createElement('span');
+                button.className = 'cms-media-picker__item';
+                button.type = 'button';
+                image.src = item.thumbnail_url || item.url;
+                image.alt = item.alt_text || item.name || 'Imagem';
+                label.textContent = item.name || `Media #${item.id}`;
 
-            button.className = 'cms-media-picker__item';
-            button.type = 'button';
-            image.src = item.thumbnail_url || item.url;
-            image.alt = item.alt_text || item.name || 'Imagem';
-            label.textContent = item.name || `Media #${item.id}`;
+                button.append(image, label);
+                button.addEventListener('click', () => {
+                    const input = activePicker?.querySelector('[data-cms-media-picker-input]');
+                    const selected = activePicker?.querySelector('[data-cms-media-picker-selected]');
 
-            button.append(image, label);
-            button.addEventListener('click', () => {
-                input.value = item.id;
-                picker.querySelector('[data-cms-media-picker-selected]').textContent = `Selecionado: ${label.textContent}`;
-                modal.hidden = true;
+                    if (! input || ! selected) {
+                        return;
+                    }
+
+                    input.value = item.id;
+                    selected.textContent = `Selecionado: ${label.textContent}`;
+                    modal.hidden = true;
+                });
+
+                grid.append(button);
             });
+        };
 
-            grid.append(button);
+        const loadItems = async () => {
+            if (! activePicker?.dataset.libraryUrl) {
+                return;
+            }
+
+            const url = new URL(activePicker.dataset.libraryUrl, window.location.origin);
+            url.searchParams.set('q', search.value || '');
+
+            setStatus('A carregar biblioteca...');
+
+            try {
+                const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+
+                if (! response.ok) {
+                    throw new Error('Não foi possível carregar a biblioteca.');
+                }
+
+                const payload = await response.json();
+                renderItems(payload.items || []);
+            } catch (error) {
+                setStatus(error.message || 'Não foi possível carregar a biblioteca.', true);
+            }
+        };
+
+        const uploadFile = async () => {
+            if (! activePicker?.dataset.uploadUrl || ! file.files.length) {
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('files[]', file.files[0]);
+            setStatus('A carregar imagem...');
+
+            try {
+                const response = await fetch(activePicker.dataset.uploadUrl, {
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    method: 'POST',
+                });
+
+                if (! response.ok) {
+                    const payload = await response.json().catch(() => ({}));
+                    const firstError = Object.values(payload.errors ?? {})?.[0]?.[0];
+                    throw new Error(firstError || payload.message || 'Não foi possível carregar a imagem.');
+                }
+
+                const payload = await response.json();
+                renderItems(payload.items || []);
+            } catch (error) {
+                setStatus(error.message || 'Não foi possível carregar a imagem.', true);
+            } finally {
+                file.value = '';
+            }
+        };
+
+        pickers.forEach((picker) => {
+            picker.querySelector('[data-cms-media-picker-open]')?.addEventListener('click', () => {
+                activePicker = picker;
+                search.value = '';
+                modal.hidden = false;
+                loadItems();
+                search.focus();
+            });
         });
-    };
 
-    const loadItems = async () => {
-        const url = new URL(libraryUrl, window.location.origin);
-        url.searchParams.set('q', search.value || '');
-
-        setStatus('A carregar biblioteca...');
-
-        try {
-            const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
-
-            if (! response.ok) {
-                throw new Error('Não foi possível carregar a biblioteca.');
-            }
-
-            const payload = await response.json();
-            renderItems(payload.items || []);
-        } catch (error) {
-            setStatus(error.message || 'Não foi possível carregar a biblioteca.', true);
-        }
-    };
-
-    const uploadFile = async () => {
-        if (! file.files.length) {
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('files[]', file.files[0]);
-        setStatus('A carregar imagem...');
-
-        try {
-            const response = await fetch(uploadUrl, {
-                body: formData,
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                },
-                method: 'POST',
-            });
-
-            if (! response.ok) {
-                const payload = await response.json().catch(() => ({}));
-                const firstError = Object.values(payload.errors ?? {})?.[0]?.[0];
-                throw new Error(firstError || payload.message || 'Não foi possível carregar a imagem.');
-            }
-
-            const payload = await response.json();
-            renderItems(payload.items || []);
-        } catch (error) {
-            setStatus(error.message || 'Não foi possível carregar a imagem.', true);
-        } finally {
-            file.value = '';
-        }
-    };
-
-    open.addEventListener('click', () => {
-        modal.hidden = false;
-        loadItems();
-        search.focus();
-    });
-
-    close.addEventListener('click', () => {
-        modal.hidden = true;
-    });
-
-    modal.addEventListener('click', (event) => {
-        if (event.target === modal) {
+        close.addEventListener('click', () => {
             modal.hidden = true;
-        }
-    });
+        });
 
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') {
-            modal.hidden = true;
-        }
-    });
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                modal.hidden = true;
+            }
+        });
 
-    search.addEventListener('input', () => {
-        window.clearTimeout(search.dataset.cmsMediaPickerTimeout);
-        search.dataset.cmsMediaPickerTimeout = window.setTimeout(loadItems, 250);
-    });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                modal.hidden = true;
+            }
+        });
 
-    file.addEventListener('change', uploadFile);
-});
+        search.addEventListener('input', () => {
+            window.clearTimeout(search.dataset.cmsMediaPickerTimeout);
+            search.dataset.cmsMediaPickerTimeout = window.setTimeout(loadItems, 250);
+        });
+
+        file.addEventListener('change', uploadFile);
+    }
+}

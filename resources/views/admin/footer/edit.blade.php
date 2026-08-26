@@ -71,17 +71,14 @@
                 </div>
 
                 <div class="row g-3 mt-0">
-                    <div class="col-md-6" data-cms-media-picker data-library-url="{{ route('admin.media.library', ['type' => 'image']) }}" data-upload-url="{{ route('admin.media.store') }}">
-                        <label class="form-label" for="footer_pcteckserv_logo_media_id">Logótipo</label>
-                        <div class="input-group">
-                            <input id="footer_pcteckserv_logo_media_id" name="footer_pcteckserv_logo_media_id" type="number" min="1" class="form-control @error('footer_pcteckserv_logo_media_id') is-invalid @enderror" value="{{ old('footer_pcteckserv_logo_media_id', $options['footer_pcteckserv_logo_media_id']) }}" placeholder="Sem imagem selecionada" data-cms-media-picker-input>
-                            <button class="btn btn-outline-primary" type="button" data-cms-media-picker-open>Escolher da biblioteca</button>
-                        </div>
-                        <div class="form-text" data-cms-media-picker-selected>Opcional. Selecione ou carregue uma imagem do Media Manager.</div>
-                        @error('footer_pcteckserv_logo_media_id')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                    <x-cms-media-picker
+                        class="col-md-6"
+                        name="footer_pcteckserv_logo_media_id"
+                        id="footer_pcteckserv_logo_media_id"
+                        label="Logótipo"
+                        :value="$options['footer_pcteckserv_logo_media_id']"
+                        help="Opcional. Selecione ou carregue uma imagem do Media Manager."
+                    />
                     <div class="col-md-6">
                         <label class="form-label" for="footer_pcteckserv_logo_path">Path fallback do logótipo</label>
                         <input id="footer_pcteckserv_logo_path" name="footer_pcteckserv_logo_path" type="text" class="form-control @error('footer_pcteckserv_logo_path') is-invalid @enderror" value="{{ old('footer_pcteckserv_logo_path', $options['footer_pcteckserv_logo_path']) }}">
@@ -178,27 +175,4 @@
             </div>
         </div>
     </form>
-
-    <div class="cms-media-picker" hidden data-cms-media-picker-modal>
-        <div class="cms-media-picker__dialog" role="dialog" aria-modal="true" aria-labelledby="cms-media-picker-title">
-            <div class="cms-media-picker__header">
-                <div>
-                    <h2 class="h5 mb-1" id="cms-media-picker-title">Biblioteca de media</h2>
-                    <p class="text-secondary small mb-0">Selecione uma imagem existente ou carregue uma nova.</p>
-                </div>
-                <button class="btn btn-sm btn-outline-secondary" type="button" data-cms-media-picker-close>Fechar</button>
-            </div>
-
-            <div class="cms-media-picker__toolbar">
-                <input class="form-control" type="search" placeholder="Pesquisar imagens" data-cms-media-picker-search>
-                <label class="btn btn-outline-primary mb-0">
-                    Carregar imagem
-                    <input class="visually-hidden" type="file" accept="image/*" data-cms-media-picker-file>
-                </label>
-            </div>
-
-            <div class="cms-media-picker__status text-secondary small" data-cms-media-picker-status></div>
-            <div class="cms-media-picker__grid" data-cms-media-picker-grid></div>
-        </div>
-    </div>
 @endsection

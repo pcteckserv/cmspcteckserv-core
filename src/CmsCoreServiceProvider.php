@@ -25,6 +25,7 @@ use Pcteckserv\CmsCore\Support\Permissions\PermissionRegistry;
 use Pcteckserv\CmsCore\Services\UserModelResolver;
 use Pcteckserv\CmsCore\Support\SiteOptions;
 use Pcteckserv\CmsCore\View\Components\CmsFooter;
+use Pcteckserv\CmsCore\View\Components\CmsMediaPicker;
 
 class CmsCoreServiceProvider extends ServiceProvider
 {
@@ -42,6 +43,7 @@ class CmsCoreServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'cms-core');
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         Blade::component(CmsFooter::class, 'cms-footer');
+        Blade::component(CmsMediaPicker::class, 'cms-media-picker');
 
         $this->publishes([
             __DIR__.'/../config/cms-core.php' => config_path('cms-core.php'),
