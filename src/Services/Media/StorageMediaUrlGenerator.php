@@ -10,12 +10,17 @@ class StorageMediaUrlGenerator implements MediaUrlGenerator
 {
     public function url(Media $media, ?string $variant = null): string
     {
+        $disk = Storage::disk($media->disk);
         $path = match ($variant) {
             'thumbnail' => $media->thumbnail_path ?: $media->path,
             'optimized', 'webp' => $media->optimized_path ?: $media->path,
             default => $media->variants[$variant] ?? $media->path,
         };
 
-        return Storage::disk($media->disk)->url($path);
+        if (! $path || ! $disk->exists($path)) {
+            $path = $media->path;
+        }
+
+        return $disk->url($path);
     }
 }

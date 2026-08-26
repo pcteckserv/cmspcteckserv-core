@@ -55,13 +55,16 @@ class MediaOptimizer
                 $variantPath = "{$baseDirectory}/variants/{$name}-{$width}.webp";
                 $variant = $this->resize($image, $media->width ?: imagesx($image), $media->height ?: imagesy($image), $width);
                 $this->storeWebp($disk->path($variantPath), $variant, $quality);
-                $variants[(string) $width] = $variantPath;
+
+                if ($disk->exists($variantPath)) {
+                    $variants[(string) $width] = $variantPath;
+                }
             }
 
             $media->forceFill([
-                'optimized_path' => $optimizedPath,
-                'thumbnail_path' => $thumbnailPath,
-                'optimized_size' => $disk->size($optimizedPath),
+                'optimized_path' => $disk->exists($optimizedPath) ? $optimizedPath : null,
+                'thumbnail_path' => $disk->exists($thumbnailPath) ? $thumbnailPath : null,
+                'optimized_size' => $disk->exists($optimizedPath) ? $disk->size($optimizedPath) : null,
                 'variants' => $variants,
                 'optimization_status' => Media::STATUS_OPTIMIZED,
             ])->save();
@@ -113,6 +116,8 @@ class MediaOptimizer
             mkdir($directory, 0755, true);
         }
 
-        imagewebp($image, $path, $quality);
+        if (! imagewebp($image, $path, $quality)) {
+            throw new \RuntimeException('Não foi possível criar a imagem WebP.');
+        }
     }
 }
