@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\ArtisanCommandsController;
+use Pcteckserv\CmsCore\Http\Controllers\Admin\BackupsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\DashboardController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\MediaController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\SiteOptionsController;
@@ -31,6 +32,14 @@ Route::middleware('web')->group(function (): void {
             Route::post('/smtp-settings/test', [SmtpSettingsController::class, 'test'])->name('smtp-settings.test');
             Route::get('/laravel-commands', [ArtisanCommandsController::class, 'index'])->name('laravel-commands.index');
             Route::post('/laravel-commands/{command}/run', [ArtisanCommandsController::class, 'run'])->name('laravel-commands.run');
+            Route::get('/backups', [BackupsController::class, 'index'])->name('backups.index');
+            Route::put('/backups/destinations/{destination}', [BackupsController::class, 'updateDestination'])->name('backups.destinations.update');
+            Route::post('/backups/destinations/{destination}/test', [BackupsController::class, 'testDestination'])->middleware('throttle:backups')->name('backups.destinations.test');
+            Route::put('/backups/plans/{plan}', [BackupsController::class, 'updatePlan'])->name('backups.plans.update');
+            Route::post('/backups/plans/{plan}/run', [BackupsController::class, 'run'])->middleware('throttle:backups')->name('backups.plans.run');
+            Route::post('/backups/plans/{plan}/test-email', [BackupsController::class, 'testEmail'])->middleware('throttle:backups')->name('backups.plans.test-email');
+            Route::post('/backups/runs/{run}/verify', [BackupsController::class, 'verify'])->middleware('throttle:backups')->name('backups.runs.verify');
+            Route::delete('/backups/runs/{run}', [BackupsController::class, 'destroy'])->name('backups.runs.destroy');
             Route::get('/media', [MediaController::class, 'index'])->name('media.index');
             Route::post('/media', [MediaController::class, 'store'])->middleware('throttle:media-upload')->name('media.store');
             Route::get('/media/{media}', [MediaController::class, 'show'])->name('media.show');
