@@ -67,14 +67,22 @@ if (uploadZone) {
 document.querySelectorAll('[data-cms-media-copy]').forEach((button) => {
     button.addEventListener('click', async () => {
         const url = button.dataset.cmsMediaCopy;
+        const canReplaceText = button.children.length === 0;
 
         try {
             await navigator.clipboard.writeText(url);
-            const original = button.textContent;
-            button.textContent = 'URL copiado';
-            window.setTimeout(() => {
-                button.textContent = original;
-            }, 1400);
+            if (canReplaceText) {
+                const original = button.textContent;
+                button.textContent = 'URL copiado';
+                window.setTimeout(() => {
+                    button.textContent = original;
+                }, 1400);
+            } else {
+                button.setAttribute('aria-label', 'URL copiado');
+                window.setTimeout(() => {
+                    button.setAttribute('aria-label', 'Copiar URL');
+                }, 1400);
+            }
         } catch {
             window.prompt('Copie o URL do ficheiro:', url);
         }
