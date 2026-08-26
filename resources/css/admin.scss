@@ -148,6 +148,23 @@ body {
     width: 2rem;
 }
 
+.cms-footer-preview {
+    align-items: center;
+    background: #0c0c0c;
+    border-radius: .5rem;
+    color: #fff;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    max-width: 100%;
+    padding: 1.5rem;
+}
+
+.cms-footer-preview__credit {
+    color: inherit;
+    white-space: nowrap;
+}
+
 .cms-help-widget {
     bottom: 1.5rem;
     position: fixed;
@@ -206,5 +223,14 @@ body {
 
     .cms-media-dropzone {
         padding: 1rem;
+    }
+
+    .cms-footer-preview {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .cms-footer-preview__credit {
+        white-space: normal;
     }
 }

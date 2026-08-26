@@ -142,3 +142,35 @@ document.querySelectorAll('[data-cms-media-upload-url]').forEach((dropzone) => {
         uploadFiles(event.dataTransfer?.files ?? []);
     });
 });
+
+document.querySelectorAll('.cms-footer-preview').forEach((preview) => {
+    const title = document.querySelector('#site_title');
+    const copyrightText = document.querySelector('#footer_copyright_text');
+    const creditText = document.querySelector('#footer_credit_text');
+    const backgroundColor = document.querySelector('#footer_background_color');
+    const textColor = document.querySelector('#footer_text_color');
+    const secondaryTextColor = document.querySelector('#footer_secondary_text_color');
+    const copyright = preview.querySelector('.cms-footer-preview__copyright');
+    const credit = preview.querySelector('.cms-footer-preview__credit');
+    const year = new Date().getFullYear();
+
+    const updatePreview = () => {
+        preview.style.backgroundColor = backgroundColor?.value || '#0c0c0c';
+        preview.style.color = textColor?.value || '#ffffff';
+
+        if (credit) {
+            credit.style.color = secondaryTextColor?.value || '#ffffff';
+            credit.firstChild.textContent = `${creditText?.value || 'Desenvolvido por'} `;
+        }
+
+        if (copyright) {
+            copyright.textContent = `© ${year}. ${title?.value || 'CMS PCTECK'} - ${copyrightText?.value || 'Todos os direitos reservados'}`;
+        }
+    };
+
+    [title, copyrightText, creditText, backgroundColor, textColor, secondaryTextColor].forEach((input) => {
+        input?.addEventListener('input', updatePreview);
+    });
+
+    updatePreview();
+});

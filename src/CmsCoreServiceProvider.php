@@ -2,6 +2,7 @@
 
 namespace Pcteckserv\CmsCore;
 
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
@@ -23,6 +24,7 @@ use Pcteckserv\CmsCore\Services\Media\StorageMediaUrlGenerator;
 use Pcteckserv\CmsCore\Support\Permissions\PermissionRegistry;
 use Pcteckserv\CmsCore\Services\UserModelResolver;
 use Pcteckserv\CmsCore\Support\SiteOptions;
+use Pcteckserv\CmsCore\View\Components\CmsFooter;
 
 class CmsCoreServiceProvider extends ServiceProvider
 {
@@ -39,6 +41,7 @@ class CmsCoreServiceProvider extends ServiceProvider
         $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'cms-core');
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        Blade::component(CmsFooter::class, 'cms-footer');
 
         $this->publishes([
             __DIR__.'/../config/cms-core.php' => config_path('cms-core.php'),
@@ -92,6 +95,8 @@ class CmsCoreServiceProvider extends ServiceProvider
             'core.roles.create' => ['label' => 'Criar roles', 'group' => 'Roles'],
             'core.roles.update' => ['label' => 'Editar roles', 'group' => 'Roles'],
             'core.roles.delete' => ['label' => 'Eliminar roles', 'group' => 'Roles'],
+            'core.site-options.view' => ['label' => 'Ver opções gerais', 'group' => 'Opções gerais'],
+            'core.site-options.update' => ['label' => 'Editar opções gerais', 'group' => 'Opções gerais'],
             'backups.view' => ['label' => 'Ver backups', 'group' => 'Backups'],
             'backups.configure' => ['label' => 'Configurar backups', 'group' => 'Backups'],
             'backups.run' => ['label' => 'Executar backups', 'group' => 'Backups'],

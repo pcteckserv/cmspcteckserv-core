@@ -4,35 +4,28 @@ namespace Pcteckserv\CmsCore\Http\Controllers\Admin;
 
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
+use Pcteckserv\CmsCore\Http\Requests\Admin\UpdateSiteOptionsRequest;
 use Pcteckserv\CmsCore\Support\SiteOptions;
 
 class SiteOptionsController extends Controller
 {
     public function edit(SiteOptions $siteOptions): View
     {
+        Gate::authorize('core.site-options.view');
+
         return view('cms-core::admin.site-options.edit', [
             'options' => $siteOptions->all(),
             'locales' => $this->locales(),
         ]);
     }
 
-    public function update(Request $request, SiteOptions $siteOptions): RedirectResponse
+    public function update(UpdateSiteOptionsRequest $request, SiteOptions $siteOptions): RedirectResponse
     {
-        $validated = $request->validate([
-            'site_title' => ['required', 'string', 'max:120'],
-            'site_description' => ['nullable', 'string', 'max:255'],
-            'site_icon_url' => ['nullable', 'string', 'max:2048'],
-            'site_icon_file' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp,ico', 'max:2048'],
-            'remove_site_icon' => ['nullable', 'boolean'],
-            'site_url' => ['required', 'url', 'max:2048'],
-            'admin_email' => ['required', 'email', 'max:255'],
-            'locale' => ['required', Rule::in(array_keys($this->locales()))],
-        ]);
+        $validated = $request->validated();
 
         if ($request->boolean('remove_site_icon')) {
             $this->deleteStoredSiteIcon($validated['site_icon_url'] ?? null);

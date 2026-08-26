@@ -3,12 +3,24 @@
 namespace Pcteckserv\CmsCore\Support;
 
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Cache;
 use Pcteckserv\CmsCore\Models\SiteOption;
 use Throwable;
 
 class SiteOptions
 {
+    private const CACHE_KEY = 'cms-core.site-options';
+
     public function all(): array
+    {
+        try {
+            return Cache::rememberForever(self::CACHE_KEY, fn (): array => $this->loadAll());
+        } catch (Throwable) {
+            return $this->loadAll();
+        }
+    }
+
+    public function loadAll(): array
     {
         $defaults = $this->defaults();
 
@@ -43,6 +55,17 @@ class SiteOptions
                 ['key' => $key],
                 ['value' => $value]
             );
+        }
+
+        $this->clearCache();
+    }
+
+    public function clearCache(): void
+    {
+        try {
+            Cache::forget(self::CACHE_KEY);
+        } catch (Throwable) {
+            // A cache pode ainda não estar disponível durante a instalação.
         }
     }
 
