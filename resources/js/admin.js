@@ -35,3 +35,110 @@ document.querySelectorAll('[data-cms-help-widget]').forEach((widget) => {
         }
     });
 });
+
+document.querySelectorAll('[data-cms-media-copy]').forEach((button) => {
+    button.addEventListener('click', async () => {
+        const url = button.dataset.cmsMediaCopy;
+
+        if (! url) {
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(url);
+        } catch (error) {
+            return;
+        }
+
+        const originalText = button.textContent;
+        if (originalText?.trim()) {
+            button.textContent = 'Copiado';
+            window.setTimeout(() => {
+                button.textContent = originalText;
+            }, 1600);
+        }
+    });
+});
+
+document.querySelectorAll('[data-cms-media-upload-url]').forEach((dropzone) => {
+    const input = dropzone.querySelector('[data-cms-media-file-input]');
+    const selectButton = dropzone.querySelector('[data-cms-media-select-files]');
+    const openButtons = document.querySelectorAll('[data-cms-media-open-upload]');
+    const results = dropzone.querySelector('[data-cms-media-upload-results]');
+    const uploadUrl = dropzone.dataset.cmsMediaUploadUrl;
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+    if (! input || ! selectButton || ! results || ! uploadUrl || ! csrfToken) {
+        return;
+    }
+
+    const renderResult = (message, variant = 'info') => {
+        const item = document.createElement('div');
+        item.className = `cms-media-upload-result text-${variant === 'error' ? 'danger' : 'secondary'}`;
+        item.textContent = message;
+        results.prepend(item);
+    };
+
+    const uploadFiles = async (files) => {
+        if (! files.length) {
+            return;
+        }
+
+        const formData = new FormData();
+        Array.from(files).forEach((file) => formData.append('files[]', file));
+
+        dropzone.classList.remove('is-dragging');
+        renderResult(`A carregar ${files.length} ficheiro(s)...`);
+
+        try {
+            const response = await fetch(uploadUrl, {
+                body: formData,
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                method: 'POST',
+            });
+
+            if (! response.ok) {
+                const payload = await response.json().catch(() => ({}));
+                const firstError = Object.values(payload.errors ?? {})?.[0]?.[0];
+                throw new Error(firstError || payload.message || 'Não foi possível carregar os ficheiros.');
+            }
+
+            const payload = await response.json();
+            const count = payload.items?.length ?? files.length;
+            renderResult(`${count} ficheiro(s) carregado(s). A atualizar a biblioteca...`, 'success');
+            window.setTimeout(() => window.location.reload(), 700);
+        } catch (error) {
+            renderResult(error.message || 'Não foi possível carregar os ficheiros.', 'error');
+        } finally {
+            input.value = '';
+        }
+    };
+
+    selectButton.addEventListener('click', () => input.click());
+    openButtons.forEach((button) => {
+        button.addEventListener('click', () => input.click());
+    });
+
+    input.addEventListener('change', () => uploadFiles(input.files));
+
+    ['dragenter', 'dragover'].forEach((eventName) => {
+        dropzone.addEventListener(eventName, (event) => {
+            event.preventDefault();
+            dropzone.classList.add('is-dragging');
+        });
+    });
+
+    ['dragleave', 'drop'].forEach((eventName) => {
+        dropzone.addEventListener(eventName, (event) => {
+            event.preventDefault();
+            dropzone.classList.remove('is-dragging');
+        });
+    });
+
+    dropzone.addEventListener('drop', (event) => {
+        uploadFiles(event.dataTransfer?.files ?? []);
+    });
+});

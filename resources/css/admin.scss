@@ -41,6 +41,113 @@ body {
     max-width: 76rem;
 }
 
+.cms-stat {
+    background: #fff;
+    border: 1px solid rgba(15, 23, 42, .1);
+    border-radius: .5rem;
+    padding: 1rem;
+}
+
+.cms-stat span {
+    display: block;
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.cms-stat small {
+    color: #64748b;
+}
+
+.cms-media-dropzone {
+    background: #fff;
+    border: 2px dashed #b6c2d1;
+    border-radius: .5rem;
+    padding: 1.5rem;
+    transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+
+.cms-media-dropzone.is-dragging {
+    background: #f0f6ff;
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 .25rem rgba(13, 110, 253, .12);
+}
+
+.cms-media-upload-results:empty {
+    display: none;
+}
+
+.cms-media-upload-results {
+    display: grid;
+    gap: .5rem;
+}
+
+.cms-media-upload-result {
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid rgba(15, 23, 42, .1);
+    border-radius: .375rem;
+    display: flex;
+    gap: .75rem;
+    justify-content: space-between;
+    padding: .65rem .75rem;
+}
+
+.cms-media-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+}
+
+.cms-media-card {
+    border-radius: .5rem;
+    box-shadow: 0 .5rem 1.25rem rgba(15, 23, 42, .06);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.cms-media-preview {
+    align-items: center;
+    aspect-ratio: 4 / 3;
+    background: #f1f5f9;
+    border: 0;
+    border-bottom: 1px solid rgba(15, 23, 42, .1);
+    cursor: copy;
+    display: flex;
+    justify-content: center;
+    padding: 0;
+    width: 100%;
+}
+
+.cms-media-preview img {
+    height: 100%;
+    object-fit: contain;
+    width: 100%;
+}
+
+.cms-media-file-icon {
+    align-items: center;
+    background: #e2e8f0;
+    border-radius: .375rem;
+    color: #334155;
+    display: inline-flex;
+    font-weight: 700;
+    min-height: 4rem;
+    min-width: 4rem;
+    padding: .75rem;
+}
+
+.cms-media-icon-button {
+    align-items: center;
+    display: inline-flex;
+    height: 2rem;
+    justify-content: center;
+    padding: 0;
+    width: 2rem;
+}
+
 .cms-help-widget {
     bottom: 1.5rem;
     position: fixed;
@@ -95,5 +202,9 @@ body {
     .cms-help-widget {
         bottom: 1rem;
         right: 1rem;
+    }
+
+    .cms-media-dropzone {
+        padding: 1rem;
     }
 }
