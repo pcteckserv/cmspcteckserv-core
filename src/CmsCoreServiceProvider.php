@@ -97,6 +97,8 @@ class CmsCoreServiceProvider extends ServiceProvider
             'core.roles.delete' => ['label' => 'Eliminar roles', 'group' => 'Roles'],
             'core.site-options.view' => ['label' => 'Ver opções gerais', 'group' => 'Opções gerais'],
             'core.site-options.update' => ['label' => 'Editar opções gerais', 'group' => 'Opções gerais'],
+            'footer.view-settings' => ['label' => 'Ver configuração do footer', 'group' => 'Footer'],
+            'footer.update-settings' => ['label' => 'Editar configuração do footer', 'group' => 'Footer'],
             'backups.view' => ['label' => 'Ver backups', 'group' => 'Backups'],
             'backups.configure' => ['label' => 'Configurar backups', 'group' => 'Backups'],
             'backups.run' => ['label' => 'Executar backups', 'group' => 'Backups'],

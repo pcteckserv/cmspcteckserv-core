@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\ArtisanCommandsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\BackupsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\DashboardController;
+use Pcteckserv\CmsCore\Http\Controllers\Admin\FooterSettingsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\MediaController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\RolesController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\SiteOptionsController;
@@ -29,6 +30,8 @@ Route::middleware('web')->group(function (): void {
             Route::get('/', DashboardController::class)->name('dashboard');
             Route::get('/site-options', [SiteOptionsController::class, 'edit'])->name('site-options.edit');
             Route::put('/site-options', [SiteOptionsController::class, 'update'])->name('site-options.update');
+            Route::get('/footer', [FooterSettingsController::class, 'edit'])->name('footer.edit');
+            Route::put('/footer', [FooterSettingsController::class, 'update'])->name('footer.update');
             Route::get('/smtp-settings', [SmtpSettingsController::class, 'edit'])->name('smtp-settings.edit');
             Route::put('/smtp-settings', [SmtpSettingsController::class, 'update'])->name('smtp-settings.update');
             Route::post('/smtp-settings/test', [SmtpSettingsController::class, 'test'])->name('smtp-settings.test');
