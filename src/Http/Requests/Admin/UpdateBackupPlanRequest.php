@@ -38,7 +38,7 @@ class UpdateBackupPlanRequest extends FormRequest
             'notify_retention_deleted' => ['nullable', 'boolean'],
             'notify_recovery' => ['nullable', 'boolean'],
             'alert_timing' => ['required', Rule::in(['after_retries', 'first_failure'])],
-            'repeat_alert_after_minutes' => ['required', 'integer', 'between:15,10080'],
+            'repeat_alert_after_minutes' => ['required', 'integer', 'between:0,10080'],
         ];
     }
 

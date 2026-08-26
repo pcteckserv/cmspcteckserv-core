@@ -91,6 +91,10 @@ class BackupNotificationService
 
     private function recentDuplicate(BackupPlan $plan, string $signature): bool
     {
+        if ($plan->last_alert_signature === $signature && (int) $plan->repeat_alert_after_minutes === 0) {
+            return true;
+        }
+
         return $plan->last_alert_signature === $signature
             && $plan->last_alert_sent_at
             && $plan->last_alert_sent_at->gt(now()->subMinutes($plan->repeat_alert_after_minutes ?: 360));
