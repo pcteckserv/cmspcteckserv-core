@@ -14,12 +14,18 @@ use Pcteckserv\CmsCore\Console\BackupStatusCommand;
 use Pcteckserv\CmsCore\Console\CheckUpdatesCommand;
 use Pcteckserv\CmsCore\Console\CleanupBackupsCommand;
 use Pcteckserv\CmsCore\Console\CreateBackupCommand;
+use Pcteckserv\CmsCore\Console\MaintenanceOffCommand;
+use Pcteckserv\CmsCore\Console\MaintenanceOnCommand;
+use Pcteckserv\CmsCore\Console\MaintenanceStatusCommand;
 use Pcteckserv\CmsCore\Console\OptimizeMediaCommand;
 use Pcteckserv\CmsCore\Console\RunDueBackupsCommand;
 use Pcteckserv\CmsCore\Console\SyncPermissionsCommand;
 use Pcteckserv\CmsCore\Console\SyncVersionsCommand;
 use Pcteckserv\CmsCore\Contracts\CmsAccessUser;
 use Pcteckserv\CmsCore\Contracts\MediaUrlGenerator;
+use Pcteckserv\CmsCore\Http\Middleware\HandleCmsMaintenanceMode;
+use Pcteckserv\CmsCore\Services\Maintenance\MaintenanceModeManager;
+use Pcteckserv\CmsCore\Services\Maintenance\MaintenanceTemplateRegistry;
 use Pcteckserv\CmsCore\Services\Media\StorageMediaUrlGenerator;
 use Pcteckserv\CmsCore\Support\Permissions\PermissionRegistry;
 use Pcteckserv\CmsCore\Services\UserModelResolver;
@@ -34,6 +40,7 @@ class CmsCoreServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/cms-core.php', 'cms-core');
         $this->mergeConfigFrom(__DIR__.'/../config/cms-backups.php', 'cms-backups');
         $this->app->singleton(PermissionRegistry::class);
+        $this->app->singleton(MaintenanceTemplateRegistry::class);
         $this->app->bind(MediaUrlGenerator::class, StorageMediaUrlGenerator::class);
     }
 
@@ -44,6 +51,7 @@ class CmsCoreServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         Blade::component(CmsFooter::class, 'cms-footer');
         Blade::component(CmsMediaPicker::class, 'cms-media-picker');
+        $this->app['router']->pushMiddlewareToGroup('web', HandleCmsMaintenanceMode::class);
 
         $this->publishes([
             __DIR__.'/../config/cms-core.php' => config_path('cms-core.php'),
@@ -67,6 +75,7 @@ class CmsCoreServiceProvider extends ServiceProvider
         $this->registerGates();
         $this->registerBackupRateLimiters();
         $this->registerMediaRateLimiters();
+        $this->registerMaintenanceRateLimiters();
 
         if ($this->app->runningInConsole()) {
             $this->commands([
@@ -74,6 +83,9 @@ class CmsCoreServiceProvider extends ServiceProvider
                 CheckUpdatesCommand::class,
                 CleanupBackupsCommand::class,
                 CreateBackupCommand::class,
+                MaintenanceOffCommand::class,
+                MaintenanceOnCommand::class,
+                MaintenanceStatusCommand::class,
                 OptimizeMediaCommand::class,
                 RunDueBackupsCommand::class,
                 SyncPermissionsCommand::class,
@@ -82,6 +94,7 @@ class CmsCoreServiceProvider extends ServiceProvider
 
             Schedule::command('cms:backup:run-due')->everyMinute()->withoutOverlapping();
             Schedule::command('cms:backup:cleanup')->dailyAt('03:30')->withoutOverlapping();
+            Schedule::call(fn () => app(MaintenanceModeManager::class)->applySchedule())->everyMinute()->withoutOverlapping();
         }
     }
 
@@ -117,6 +130,11 @@ class CmsCoreServiceProvider extends ServiceProvider
             'media.restore' => ['label' => 'Restaurar media', 'group' => 'Media'],
             'media.force-delete' => ['label' => 'Eliminar media definitivamente', 'group' => 'Media'],
             'media.optimize' => ['label' => 'Optimizar media', 'group' => 'Media'],
+            'maintenance.view' => ['label' => 'Ver modo de manutenÃ§Ã£o', 'group' => 'ManutenÃ§Ã£o'],
+            'maintenance.configure' => ['label' => 'Configurar modo de manutenÃ§Ã£o', 'group' => 'ManutenÃ§Ã£o'],
+            'maintenance.toggle' => ['label' => 'Ativar ou desativar manutenÃ§Ã£o', 'group' => 'ManutenÃ§Ã£o'],
+            'maintenance.preview' => ['label' => 'PrÃ©-visualizar manutenÃ§Ã£o', 'group' => 'ManutenÃ§Ã£o'],
+            'maintenance.manage-access' => ['label' => 'Gerir acesso privado', 'group' => 'ManutenÃ§Ã£o'],
         ]);
     }
 
@@ -153,6 +171,13 @@ class CmsCoreServiceProvider extends ServiceProvider
     {
         RateLimiter::for('media-upload', function (Request $request) {
             return Limit::perMinute(30)->by((string) ($request->user()?->getAuthIdentifier() ?: $request->ip()));
+        });
+    }
+
+    private function registerMaintenanceRateLimiters(): void
+    {
+        RateLimiter::for('maintenance-access', function (Request $request) {
+            return Limit::perMinute(5)->by('maintenance-access:'.$request->ip());
         });
     }
 }

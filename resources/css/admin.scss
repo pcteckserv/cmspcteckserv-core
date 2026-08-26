@@ -41,6 +41,27 @@ body {
     max-width: 76rem;
 }
 
+.cms-maintenance-template-card {
+    border: 1px solid rgba(15, 23, 42, .14);
+    border-radius: .5rem;
+    cursor: pointer;
+    display: grid;
+    gap: .45rem;
+    min-height: 9rem;
+    padding: 1rem;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.cms-maintenance-template-card:has(input:checked),
+.cms-maintenance-template-card.is-selected {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 .2rem rgba(13, 110, 253, .12);
+}
+
+.cms-maintenance-template-card .form-check-input {
+    margin: 0;
+}
+
 .cms-stat {
     background: #fff;
     border: 1px solid rgba(15, 23, 42, .1);

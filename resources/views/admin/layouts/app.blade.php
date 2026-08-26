@@ -32,6 +32,15 @@
                 @can('footer.view-settings')
                     <a @class(['nav-link', 'active' => request()->routeIs('admin.footer.*')]) href="{{ route('admin.footer.edit') }}">Footer</a>
                 @endcan
+                @can('maintenance.view')
+                    @php($cmsMaintenanceActive = app(\Pcteckserv\CmsCore\Services\Maintenance\MaintenanceModeManager::class)->isActive())
+                    <a @class(['nav-link d-flex align-items-center justify-content-between gap-2', 'active' => request()->routeIs('admin.maintenance.*')]) href="{{ route('admin.maintenance.edit') }}">
+                        <span>Modo de Manutenção</span>
+                        @if ($cmsMaintenanceActive)
+                            <span class="badge text-bg-warning">ATIVO</span>
+                        @endif
+                    </a>
+                @endcan
                 <a @class(['nav-link', 'active' => request()->routeIs('admin.smtp-settings.*')]) href="{{ route('admin.smtp-settings.edit') }}">SMTP</a>
                 @can('backups.view')
                     <a @class(['nav-link', 'active' => request()->routeIs('admin.backups.*')]) href="{{ route('admin.backups.index') }}">Backups</a>

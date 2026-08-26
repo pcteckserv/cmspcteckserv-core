@@ -5,6 +5,7 @@ use Pcteckserv\CmsCore\Http\Controllers\Admin\ArtisanCommandsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\BackupsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\DashboardController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\FooterSettingsController;
+use Pcteckserv\CmsCore\Http\Controllers\Admin\MaintenanceSettingsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\MediaController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\RolesController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\SiteOptionsController;
@@ -12,6 +13,7 @@ use Pcteckserv\CmsCore\Http\Controllers\Admin\SmtpSettingsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\UpdatesController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\UsersController;
 use Pcteckserv\CmsCore\Http\Controllers\Auth\AuthenticatedSessionController;
+use Pcteckserv\CmsCore\Http\Controllers\MaintenanceAccessController;
 
 Route::middleware('web')->group(function (): void {
     Route::middleware('guest')->group(function (): void {
@@ -23,6 +25,10 @@ Route::middleware('web')->group(function (): void {
         ->middleware('auth')
         ->name('logout');
 
+    Route::post('/maintenance/access', [MaintenanceAccessController::class, 'store'])
+        ->middleware('throttle:maintenance-access')
+        ->name('maintenance.access');
+
     Route::middleware('auth')
         ->prefix('admin')
         ->name('admin.')
@@ -32,6 +38,11 @@ Route::middleware('web')->group(function (): void {
             Route::put('/site-options', [SiteOptionsController::class, 'update'])->name('site-options.update');
             Route::get('/footer', [FooterSettingsController::class, 'edit'])->name('footer.edit');
             Route::put('/footer', [FooterSettingsController::class, 'update'])->name('footer.update');
+            Route::get('/maintenance', [MaintenanceSettingsController::class, 'edit'])->name('maintenance.edit');
+            Route::put('/maintenance', [MaintenanceSettingsController::class, 'update'])->name('maintenance.update');
+            Route::get('/maintenance/preview', [MaintenanceSettingsController::class, 'preview'])->name('maintenance.preview');
+            Route::put('/maintenance/revoke-access', [MaintenanceSettingsController::class, 'revoke'])->name('maintenance.revoke-access');
+            Route::post('/maintenance/disable', [MaintenanceSettingsController::class, 'disable'])->name('maintenance.disable');
             Route::get('/smtp-settings', [SmtpSettingsController::class, 'edit'])->name('smtp-settings.edit');
             Route::put('/smtp-settings', [SmtpSettingsController::class, 'update'])->name('smtp-settings.update');
             Route::post('/smtp-settings/test', [SmtpSettingsController::class, 'test'])->name('smtp-settings.test');

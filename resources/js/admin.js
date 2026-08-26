@@ -60,6 +60,29 @@ document.querySelectorAll('[data-cms-media-copy]').forEach((button) => {
     });
 });
 
+document.querySelectorAll('[data-copy-target]').forEach((button) => {
+    button.addEventListener('click', async () => {
+        const target = document.querySelector(button.dataset.copyTarget);
+        const value = target?.textContent?.trim();
+
+        if (! value) {
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(value);
+        } catch (error) {
+            return;
+        }
+
+        const originalText = button.textContent;
+        button.textContent = 'Copiado';
+        window.setTimeout(() => {
+            button.textContent = originalText;
+        }, 1600);
+    });
+});
+
 document.querySelectorAll('[data-cms-media-upload-url]').forEach((dropzone) => {
     const input = dropzone.querySelector('[data-cms-media-file-input]');
     const selectButton = dropzone.querySelector('[data-cms-media-select-files]');
