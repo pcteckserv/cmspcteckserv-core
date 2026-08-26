@@ -11,13 +11,30 @@ body {
 }
 
 .admin-shell {
+    height: 100vh;
     min-height: 100vh;
+    overflow: hidden;
 }
 
 .admin-sidebar {
     flex: 0 0 16rem;
     min-width: 16rem;
+    max-height: 100vh;
+    overflow-y: auto;
     width: 16rem;
+}
+
+.admin-content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    max-height: 100vh;
+    overflow: hidden;
+}
+
+.admin-content > main {
+    flex: 1 1 auto;
+    overflow-y: auto;
 }
 
 .cms-settings-form {
@@ -52,10 +69,27 @@ body {
 }
 
 @media (max-width: 767.98px) {
+    .admin-shell {
+        height: auto;
+        min-height: 100vh;
+        overflow: visible;
+    }
+
     .admin-sidebar {
         flex-basis: auto;
+        max-height: none;
         min-width: 0;
+        overflow: visible;
         width: 100%;
+    }
+
+    .admin-content {
+        max-height: none;
+        overflow: visible;
+    }
+
+    .admin-content > main {
+        overflow: visible;
     }
 
     .cms-help-widget {
