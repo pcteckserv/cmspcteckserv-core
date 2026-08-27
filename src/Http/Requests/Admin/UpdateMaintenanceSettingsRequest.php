@@ -23,6 +23,7 @@ class UpdateMaintenanceSettingsRequest extends FormRequest
             'maintenance_title' => ['required', 'string', 'max:120'],
             'maintenance_message' => ['required', 'string', 'max:600'],
             'maintenance_secondary_text' => ['nullable', 'string', 'max:240'],
+            'maintenance_schedule_enabled' => ['nullable', 'boolean'],
             'maintenance_start_at' => ['nullable', 'date'],
             'maintenance_end_at' => ['nullable', 'date', 'after_or_equal:maintenance_start_at'],
             'maintenance_auto_disable' => ['nullable', 'boolean'],
@@ -56,6 +57,7 @@ class UpdateMaintenanceSettingsRequest extends FormRequest
         foreach ([
             'maintenance_enabled',
             'maintenance_show_logo',
+            'maintenance_schedule_enabled',
             'maintenance_auto_disable',
             'maintenance_show_countdown',
             'maintenance_show_footer',
@@ -73,6 +75,12 @@ class UpdateMaintenanceSettingsRequest extends FormRequest
         $validated['maintenance_secondary_text'] = trim((string) ($validated['maintenance_secondary_text'] ?? ''));
         $validated['maintenance_allowed_ips'] = $this->sanitizeIps((string) ($validated['maintenance_allowed_ips'] ?? ''));
         $validated['maintenance_allowed_paths'] = $this->sanitizePaths((string) ($validated['maintenance_allowed_paths'] ?? ''));
+
+        if (! $validated['maintenance_schedule_enabled']) {
+            $validated['maintenance_start_at'] = null;
+            $validated['maintenance_end_at'] = null;
+            $validated['maintenance_auto_disable'] = false;
+        }
 
         return $validated;
     }

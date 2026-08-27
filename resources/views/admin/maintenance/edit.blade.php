@@ -1,6 +1,7 @@
 @extends('cms-core::admin.layouts.app', ['title' => 'Modo de Manutenção'])
 
 @section('content')
+    @php($maintenanceScheduleEnabled = old('maintenance_schedule_enabled', $options['maintenance_schedule_enabled'] ?? false))
     <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
         <div>
             <h1 class="h3 mb-1">Modo de Manutenção</h1>
@@ -49,23 +50,24 @@
                 <h2 class="h5 mb-1">Agendamento</h2>
             </div>
             <div class="col-lg-10">
-                <div class="row g-3">
+                <div class="form-check form-switch mb-3">
+                    <input type="hidden" name="maintenance_schedule_enabled" value="0">
+                    <input id="maintenance_schedule_enabled" name="maintenance_schedule_enabled" type="checkbox" class="form-check-input" value="1" @checked($maintenanceScheduleEnabled) data-maintenance-schedule-toggle>
+                    <label class="form-check-label" for="maintenance_schedule_enabled">Ativar programação da manutenção</label>
+                </div>
+                <div class="row g-3 {{ $maintenanceScheduleEnabled ? '' : 'd-none' }}" data-maintenance-schedule-fields>
                     <div class="col-md-6">
                         <label class="form-label" for="maintenance_start_at">Início da manutenção</label>
-                        <input id="maintenance_start_at" name="maintenance_start_at" type="datetime-local" class="form-control @error('maintenance_start_at') is-invalid @enderror" value="{{ old('maintenance_start_at', $maintenance['start_at']?->format('Y-m-d\TH:i')) }}">
+                        <input id="maintenance_start_at" name="maintenance_start_at" type="datetime-local" class="form-control @error('maintenance_start_at') is-invalid @enderror" value="{{ old('maintenance_start_at', $maintenance['start_at']?->format('Y-m-d\TH:i')) }}" @disabled(! $maintenanceScheduleEnabled)>
                         @error('maintenance_start_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-6">
                         <label class="form-label" for="maintenance_end_at">Fim previsto</label>
-                        <input id="maintenance_end_at" name="maintenance_end_at" type="datetime-local" class="form-control @error('maintenance_end_at') is-invalid @enderror" value="{{ old('maintenance_end_at', $maintenance['end_at']?->format('Y-m-d\TH:i')) }}">
+                        <input id="maintenance_end_at" name="maintenance_end_at" type="datetime-local" class="form-control @error('maintenance_end_at') is-invalid @enderror" value="{{ old('maintenance_end_at', $maintenance['end_at']?->format('Y-m-d\TH:i')) }}" @disabled(! $maintenanceScheduleEnabled)>
                         @error('maintenance_end_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                 </div>
-                <div class="form-check form-switch mt-3">
-                    <input type="hidden" name="maintenance_auto_disable" value="0">
-                    <input id="maintenance_auto_disable" name="maintenance_auto_disable" type="checkbox" class="form-check-input" value="1" @checked(old('maintenance_auto_disable', $options['maintenance_auto_disable']))>
-                    <label class="form-check-label" for="maintenance_auto_disable">Desativar automaticamente no fim</label>
-                </div>
+                <input type="hidden" name="maintenance_auto_disable" value="{{ $maintenanceScheduleEnabled ? 1 : 0 }}" data-maintenance-auto-disable>
                 <div class="form-text">Timezone: {{ $maintenance['timezone'] }}</div>
             </div>
         </div>
@@ -225,4 +227,28 @@
             </div>
         </div>
     </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggle = document.querySelector('[data-maintenance-schedule-toggle]');
+            const fields = document.querySelector('[data-maintenance-schedule-fields]');
+            const autoDisable = document.querySelector('[data-maintenance-auto-disable]');
+
+            if (! toggle || ! fields || ! autoDisable) {
+                return;
+            }
+
+            const syncScheduleFields = () => {
+                fields.classList.toggle('d-none', ! toggle.checked);
+                autoDisable.value = toggle.checked ? '1' : '0';
+
+                fields.querySelectorAll('input').forEach((input) => {
+                    input.disabled = ! toggle.checked;
+                });
+            };
+
+            toggle.addEventListener('change', syncScheduleFields);
+            syncScheduleFields();
+        });
+    </script>
 @endsection

@@ -44,6 +44,7 @@ class MaintenanceModeManager
             'title' => (string) ($options['maintenance_title'] ?? 'Estamos a preparar algo novo.'),
             'message' => (string) ($options['maintenance_message'] ?? 'O nosso site encontra-se temporariamente em manutenção. Voltamos em breve.'),
             'secondary_text' => (string) ($options['maintenance_secondary_text'] ?? ''),
+            'schedule_enabled' => $this->truthy($options['maintenance_schedule_enabled'] ?? false),
             'start_at' => $this->date($options['maintenance_start_at'] ?? null),
             'end_at' => $this->date($options['maintenance_end_at'] ?? null),
             'auto_disable' => $this->truthy($options['maintenance_auto_disable'] ?? true),
@@ -81,11 +82,11 @@ class MaintenanceModeManager
             return false;
         }
 
-        if ($settings['start_at'] && $settings['start_at']->isFuture()) {
+        if ($settings['schedule_enabled'] && $settings['start_at'] && $settings['start_at']->isFuture()) {
             return false;
         }
 
-        if ($settings['auto_disable'] && $settings['end_at'] && $settings['end_at']->isPast()) {
+        if ($settings['schedule_enabled'] && $settings['auto_disable'] && $settings['end_at'] && $settings['end_at']->isPast()) {
             return false;
         }
 
@@ -172,6 +173,10 @@ class MaintenanceModeManager
     {
         $settings = $this->settings();
         $now = now();
+
+        if (! $settings['schedule_enabled']) {
+            return;
+        }
 
         if (! $settings['enabled'] && $settings['start_at'] && $settings['start_at']->lessThanOrEqualTo($now)) {
             $this->enable();
@@ -268,6 +273,7 @@ class MaintenanceModeManager
             'maintenance_title' => 'Estamos a preparar algo novo.',
             'maintenance_message' => 'O nosso site encontra-se temporariamente em manutenção. Voltamos em breve.',
             'maintenance_secondary_text' => 'Agradecemos a sua compreensão.',
+            'maintenance_schedule_enabled' => false,
             'maintenance_start_at' => null,
             'maintenance_end_at' => null,
             'maintenance_auto_disable' => true,

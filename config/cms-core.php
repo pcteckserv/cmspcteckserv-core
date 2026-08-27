@@ -52,6 +52,7 @@ return [
         'maintenance_title' => env('CMS_MAINTENANCE_TITLE', 'Estamos a preparar algo novo.'),
         'maintenance_message' => env('CMS_MAINTENANCE_MESSAGE', 'O nosso site encontra-se temporariamente em manutenção. Voltamos em breve.'),
         'maintenance_secondary_text' => env('CMS_MAINTENANCE_SECONDARY_TEXT', 'Agradecemos a sua compreensão.'),
+        'maintenance_schedule_enabled' => env('CMS_MAINTENANCE_SCHEDULE_ENABLED', false),
         'maintenance_start_at' => env('CMS_MAINTENANCE_START_AT'),
         'maintenance_end_at' => env('CMS_MAINTENANCE_END_AT'),
         'maintenance_auto_disable' => env('CMS_MAINTENANCE_AUTO_DISABLE', true),
