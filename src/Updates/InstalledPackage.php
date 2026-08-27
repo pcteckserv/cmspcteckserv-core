@@ -31,7 +31,7 @@ final readonly class InstalledPackage
         }
 
         return CarbonImmutable::parse($this->checkedAt, 'UTC')
-            ->timezone(config('app.timezone', 'Europe/Lisbon'))
+            ->timezone(config('cms-core.admin_timezone', 'Europe/Lisbon'))
             ->format('d/m/Y H:i:s');
     }
 
