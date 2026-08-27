@@ -139,6 +139,28 @@
 
         <div class="row g-3 align-items-start mb-4">
             <div class="col-lg-2">
+                <h2 class="h5 mb-1">Aparência</h2>
+            </div>
+            <div class="col-lg-10">
+                <div class="row g-3">
+                    @foreach ([
+                        'maintenance_background_color' => 'Cor de fundo',
+                        'maintenance_text_color' => 'Cor do texto',
+                        'maintenance_accent_color' => 'Cor principal',
+                        'maintenance_button_color' => 'Cor dos botões',
+                    ] as $field => $label)
+                        <div class="col-md-3">
+                            <label class="form-label" for="{{ $field }}">{{ $label }}</label>
+                            <input id="{{ $field }}" name="{{ $field }}" type="color" class="form-control form-control-color @error($field) is-invalid @enderror" value="{{ old($field, $options[$field]) }}" required>
+                            @error($field)<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 align-items-start mb-4">
+            <div class="col-lg-2">
                 <h2 class="h5 mb-1">Acesso privado</h2>
             </div>
             <div class="col-lg-10">
@@ -150,8 +172,8 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label" for="maintenance_access_code">Código de acesso</label>
-                        <input id="maintenance_access_code" name="maintenance_access_code" type="text" class="form-control @error('maintenance_access_code') is-invalid @enderror" placeholder="{{ $maintenance['access_code_configured'] ? 'Código configurado' : 'Definir código' }}">
-                        <div class="form-text">O código é guardado como hash e só aparece completo quando é criado.</div>
+                        <input id="maintenance_access_code" name="maintenance_access_code" type="text" class="form-control @error('maintenance_access_code') is-invalid @enderror" value="{{ old('maintenance_access_code', session('cms_maintenance_access_code', $maintenance['access_code'])) }}" placeholder="Definir código">
+                        <div class="form-text">O código é validado por hash e guardado encriptado para consulta no admin.</div>
                         @error('maintenance_access_code')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-3">
@@ -171,28 +193,6 @@
                     <input type="hidden" name="invalidate_maintenance_access" value="0">
                     <input id="invalidate_maintenance_access" name="invalidate_maintenance_access" class="form-check-input" type="checkbox" value="1" checked>
                     <label class="form-check-label" for="invalidate_maintenance_access">Invalidar acessos existentes ao alterar o código</label>
-                </div>
-            </div>
-        </div>
-
-        <div class="row g-3 align-items-start mb-4">
-            <div class="col-lg-2">
-                <h2 class="h5 mb-1">Aparência</h2>
-            </div>
-            <div class="col-lg-10">
-                <div class="row g-3">
-                    @foreach ([
-                        'maintenance_background_color' => 'Cor de fundo',
-                        'maintenance_text_color' => 'Cor do texto',
-                        'maintenance_accent_color' => 'Cor principal',
-                        'maintenance_button_color' => 'Cor dos botões',
-                    ] as $field => $label)
-                        <div class="col-md-3">
-                            <label class="form-label" for="{{ $field }}">{{ $label }}</label>
-                            <input id="{{ $field }}" name="{{ $field }}" type="color" class="form-control form-control-color @error($field) is-invalid @enderror" value="{{ old($field, $options[$field]) }}" required>
-                            @error($field)<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
-                        </div>
-                    @endforeach
                 </div>
             </div>
         </div>

@@ -66,6 +66,7 @@ return [
         'maintenance_button_color' => env('CMS_MAINTENANCE_BUTTON_COLOR', '#C0842D'),
         'maintenance_access_enabled' => env('CMS_MAINTENANCE_ACCESS_ENABLED', false),
         'maintenance_access_code_hash' => env('CMS_MAINTENANCE_ACCESS_CODE_HASH'),
+        'maintenance_access_code_encrypted' => env('CMS_MAINTENANCE_ACCESS_CODE_ENCRYPTED'),
         'maintenance_access_version' => env('CMS_MAINTENANCE_ACCESS_VERSION', 1),
         'maintenance_access_duration' => env('CMS_MAINTENANCE_ACCESS_DURATION', '24h'),
         'maintenance_admin_bypass' => env('CMS_MAINTENANCE_ADMIN_BYPASS', true),

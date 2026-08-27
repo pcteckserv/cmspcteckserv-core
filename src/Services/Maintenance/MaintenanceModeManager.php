@@ -4,6 +4,7 @@ namespace Pcteckserv\CmsCore\Services\Maintenance;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -60,6 +61,7 @@ class MaintenanceModeManager
             'button_color' => $this->color($options['maintenance_button_color'] ?? null, '#C0842D'),
             'access_enabled' => $this->truthy($options['maintenance_access_enabled'] ?? false),
             'access_code_configured' => filled($options['maintenance_access_code_hash'] ?? null),
+            'access_code' => $this->decryptAccessCode($options['maintenance_access_code_encrypted'] ?? null),
             'access_version' => max(1, (int) ($options['maintenance_access_version'] ?? 1)),
             'access_duration' => (string) ($options['maintenance_access_duration'] ?? '24h'),
             'admin_bypass' => $this->truthy($options['maintenance_admin_bypass'] ?? true),
@@ -100,16 +102,20 @@ class MaintenanceModeManager
         $payload = $settings;
         $plainCode = trim((string) ($payload['maintenance_access_code'] ?? ''));
         $generatedCode = null;
+        $currentCode = $this->decryptAccessCode($this->siteOptions->get('maintenance_access_code_encrypted'));
+        $accessCodeChanged = false;
         unset($payload['maintenance_access_code']);
 
-        if (($payload['generate_maintenance_access_code'] ?? false) || $plainCode !== '') {
+        if (($payload['generate_maintenance_access_code'] ?? false) || ($plainCode !== '' && ! hash_equals((string) $currentCode, $plainCode))) {
             $generatedCode = $plainCode !== '' ? $plainCode : $this->generateAccessCode();
             $payload['maintenance_access_code_hash'] = Hash::make($generatedCode);
+            $payload['maintenance_access_code_encrypted'] = Crypt::encryptString($generatedCode);
+            $accessCodeChanged = true;
         }
 
         unset($payload['generate_maintenance_access_code']);
 
-        if ($this->truthy($payload['invalidate_maintenance_access'] ?? false)) {
+        if ($accessCodeChanged && $this->truthy($payload['invalidate_maintenance_access'] ?? false)) {
             $payload['maintenance_access_version'] = $this->nextAccessVersion();
         }
 
@@ -246,6 +252,19 @@ class MaintenanceModeManager
         return is_string($value) && preg_match('/^#[0-9A-Fa-f]{6}$/', $value) ? strtoupper($value) : $fallback;
     }
 
+    private function decryptAccessCode(mixed $value): ?string
+    {
+        if (! is_string($value) || trim($value) === '') {
+            return null;
+        }
+
+        try {
+            return Crypt::decryptString($value);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
     private function integer(mixed $value, int $fallback, int $min, int $max): int
     {
         $value = filter_var($value, FILTER_VALIDATE_INT);
@@ -307,6 +326,7 @@ class MaintenanceModeManager
             'maintenance_button_color' => '#C0842D',
             'maintenance_access_enabled' => false,
             'maintenance_access_code_hash' => null,
+            'maintenance_access_code_encrypted' => null,
             'maintenance_access_version' => 1,
             'maintenance_access_duration' => '24h',
             'maintenance_admin_bypass' => true,
