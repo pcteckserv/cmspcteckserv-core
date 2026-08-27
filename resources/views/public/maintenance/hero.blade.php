@@ -3,12 +3,13 @@
 <head>
     @include('cms-core::public.maintenance.partials.head')
     <style>
-        body { display: grid; place-items: stretch; }
-        .maintenance-hero { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 560px); }
-        .maintenance-hero__image { background: color-mix(in srgb, var(--cms-maintenance-accent) 28%, #111); min-height: 100%; }
+        body { display: grid; place-items: stretch; overflow: hidden; }
+        .maintenance-hero { height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 560px); overflow: hidden; }
+        .maintenance-hero__image { position: relative; background: color-mix(in srgb, var(--cms-maintenance-accent) 28%, #111); height: 100vh; overflow: hidden; }
+        .maintenance-hero__image::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 45%, color-mix(in srgb, var(--cms-maintenance-bg) 72%, transparent)); pointer-events: none; }
         .maintenance-hero__image img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .maintenance-hero__content { display: flex; flex-direction: column; justify-content: center; padding: clamp(2rem, 5vw, 5rem); }
-        @media (max-width: 767.98px) { .maintenance-hero { grid-template-columns: 1fr; } .maintenance-hero__image { min-height: 38vh; } }
+        .maintenance-hero__content { display: flex; flex-direction: column; justify-content: center; min-height: 0; overflow: auto; padding: clamp(2.5rem, 5vw, 5rem); background: color-mix(in srgb, var(--cms-maintenance-bg) 96%, #000); }
+        @media (max-width: 767.98px) { body { overflow: auto; } .maintenance-hero { height: auto; min-height: 100vh; grid-template-columns: 1fr; overflow: visible; } .maintenance-hero__image { height: 38vh; min-height: 260px; } .maintenance-hero__image::after { background: linear-gradient(0deg, color-mix(in srgb, var(--cms-maintenance-bg) 72%, transparent), transparent 45%); } }
     </style>
 </head>
 <body>

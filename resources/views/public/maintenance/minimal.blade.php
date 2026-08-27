@@ -3,8 +3,9 @@
 <head>
     @include('cms-core::public.maintenance.partials.head')
     <style>
-        body { display: grid; place-items: center; padding: 2rem; background: color-mix(in srgb, var(--cms-maintenance-bg) 92%, #fff); }
-        .maintenance-card { width: min(760px, 100%); text-align: center; padding: clamp(2rem, 6vw, 5rem) 1rem; }
+        body { display: grid; place-items: center; padding: 2rem; background: radial-gradient(circle at top, color-mix(in srgb, var(--cms-maintenance-accent) 18%, transparent), transparent 34rem), var(--cms-maintenance-bg); }
+        .maintenance-card { width: min(780px, 100%); text-align: center; padding: clamp(2.5rem, 7vw, 5.5rem) clamp(1rem, 4vw, 2rem); }
+        .maintenance-logo { margin-inline: auto; }
         .maintenance-message { margin-inline: auto; }
         .maintenance-access { margin-inline: auto; text-align: left; }
         .maintenance-countdown { justify-content: center; }

@@ -3,10 +3,11 @@
 <head>
     @include('cms-core::public.maintenance.partials.head')
     <style>
-        body { display: grid; place-items: center; overflow-x: hidden; padding: 2rem; }
-        .maintenance-modern { width: min(1080px, 100%); position: relative; padding: clamp(2rem, 7vw, 6rem); border: 1px solid rgba(255,255,255,.14); border-radius: .75rem; background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.02)); }
-        .maintenance-modern::before { content: ""; position: absolute; inset: 1rem; border: 1px solid color-mix(in srgb, var(--cms-maintenance-accent) 48%, transparent); pointer-events: none; }
-        .maintenance-progress { width: min(420px, 100%); height: .45rem; background: rgba(255,255,255,.12); border-radius: 999px; overflow: hidden; margin-top: 1.75rem; }
+        body { display: grid; place-items: center; overflow-x: hidden; padding: 2rem; background: linear-gradient(145deg, color-mix(in srgb, var(--cms-maintenance-bg) 84%, #000), var(--cms-maintenance-bg)); }
+        .maintenance-modern { width: min(1080px, 100%); position: relative; padding: clamp(2.5rem, 7vw, 6rem); border: 1px solid color-mix(in srgb, var(--cms-maintenance-text) 14%, transparent); border-radius: .75rem; background: linear-gradient(135deg, color-mix(in srgb, var(--cms-maintenance-text) 9%, transparent), color-mix(in srgb, var(--cms-maintenance-accent) 8%, transparent)); box-shadow: 0 30px 80px rgba(0,0,0,.28); }
+        .maintenance-modern::before { content: ""; position: absolute; inset: 1rem; border: 1px solid color-mix(in srgb, var(--cms-maintenance-accent) 38%, transparent); pointer-events: none; }
+        .maintenance-modern > * { position: relative; }
+        .maintenance-progress { width: min(420px, 100%); height: .45rem; background: color-mix(in srgb, var(--cms-maintenance-text) 12%, transparent); border-radius: 999px; overflow: hidden; margin-top: 1.75rem; }
         .maintenance-progress span { display: block; width: 68%; height: 100%; background: var(--cms-maintenance-accent); }
         @media (prefers-reduced-motion: no-preference) { .maintenance-modern { animation: maintenanceIn .55s ease-out both; } @keyframes maintenanceIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } } }
     </style>
