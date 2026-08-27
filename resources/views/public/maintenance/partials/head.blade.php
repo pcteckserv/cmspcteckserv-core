@@ -11,11 +11,13 @@
         --cms-maintenance-text: {{ $maintenance['text_color'] }};
         --cms-maintenance-accent: {{ $maintenance['accent_color'] }};
         --cms-maintenance-button: {{ $maintenance['button_color'] }};
+        --cms-maintenance-logo-max-width: {{ $maintenance['logo_max_width'] }};
+        --cms-maintenance-logo-max-height: {{ $maintenance['logo_max_height'] }};
     }
     * { box-sizing: border-box; }
     body { margin: 0; min-height: 100vh; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--cms-maintenance-bg); color: var(--cms-maintenance-text); }
     a { color: inherit; }
-    .maintenance-logo { max-width: 180px; max-height: 72px; object-fit: contain; }
+    .maintenance-logo { max-width: var(--cms-maintenance-logo-max-width); max-height: var(--cms-maintenance-logo-max-height); object-fit: contain; }
     .maintenance-eyebrow { color: var(--cms-maintenance-accent); font-weight: 700; letter-spacing: 0; text-transform: uppercase; font-size: .82rem; }
     .maintenance-title { font-size: clamp(2rem, 7vw, 4.8rem); line-height: 1.02; letter-spacing: 0; margin: .75rem 0 1rem; }
     .maintenance-message { font-size: clamp(1rem, 2vw, 1.2rem); line-height: 1.65; opacity: .86; max-width: 680px; }

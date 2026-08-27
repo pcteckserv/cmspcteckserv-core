@@ -18,8 +18,8 @@ class UpdateMaintenanceSettingsRequest extends FormRequest
         return [
             'maintenance_enabled' => ['nullable', 'boolean'],
             'maintenance_template' => ['required', 'string', Rule::in(app(MaintenanceTemplateRegistry::class)->keys())],
-            'maintenance_show_logo' => ['nullable', 'boolean'],
             'maintenance_logo_media_id' => ['nullable', 'integer', 'exists:cms_media,id'],
+            'maintenance_logo_scale' => ['required', 'integer', 'between:25,250'],
             'maintenance_title' => ['required', 'string', 'max:120'],
             'maintenance_message' => ['required', 'string', 'max:600'],
             'maintenance_secondary_text' => ['nullable', 'string', 'max:240'],
@@ -56,7 +56,6 @@ class UpdateMaintenanceSettingsRequest extends FormRequest
 
         foreach ([
             'maintenance_enabled',
-            'maintenance_show_logo',
             'maintenance_schedule_enabled',
             'maintenance_auto_disable',
             'maintenance_show_countdown',
@@ -71,6 +70,7 @@ class UpdateMaintenanceSettingsRequest extends FormRequest
         }
 
         $validated['maintenance_logo_media_id'] = $validated['maintenance_logo_media_id'] ?? null;
+        $validated['maintenance_logo_scale'] = (int) $validated['maintenance_logo_scale'];
         $validated['maintenance_hero_media_id'] = $validated['maintenance_hero_media_id'] ?? null;
         $validated['maintenance_secondary_text'] = trim((string) ($validated['maintenance_secondary_text'] ?? ''));
         $validated['maintenance_allowed_ips'] = $this->sanitizeIps((string) ($validated['maintenance_allowed_ips'] ?? ''));

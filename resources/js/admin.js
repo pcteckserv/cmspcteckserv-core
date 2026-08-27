@@ -330,6 +330,7 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
                     const input = activePicker?.querySelector('[data-cms-media-picker-input]');
                     const display = activePicker?.querySelector('[data-cms-media-picker-display]');
                     const selected = activePicker?.querySelector('[data-cms-media-picker-selected]');
+                    const clear = activePicker?.querySelector('[data-cms-media-picker-clear]');
 
                     if (! input || ! display || ! selected) {
                         return;
@@ -338,6 +339,9 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
                     input.value = item.id;
                     display.value = label.textContent;
                     selected.textContent = `Selecionado: ${label.textContent}`;
+                    if (clear) {
+                        clear.disabled = false;
+                    }
                     activePicker.dispatchEvent(new CustomEvent('cms:media-picker-selected', {
                         bubbles: true,
                         detail: {
@@ -422,6 +426,29 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
                 modal.hidden = false;
                 loadItems();
                 search.focus();
+            });
+
+            picker.querySelector('[data-cms-media-picker-clear]')?.addEventListener('click', () => {
+                const input = picker.querySelector('[data-cms-media-picker-input]');
+                const display = picker.querySelector('[data-cms-media-picker-display]');
+                const selected = picker.querySelector('[data-cms-media-picker-selected]');
+                const clear = picker.querySelector('[data-cms-media-picker-clear]');
+
+                if (! input || ! display || ! selected || ! clear) {
+                    return;
+                }
+
+                input.value = '';
+                display.value = '';
+                selected.textContent = picker.dataset.emptyHelp || selected.textContent;
+                clear.disabled = true;
+
+                picker.dispatchEvent(new CustomEvent('cms:media-picker-cleared', {
+                    bubbles: true,
+                    detail: {
+                        inputName: input.name,
+                    },
+                }));
             });
         });
 

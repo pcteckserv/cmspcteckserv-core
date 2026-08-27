@@ -12,7 +12,7 @@
 </head>
 <body>
     <main class="maintenance-card">
-        @if ($maintenance['show_logo'] && $maintenance['logo_url'])
+        @if ($maintenance['logo_url'])
             <img class="maintenance-logo" src="{{ $maintenance['logo_url'] }}" alt="{{ $maintenance['site_title'] }}">
         @endif
         <div class="maintenance-eyebrow mt-4">Modo de manutenção</div>

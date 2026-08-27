@@ -4,6 +4,7 @@
     data-library-url="{{ route('admin.media.library', ['type' => $type]) }}"
     data-upload-url="{{ route('admin.media.store') }}"
     data-type="{{ $type }}"
+    data-empty-help="{{ $help }}"
 >
     @php($selectedMediaId = old($name, $value))
 
@@ -29,6 +30,9 @@
             data-cms-media-picker-display
         >
         <button class="btn btn-outline-primary" type="button" data-cms-media-picker-open>{{ $buttonLabel }}</button>
+        @if ($clearable)
+            <button class="btn btn-outline-secondary" type="button" data-cms-media-picker-clear @disabled(! $selectedMediaId)>{{ $clearLabel }}</button>
+        @endif
     </div>
 
     <div class="form-text" data-cms-media-picker-selected>{{ $help }}</div>

@@ -38,9 +38,11 @@ class MaintenanceModeManager
             'template_view' => $template->view,
             'site_title' => (string) ($options['site_title'] ?? config('app.name', 'CMS PCTECK')),
             'site_icon_url' => (string) ($options['site_icon_url'] ?? ''),
-            'show_logo' => $this->truthy($options['maintenance_show_logo'] ?? true),
             'logo_media_id' => ($options['maintenance_logo_media_id'] ?? null) ?: null,
-            'logo_url' => $this->mediaUrl($options['maintenance_logo_media_id'] ?? null) ?: (string) ($options['site_icon_url'] ?? ''),
+            'logo_url' => $this->mediaUrl($options['maintenance_logo_media_id'] ?? null),
+            'logo_scale' => $this->integer($options['maintenance_logo_scale'] ?? null, 100, 25, 250),
+            'logo_max_width' => $this->scaledPixels($options['maintenance_logo_scale'] ?? null, 180, '180px'),
+            'logo_max_height' => $this->scaledPixels($options['maintenance_logo_scale'] ?? null, 72, '72px'),
             'title' => (string) ($options['maintenance_title'] ?? 'Estamos a preparar algo novo.'),
             'message' => (string) ($options['maintenance_message'] ?? 'O nosso site encontra-se temporariamente em manutenção. Voltamos em breve.'),
             'secondary_text' => (string) ($options['maintenance_secondary_text'] ?? ''),
@@ -244,6 +246,25 @@ class MaintenanceModeManager
         return is_string($value) && preg_match('/^#[0-9A-Fa-f]{6}$/', $value) ? strtoupper($value) : $fallback;
     }
 
+    private function integer(mixed $value, int $fallback, int $min, int $max): int
+    {
+        $value = filter_var($value, FILTER_VALIDATE_INT);
+
+        if ($value === false) {
+            return $fallback;
+        }
+
+        return max($min, min($max, $value));
+    }
+
+    private function scaledPixels(mixed $scale, int $basePixels, string $fallback): string
+    {
+        $scale = $this->integer($scale, 100, 25, 250);
+        $pixels = (int) round($basePixels * ($scale / 100));
+
+        return $pixels > 0 ? $pixels.'px' : $fallback;
+    }
+
     private function lines(mixed $value): array
     {
         if (! is_string($value)) {
@@ -268,8 +289,8 @@ class MaintenanceModeManager
         return [
             'maintenance_enabled' => false,
             'maintenance_template' => 'minimal',
-            'maintenance_show_logo' => true,
             'maintenance_logo_media_id' => null,
+            'maintenance_logo_scale' => 100,
             'maintenance_title' => 'Estamos a preparar algo novo.',
             'maintenance_message' => 'O nosso site encontra-se temporariamente em manutenção. Voltamos em breve.',
             'maintenance_secondary_text' => 'Agradecemos a sua compreensão.',

@@ -96,14 +96,18 @@
                 <h2 class="h5 mb-1">Conteúdo</h2>
             </div>
             <div class="col-lg-10">
-                <div class="form-check form-switch mb-3">
-                    <input type="hidden" name="maintenance_show_logo" value="0">
-                    <input id="maintenance_show_logo" name="maintenance_show_logo" type="checkbox" class="form-check-input" value="1" @checked(old('maintenance_show_logo', $options['maintenance_show_logo']))>
-                    <label class="form-check-label" for="maintenance_show_logo">Mostrar logótipo</label>
-                </div>
                 <div class="row g-3">
-                    <x-cms-media-picker class="col-md-6" name="maintenance_logo_media_id" id="maintenance_logo_media_id" label="Logótipo" :value="$options['maintenance_logo_media_id']" help="Opcional. Por defeito usa o ícone do site." />
-                    <x-cms-media-picker class="col-md-6" name="maintenance_hero_media_id" id="maintenance_hero_media_id" label="Imagem Hero" :value="$options['maintenance_hero_media_id']" help="Usada pelo template Hero." />
+                    <x-cms-media-picker class="col-md-6" name="maintenance_logo_media_id" id="maintenance_logo_media_id" label="Logótipo" :value="$options['maintenance_logo_media_id']" help="Opcional. Se não escolher uma imagem, o logótipo não é apresentado." clearable />
+                    <x-cms-media-picker class="col-md-6" name="maintenance_hero_media_id" id="maintenance_hero_media_id" label="Imagem Hero" :value="$options['maintenance_hero_media_id']" help="Usada pelo template Hero." clearable />
+                    <div class="col-md-12">
+                        <div class="d-flex align-items-center justify-content-between gap-3">
+                            <label class="form-label mb-0" for="maintenance_logo_scale">Tamanho do logótipo</label>
+                            <output class="badge text-bg-light border" for="maintenance_logo_scale" data-cms-maintenance-logo-scale-output>{{ old('maintenance_logo_scale', $options['maintenance_logo_scale'] ?? 100) }}%</output>
+                        </div>
+                        <input id="maintenance_logo_scale" name="maintenance_logo_scale" type="range" min="25" max="250" step="5" class="form-range @error('maintenance_logo_scale') is-invalid @enderror" value="{{ old('maintenance_logo_scale', $options['maintenance_logo_scale'] ?? 100) }}" required data-cms-maintenance-logo-scale>
+                        <div class="form-text">Aumenta ou reduz proporcionalmente o logótipo na página de manutenção.</div>
+                        @error('maintenance_logo_scale')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                    </div>
                     <div class="col-md-12">
                         <label class="form-label" for="maintenance_title">Título</label>
                         <input id="maintenance_title" name="maintenance_title" type="text" class="form-control @error('maintenance_title') is-invalid @enderror" value="{{ old('maintenance_title', $options['maintenance_title']) }}" required>
@@ -233,6 +237,8 @@
             const toggle = document.querySelector('[data-maintenance-schedule-toggle]');
             const fields = document.querySelector('[data-maintenance-schedule-fields]');
             const autoDisable = document.querySelector('[data-maintenance-auto-disable]');
+            const logoScale = document.querySelector('[data-cms-maintenance-logo-scale]');
+            const logoScaleOutput = document.querySelector('[data-cms-maintenance-logo-scale-output]');
 
             if (! toggle || ! fields || ! autoDisable) {
                 return;
@@ -249,6 +255,13 @@
 
             toggle.addEventListener('change', syncScheduleFields);
             syncScheduleFields();
+
+            logoScale?.addEventListener('input', () => {
+                if (logoScaleOutput) {
+                    logoScaleOutput.value = `${logoScale.value}%`;
+                    logoScaleOutput.textContent = `${logoScale.value}%`;
+                }
+            });
         });
     </script>
 @endsection

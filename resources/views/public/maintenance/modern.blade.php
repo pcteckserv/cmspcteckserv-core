@@ -13,7 +13,7 @@
 </head>
 <body>
     <main class="maintenance-modern">
-        @if ($maintenance['show_logo'] && $maintenance['logo_url'])
+        @if ($maintenance['logo_url'])
             <img class="maintenance-logo" src="{{ $maintenance['logo_url'] }}" alt="{{ $maintenance['site_title'] }}">
         @endif
         <p class="maintenance-eyebrow mt-4">Intervenção técnica em curso</p>

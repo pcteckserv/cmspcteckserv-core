@@ -15,8 +15,10 @@ class CmsMediaPicker extends Component
         public readonly mixed $value = null,
         public readonly string $type = 'image',
         public readonly string $buttonLabel = 'Escolher',
+        public readonly string $clearLabel = 'Remover',
         public readonly string $emptyLabel = 'Sem imagem selecionada',
         public readonly string $help = 'Selecione ou carregue uma imagem do Media Manager.',
+        public readonly bool $clearable = false,
     ) {
     }
 
