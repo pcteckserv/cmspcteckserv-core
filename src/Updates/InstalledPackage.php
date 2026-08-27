@@ -2,6 +2,8 @@
 
 namespace Pcteckserv\CmsCore\Updates;
 
+use Carbon\CarbonImmutable;
+
 final readonly class InstalledPackage
 {
     public function __construct(
@@ -20,6 +22,17 @@ final readonly class InstalledPackage
         }
 
         return version_compare($this->normalizeVersion($this->availableVersion), $this->normalizeVersion($this->installedVersion), '>');
+    }
+
+    public function formattedCheckedAt(): string
+    {
+        if ($this->checkedAt === null || trim($this->checkedAt) === '') {
+            return '-';
+        }
+
+        return CarbonImmutable::parse($this->checkedAt, 'UTC')
+            ->timezone(config('app.timezone', 'Europe/Lisbon'))
+            ->format('d/m/Y H:i:s');
     }
 
     private function normalizeVersion(string $version): string
