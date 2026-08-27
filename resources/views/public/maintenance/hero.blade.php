@@ -4,12 +4,15 @@
     @include('cms-core::public.maintenance.partials.head')
     <style>
         body { display: grid; place-items: stretch; overflow: hidden; }
-        .maintenance-hero { height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 560px); overflow: hidden; }
+        .maintenance-hero { height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(480px, 640px); overflow: hidden; }
         .maintenance-hero__image { position: relative; background: color-mix(in srgb, var(--cms-maintenance-accent) 28%, #111); height: 100vh; overflow: hidden; }
         .maintenance-hero__image::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 45%, color-mix(in srgb, var(--cms-maintenance-bg) 72%, transparent)); pointer-events: none; }
         .maintenance-hero__image img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .maintenance-hero__content { display: flex; flex-direction: column; justify-content: center; min-height: 0; overflow: auto; padding: clamp(2.5rem, 5vw, 5rem); background: color-mix(in srgb, var(--cms-maintenance-bg) 96%, #000); }
-        @media (max-width: 767.98px) { body { overflow: auto; } .maintenance-hero { height: auto; min-height: 100vh; grid-template-columns: 1fr; overflow: visible; } .maintenance-hero__image { height: 38vh; min-height: 260px; } .maintenance-hero__image::after { background: linear-gradient(0deg, color-mix(in srgb, var(--cms-maintenance-bg) 72%, transparent), transparent 45%); } }
+        .maintenance-hero__content { display: flex; flex-direction: column; justify-content: center; min-width: 0; min-height: 0; overflow: auto; padding: clamp(2.5rem, 5vw, 5rem); background: color-mix(in srgb, var(--cms-maintenance-bg) 96%, #000); }
+        .maintenance-hero .maintenance-title { max-width: 10ch; font-size: clamp(2.4rem, 4.2vw, 4.35rem); line-height: 1.04; }
+        .maintenance-hero .maintenance-message { max-width: 34rem; }
+        @media (max-width: 1199.98px) { body { overflow: auto; } .maintenance-hero { height: auto; min-height: 100vh; grid-template-columns: 1fr; overflow: visible; } .maintenance-hero__image { height: 42vh; min-height: 280px; } .maintenance-hero__image::after { background: linear-gradient(0deg, color-mix(in srgb, var(--cms-maintenance-bg) 72%, transparent), transparent 45%); } .maintenance-hero__content { overflow: visible; } .maintenance-hero .maintenance-title { max-width: 12ch; font-size: clamp(2.3rem, 9vw, 4rem); } }
+        @media (max-width: 575.98px) { .maintenance-hero__content { padding: 2rem 1.5rem; } .maintenance-hero .maintenance-title { max-width: 11ch; font-size: clamp(2.2rem, 13vw, 3.4rem); } }
     </style>
 </head>
 <body>
