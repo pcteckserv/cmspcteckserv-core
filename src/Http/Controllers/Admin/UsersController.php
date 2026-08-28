@@ -11,13 +11,17 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 use Pcteckserv\CmsCore\Http\Requests\Admin\StoreUserRequest;
 use Pcteckserv\CmsCore\Http\Requests\Admin\UpdateUserRequest;
+use Pcteckserv\CmsCore\ActivityLog\Contracts\ActivityLoggerContract;
 use Pcteckserv\CmsCore\Models\Permission;
 use Pcteckserv\CmsCore\Models\Role;
 use Pcteckserv\CmsCore\Services\UserModelResolver;
 
 class UsersController extends Controller
 {
-    public function __construct(private readonly UserModelResolver $users)
+    public function __construct(
+        private readonly UserModelResolver $users,
+        private readonly ActivityLoggerContract $activityLogger,
+    )
     {
     }
 
@@ -62,7 +66,7 @@ class UsersController extends Controller
         $userModel = $this->users->className();
         $data = $request->validated();
 
-        DB::transaction(function () use ($userModel, $data, $request): void {
+        $user = DB::transaction(function () use ($userModel, $data, $request) {
             $user = $userModel::query()->create([
                 'name' => $data['name'],
                 'email' => $data['email'],
@@ -72,7 +76,23 @@ class UsersController extends Controller
             $user->cmsState()->create(['state' => $data['state']]);
             $user->cmsRoles()->sync($request->roleIds());
             $user->cmsPermissions()->sync($request->permissionIds());
+
+            return $user;
         });
+
+        $this->activityLogger->log(
+            action: 'user.created',
+            category: 'users',
+            description: 'Utilizador criado.',
+            subject: $user,
+            newValues: [
+                'name' => $user->name,
+                'email' => $user->email,
+                'state' => $data['state'],
+                'roles' => $request->roleIds(),
+                'permissions' => $request->permissionIds(),
+            ],
+        );
 
         return redirect()->route('admin.users.index')->with('status', 'Utilizador criado com sucesso.');
     }
@@ -89,6 +109,13 @@ class UsersController extends Controller
     public function update(UpdateUserRequest $request, mixed $user): RedirectResponse
     {
         $data = $request->validated();
+        $oldValues = [
+            'name' => $user->name,
+            'email' => $user->email,
+            'state' => $user->cmsAccessState(),
+            'roles' => $user->cmsRoles()->pluck('cms_roles.id')->all(),
+            'permissions' => $user->cmsPermissions()->pluck('cms_permissions.id')->all(),
+        ];
 
         DB::transaction(function () use ($data, $request, $user): void {
             $payload = [
@@ -106,6 +133,23 @@ class UsersController extends Controller
             $user->cmsPermissions()->sync($request->permissionIds());
         });
 
+        $user->refresh()->load(['cmsRoles', 'cmsPermissions', 'cmsState']);
+
+        $this->activityLogger->log(
+            action: 'user.updated',
+            category: 'users',
+            description: 'Utilizador atualizado.',
+            subject: $user,
+            oldValues: $oldValues,
+            newValues: [
+                'name' => $user->name,
+                'email' => $user->email,
+                'state' => $user->cmsAccessState(),
+                'roles' => $user->cmsRoles->pluck('id')->all(),
+                'permissions' => $user->cmsPermissions->pluck('id')->all(),
+            ],
+        );
+
         return redirect()->route('admin.users.edit', $user)->with('status', 'Utilizador atualizado com sucesso.');
     }
 
@@ -117,7 +161,18 @@ class UsersController extends Controller
             return back()->withErrors(['user' => 'Não é possível eliminar um Super Admin.']);
         }
 
+        $oldState = $user->cmsAccessState();
+
         $user->cmsState()->updateOrCreate([], ['state' => 'inactive']);
+
+        $this->activityLogger->log(
+            action: 'user.deleted',
+            category: 'users',
+            description: 'Utilizador desativado.',
+            subject: $user,
+            oldValues: ['state' => $oldState],
+            newValues: ['state' => 'inactive'],
+        );
 
         return redirect()->route('admin.users.index')->with('status', 'Utilizador desativado com sucesso.');
     }

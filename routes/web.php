@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Pcteckserv\CmsCore\Http\Controllers\Admin\ActivityLogController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\ArtisanCommandsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\BackupsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\DashboardController;
@@ -48,6 +49,9 @@ Route::middleware('web')->group(function (): void {
             Route::post('/smtp-settings/test', [SmtpSettingsController::class, 'test'])->name('smtp-settings.test');
             Route::get('/laravel-commands', [ArtisanCommandsController::class, 'index'])->name('laravel-commands.index');
             Route::post('/laravel-commands/{command}/run', [ArtisanCommandsController::class, 'run'])->name('laravel-commands.run');
+            Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+            Route::get('/activity-logs/export', [ActivityLogController::class, 'export'])->name('activity-logs.export');
+            Route::get('/activity-logs/{activityLog}', [ActivityLogController::class, 'show'])->name('activity-logs.show');
             Route::get('/backups', [BackupsController::class, 'index'])->name('backups.index');
             Route::put('/backups/destinations/{destination}', [BackupsController::class, 'updateDestination'])->name('backups.destinations.update');
             Route::post('/backups/destinations/{destination}/test', [BackupsController::class, 'testDestination'])->middleware('throttle:backups')->name('backups.destinations.test');

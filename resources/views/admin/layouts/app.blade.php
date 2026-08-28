@@ -26,6 +26,9 @@
                 @can('media.view')
                     <a @class(['nav-link', 'active' => request()->routeIs('admin.media.*')]) href="{{ route('admin.media.index') }}">Media</a>
                 @endcan
+                @can('core.activity-logs.view')
+                    <a @class(['nav-link', 'active' => request()->routeIs('admin.activity-logs.*')]) href="{{ route('admin.activity-logs.index') }}">Logs de Atividade</a>
+                @endcan
                 @can('core.site-options.view')
                     <a @class(['nav-link', 'active' => request()->routeIs('admin.site-options.*')]) href="{{ route('admin.site-options.edit') }}">Opções gerais</a>
                 @endcan

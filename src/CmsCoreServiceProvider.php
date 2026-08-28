@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Pcteckserv\CmsCore\ActivityLog\ActivityLogger;
+use Pcteckserv\CmsCore\ActivityLog\Contracts\ActivityLoggerContract;
 use Pcteckserv\CmsCore\Console\BackupStatusCommand;
 use Pcteckserv\CmsCore\Console\CheckUpdatesCommand;
 use Pcteckserv\CmsCore\Console\CleanupBackupsCommand;
@@ -18,6 +20,7 @@ use Pcteckserv\CmsCore\Console\MaintenanceOffCommand;
 use Pcteckserv\CmsCore\Console\MaintenanceOnCommand;
 use Pcteckserv\CmsCore\Console\MaintenanceStatusCommand;
 use Pcteckserv\CmsCore\Console\OptimizeMediaCommand;
+use Pcteckserv\CmsCore\Console\PruneActivityLogsCommand;
 use Pcteckserv\CmsCore\Console\RunDueBackupsCommand;
 use Pcteckserv\CmsCore\Console\SyncPermissionsCommand;
 use Pcteckserv\CmsCore\Console\SyncVersionsCommand;
@@ -41,6 +44,7 @@ class CmsCoreServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/cms-backups.php', 'cms-backups');
         $this->app->singleton(PermissionRegistry::class);
         $this->app->singleton(MaintenanceTemplateRegistry::class);
+        $this->app->singleton(ActivityLoggerContract::class, ActivityLogger::class);
         $this->app->bind(MediaUrlGenerator::class, StorageMediaUrlGenerator::class);
     }
 
@@ -87,6 +91,7 @@ class CmsCoreServiceProvider extends ServiceProvider
                 MaintenanceOnCommand::class,
                 MaintenanceStatusCommand::class,
                 OptimizeMediaCommand::class,
+                PruneActivityLogsCommand::class,
                 RunDueBackupsCommand::class,
                 SyncPermissionsCommand::class,
                 SyncVersionsCommand::class,
@@ -133,6 +138,8 @@ class CmsCoreServiceProvider extends ServiceProvider
             'media.restore' => ['label' => 'Restaurar media', 'group' => 'Media'],
             'media.force-delete' => ['label' => 'Eliminar media definitivamente', 'group' => 'Media'],
             'media.optimize' => ['label' => 'Optimizar media', 'group' => 'Media'],
+            'core.activity-logs.view' => ['label' => 'Ver logs de atividade', 'group' => 'Auditoria'],
+            'core.activity-logs.export' => ['label' => 'Exportar logs de atividade', 'group' => 'Auditoria'],
             'maintenance.view' => ['label' => 'Ver modo de manutenÃ§Ã£o', 'group' => 'ManutenÃ§Ã£o'],
             'maintenance.configure' => ['label' => 'Configurar modo de manutenÃ§Ã£o', 'group' => 'ManutenÃ§Ã£o'],
             'maintenance.toggle' => ['label' => 'Ativar ou desativar manutenÃ§Ã£o', 'group' => 'ManutenÃ§Ã£o'],

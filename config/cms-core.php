@@ -11,6 +11,28 @@ return [
         'logout_redirect' => env('CMS_CORE_LOGOUT_REDIRECT', '/'),
     ],
 
+    'activity_log' => [
+        'enabled' => env('CMS_ACTIVITY_LOG_ENABLED', true),
+        'retention_days' => env('CMS_ACTIVITY_LOG_RETENTION_DAYS', 365),
+        'sensitive_fields' => [
+            'password',
+            'password_confirmation',
+            'current_password',
+            'token',
+            'api_token',
+            'access_token',
+            'refresh_token',
+            'secret',
+            'client_secret',
+            'authorization',
+            'cookie',
+            'session',
+            'app_key',
+            'smtp_password',
+            'mail_password',
+        ],
+    ],
+
     'admin_user' => [
         'name' => env('ADMIN_USER_NAME', 'Administrador'),
         'email' => env('ADMIN_USER_EMAIL'),
