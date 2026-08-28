@@ -57,6 +57,7 @@ class PackageVersionRegistry
 
         foreach ($packages as $package) {
             $availableVersion = $this->updateChecker->latestVersion($package);
+            $installedVersion = $this->installedVersion($package);
 
             if ($availableVersion === null) {
                 DB::table('cms_installed_packages')
@@ -67,6 +68,14 @@ class PackageVersionRegistry
                     ]);
 
                 continue;
+            }
+
+            if (is_string($installedVersion) && version_compare(
+                $this->normalizeVersion($installedVersion),
+                $this->normalizeVersion($availableVersion),
+                '>'
+            )) {
+                $availableVersion = $installedVersion;
             }
 
             DB::table('cms_installed_packages')
@@ -105,5 +114,10 @@ class PackageVersionRegistry
         }
 
         return InstalledVersions::getPrettyVersion($package) ?: InstalledVersions::getVersion($package);
+    }
+
+    private function normalizeVersion(string $version): string
+    {
+        return ltrim($version, 'v');
     }
 }

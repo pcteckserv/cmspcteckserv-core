@@ -99,7 +99,7 @@ class GitTagUpdateChecker
         $version = ltrim($tag, 'v');
 
         return preg_match('/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/', $version) === 1
-            ? $version
+            ? 'v'.$version
             : null;
     }
 
