@@ -30,7 +30,9 @@ class UsersController extends Controller
         Gate::authorize('core.users.view');
 
         $userModel = $this->users->className();
-        $query = $userModel::query()->with(['cmsRoles', 'cmsState']);
+        $query = $userModel::query()
+            ->with(['cmsRoles', 'cmsState'])
+            ->whereDoesntHave('cmsRoles', fn ($query) => $query->where('key', $this->superAdminRoleKey()));
 
         if ($search = trim((string) $request->query('search'))) {
             $query->where(function ($query) use ($search): void {
@@ -49,7 +51,7 @@ class UsersController extends Controller
 
         return view('cms-core::admin.users.index', [
             'users' => $query->latest()->paginate((int) config('cms-core.users_per_page', 15))->withQueryString(),
-            'roles' => Role::query()->orderBy('name')->get(),
+            'roles' => $this->visibleRolesQuery()->orderBy('name')->get(),
             'filters' => $request->only(['search', 'state', 'role']),
         ]);
     }
@@ -100,6 +102,7 @@ class UsersController extends Controller
     public function edit(mixed $user): View
     {
         Gate::authorize('core.users.update');
+        $this->abortIfSuperAdminUser($user);
 
         return view('cms-core::admin.users.edit', array_merge($this->formData(), [
             'user' => $user->load(['cmsRoles', 'cmsPermissions', 'cmsState']),
@@ -108,6 +111,8 @@ class UsersController extends Controller
 
     public function update(UpdateUserRequest $request, mixed $user): RedirectResponse
     {
+        $this->abortIfSuperAdminUser($user);
+
         $data = $request->validated();
         $oldValues = [
             'name' => $user->name,
@@ -156,6 +161,7 @@ class UsersController extends Controller
     public function destroy(mixed $user): RedirectResponse
     {
         Gate::authorize('core.users.delete');
+        $this->abortIfSuperAdminUser($user);
 
         if (method_exists($user, 'isCmsSuperAdmin') && $user->isCmsSuperAdmin()) {
             return back()->withErrors(['user' => 'Não é possível eliminar um Super Admin.']);
@@ -180,9 +186,26 @@ class UsersController extends Controller
     private function formData(): array
     {
         return [
-            'roles' => Role::query()->orderBy('name')->get(),
+            'roles' => $this->visibleRolesQuery()->orderBy('name')->get(),
             'permissionsByGroup' => Permission::query()->orderBy('group')->orderBy('label')->get()->groupBy('group'),
             'states' => config('cms-core.user_states', ['active', 'inactive']),
         ];
+    }
+
+    private function visibleRolesQuery()
+    {
+        return Role::query()->where('key', '!=', $this->superAdminRoleKey());
+    }
+
+    private function abortIfSuperAdminUser(mixed $user): void
+    {
+        if (method_exists($user, 'hasCmsRole') && $user->hasCmsRole($this->superAdminRoleKey())) {
+            abort(404);
+        }
+    }
+
+    private function superAdminRoleKey(): string
+    {
+        return (string) config('cms-core.super_admin_role', 'core.super_admin');
     }
 }

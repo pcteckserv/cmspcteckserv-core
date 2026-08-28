@@ -110,8 +110,39 @@ class ActivityLogTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.activity-logs.index', ['category' => 'media']))
             ->assertOk()
-            ->assertSee('media.deleted')
-            ->assertDontSee('auth.login');
+            ->assertSee('<code>media.deleted</code>', false)
+            ->assertDontSee('<code>auth.login</code>', false);
+    }
+
+    public function test_super_admin_nao_aparece_nos_utilizadores_roles_ou_logs(): void
+    {
+        $superAdmin = $this->superAdmin();
+
+        app(ActivityLoggerContract::class)->log(
+            action: 'auth.login',
+            category: 'authentication',
+            description: 'Utilizador iniciou sessão.',
+            subject: $superAdmin,
+            user: $superAdmin,
+        );
+
+        $this->actingAs($superAdmin)
+            ->get(route('admin.users.index'))
+            ->assertOk()
+            ->assertDontSee($superAdmin->email)
+            ->assertDontSee('Super Admin');
+
+        $this->actingAs($superAdmin)
+            ->get(route('admin.roles.index'))
+            ->assertOk()
+            ->assertDontSee('core.super_admin')
+            ->assertDontSee('Super Admin');
+
+        $this->actingAs($superAdmin)
+            ->get(route('admin.activity-logs.index'))
+            ->assertOk()
+            ->assertDontSee('<code>auth.login</code>', false)
+            ->assertDontSee($superAdmin->email);
     }
 
     public function test_logger_funciona_sem_request_http(): void

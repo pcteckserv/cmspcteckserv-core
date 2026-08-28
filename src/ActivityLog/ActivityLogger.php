@@ -29,8 +29,8 @@ class ActivityLogger implements ActivityLoggerContract
             return null;
         }
 
-        $request = app()->bound('request') ? request() : null;
-        $user ??= Auth::user();
+        $request = $this->currentRequest();
+        $user ??= $this->currentUser();
 
         $activityLog = ActivityLog::query()->create([
             'user_type' => $user instanceof Model ? $user->getMorphClass() : null,
@@ -52,5 +52,25 @@ class ActivityLogger implements ActivityLoggerContract
         event(new ActivityLogged($activityLog));
 
         return $activityLog;
+    }
+
+    private function currentRequest(): ?Request
+    {
+        if (! app()->bound('request')) {
+            return null;
+        }
+
+        $request = app('request');
+
+        return $request instanceof Request ? $request : null;
+    }
+
+    private function currentUser(): mixed
+    {
+        try {
+            return Auth::user();
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }

@@ -17,7 +17,7 @@ class RolesController
         Gate::authorize('core.roles.view');
 
         return view('cms-core::admin.roles.index', [
-            'roles' => Role::query()->withCount('permissions')->orderBy('name')->paginate(15),
+            'roles' => $this->visibleRolesQuery()->withCount('permissions')->orderBy('name')->paginate(15),
         ]);
     }
 
@@ -39,6 +39,7 @@ class RolesController
     public function edit(Role $role): View
     {
         Gate::authorize('core.roles.update');
+        $this->abortIfSuperAdminRole($role);
 
         return view('cms-core::admin.roles.edit', array_merge($this->formData(), [
             'role' => $role->load('permissions'),
@@ -47,6 +48,8 @@ class RolesController
 
     public function update(UpdateRoleRequest $request, Role $role): RedirectResponse
     {
+        $this->abortIfSuperAdminRole($role);
+
         if ($role->is_protected && ! $request->user()?->isCmsSuperAdmin()) {
             abort(403);
         }
@@ -60,6 +63,7 @@ class RolesController
     public function destroy(Role $role): RedirectResponse
     {
         Gate::authorize('core.roles.delete');
+        $this->abortIfSuperAdminRole($role);
 
         if ($role->is_protected) {
             return back()->withErrors(['role' => 'Não é possível eliminar uma role protegida.']);
@@ -75,5 +79,22 @@ class RolesController
         return [
             'permissionsByGroup' => Permission::query()->orderBy('group')->orderBy('label')->get()->groupBy('group'),
         ];
+    }
+
+    private function visibleRolesQuery()
+    {
+        return Role::query()->where('key', '!=', $this->superAdminRoleKey());
+    }
+
+    private function abortIfSuperAdminRole(Role $role): void
+    {
+        if ($role->key === $this->superAdminRoleKey()) {
+            abort(404);
+        }
+    }
+
+    private function superAdminRoleKey(): string
+    {
+        return (string) config('cms-core.super_admin_role', 'core.super_admin');
     }
 }

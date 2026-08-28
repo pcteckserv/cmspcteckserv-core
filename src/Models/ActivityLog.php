@@ -26,6 +26,7 @@ class ActivityLog extends Model
         'properties',
         'old_values',
         'new_values',
+        'created_at',
     ];
 
     protected $casts = [
