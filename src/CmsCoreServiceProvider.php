@@ -50,7 +50,6 @@ class CmsCoreServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/cms-backups.php', 'cms-backups');
         $this->app->singleton(PermissionRegistry::class);
         $this->app->singleton(ConsentManagerContract::class, ConsentManager::class);
-        $this->app->alias(ConsentManagerContract::class, ConsentManager::class);
         $this->app->singleton(MaintenanceTemplateRegistry::class);
         $this->app->singleton(ActivityLoggerContract::class, ActivityLogger::class);
         $this->app->bind(MediaUrlGenerator::class, StorageMediaUrlGenerator::class);
