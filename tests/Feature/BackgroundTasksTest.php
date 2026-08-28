@@ -16,6 +16,8 @@ class BackgroundTasksTest extends TestCase
 
     public function test_monitor_mostra_jobs_pendentes_e_falhados(): void
     {
+        config(['queue.default' => 'database']);
+
         DB::table('jobs')->insert([
             'queue' => 'default',
             'payload' => json_encode(['displayName' => 'App\\Jobs\\ExampleJob']),
