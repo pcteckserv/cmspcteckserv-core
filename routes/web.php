@@ -22,6 +22,13 @@ use Pcteckserv\CmsCore\Http\Controllers\Admin\UsersController;
 use Pcteckserv\CmsCore\Http\Controllers\Auth\AuthenticatedSessionController;
 use Pcteckserv\CmsCore\Http\Controllers\Consent\ConsentRecordController;
 use Pcteckserv\CmsCore\Http\Controllers\MaintenanceAccessController;
+use Pcteckserv\CmsCore\Seo\Http\Controllers\RobotsTxtController;
+use Pcteckserv\CmsCore\Seo\Http\Controllers\SeoAuditController;
+use Pcteckserv\CmsCore\Seo\Http\Controllers\SeoDashboardController;
+use Pcteckserv\CmsCore\Seo\Http\Controllers\SeoNotFoundController;
+use Pcteckserv\CmsCore\Seo\Http\Controllers\SeoRedirectsController;
+use Pcteckserv\CmsCore\Seo\Http\Controllers\SeoSettingsController;
+use Pcteckserv\CmsCore\Seo\Http\Controllers\SitemapController;
 
 Route::middleware('web')->group(function (): void {
     Route::middleware('guest')->group(function (): void {
@@ -40,6 +47,9 @@ Route::middleware('web')->group(function (): void {
     Route::post('/consent/records', [ConsentRecordController::class, 'store'])
         ->middleware('throttle:60,1')
         ->name('consent.records.store');
+
+    Route::get('/sitemap.xml', SitemapController::class)->name('seo.sitemap');
+    Route::get('/robots.txt', RobotsTxtController::class)->name('seo.robots');
 
     Route::middleware('auth')
         ->prefix('admin')
@@ -69,6 +79,18 @@ Route::middleware('web')->group(function (): void {
             Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
             Route::get('/activity-logs/export', [ActivityLogController::class, 'export'])->name('activity-logs.export');
             Route::get('/activity-logs/{activityLog}', [ActivityLogController::class, 'show'])->name('activity-logs.show');
+            Route::prefix('seo')->name('seo.')->group(function (): void {
+                Route::get('/', SeoDashboardController::class)->name('dashboard');
+                Route::get('/settings', [SeoSettingsController::class, 'edit'])->name('settings.edit');
+                Route::put('/settings', [SeoSettingsController::class, 'update'])->name('settings.update');
+                Route::get('/redirects', [SeoRedirectsController::class, 'index'])->name('redirects.index');
+                Route::post('/redirects', [SeoRedirectsController::class, 'store'])->name('redirects.store');
+                Route::put('/redirects/{redirect}', [SeoRedirectsController::class, 'update'])->name('redirects.update');
+                Route::delete('/redirects/{redirect}', [SeoRedirectsController::class, 'destroy'])->name('redirects.destroy');
+                Route::get('/404', [SeoNotFoundController::class, 'index'])->name('not-found.index');
+                Route::put('/404/{notFound}', [SeoNotFoundController::class, 'update'])->name('not-found.update');
+                Route::get('/audit', [SeoAuditController::class, 'index'])->name('audit.index');
+            });
             Route::prefix('consent')->name('consent.')->group(function (): void {
                 Route::get('/', ConsentDashboardController::class)->name('dashboard');
                 Route::get('/settings', [ConsentSettingsController::class, 'edit'])->name('settings.edit');

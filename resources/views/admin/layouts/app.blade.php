@@ -32,6 +32,9 @@
                 @can('consent.view')
                     <a @class(['nav-link', 'active' => request()->routeIs('admin.consent.*')]) href="{{ route('admin.consent.dashboard') }}">Consentimentos</a>
                 @endcan
+                @can('seo.view')
+                    <a @class(['nav-link', 'active' => request()->routeIs('admin.seo.*')]) href="{{ route('admin.seo.dashboard') }}">SEO</a>
+                @endcan
                 @can('core.site-options.view')
                     <a @class(['nav-link', 'active' => request()->routeIs('admin.site-options.*')]) href="{{ route('admin.site-options.edit') }}">Opções gerais</a>
                 @endcan

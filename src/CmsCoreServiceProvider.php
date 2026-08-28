@@ -33,6 +33,17 @@ use Pcteckserv\CmsCore\Contracts\CmsAccessUser;
 use Pcteckserv\CmsCore\Contracts\MediaUrlGenerator;
 use Pcteckserv\CmsCore\Http\Middleware\HandleCmsMaintenanceMode;
 use Pcteckserv\CmsCore\Http\Middleware\InjectConsentManager;
+use Pcteckserv\CmsCore\Seo\Http\Middleware\HandleSeoRedirects;
+use Pcteckserv\CmsCore\Seo\Http\Middleware\TrackSeoNotFound;
+use Pcteckserv\CmsCore\Seo\Rules\MissingAltRule;
+use Pcteckserv\CmsCore\Seo\Rules\MissingCanonicalRule;
+use Pcteckserv\CmsCore\Seo\Rules\MissingDescriptionRule;
+use Pcteckserv\CmsCore\Seo\Rules\MissingTitleRule;
+use Pcteckserv\CmsCore\Seo\Rules\MultipleH1Rule;
+use Pcteckserv\CmsCore\Seo\Schema\OrganizationSchemaProvider;
+use Pcteckserv\CmsCore\Seo\Schema\WebPageSchemaProvider;
+use Pcteckserv\CmsCore\Seo\Schema\WebSiteSchemaProvider;
+use Pcteckserv\CmsCore\Seo\Support\SeoRegistry;
 use Pcteckserv\CmsCore\Services\Maintenance\MaintenanceModeManager;
 use Pcteckserv\CmsCore\Services\Maintenance\MaintenanceTemplateRegistry;
 use Pcteckserv\CmsCore\Services\Media\StorageMediaUrlGenerator;
@@ -41,6 +52,8 @@ use Pcteckserv\CmsCore\Services\UserModelResolver;
 use Pcteckserv\CmsCore\Support\SiteOptions;
 use Pcteckserv\CmsCore\View\Components\CmsFooter;
 use Pcteckserv\CmsCore\View\Components\CmsMediaPicker;
+use Pcteckserv\CmsCore\View\Components\CmsSeo;
+use Pcteckserv\CmsCore\View\Components\CmsSeoEditor;
 
 class CmsCoreServiceProvider extends ServiceProvider
 {
@@ -49,6 +62,8 @@ class CmsCoreServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/cms-core.php', 'cms-core');
         $this->mergeConfigFrom(__DIR__.'/../config/cms-backups.php', 'cms-backups');
         $this->app->singleton(PermissionRegistry::class);
+        $this->app->singleton(SeoRegistry::class);
+        $this->app->alias(SeoRegistry::class, 'cms.seo.registry');
         $this->app->singleton(ConsentManagerContract::class, ConsentManager::class);
         $this->app->singleton(MaintenanceTemplateRegistry::class);
         $this->app->singleton(ActivityLoggerContract::class, ActivityLogger::class);
@@ -60,10 +75,15 @@ class CmsCoreServiceProvider extends ServiceProvider
         $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'cms-core');
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        Blade::anonymousComponentPath(__DIR__.'/../resources/views/components', 'cms');
         Blade::component(CmsFooter::class, 'cms-footer');
         Blade::component(CmsMediaPicker::class, 'cms-media-picker');
+        Blade::component(CmsSeo::class, 'cms-seo');
+        Blade::component(CmsSeoEditor::class, 'cms-seo-editor');
         $this->app['router']->pushMiddlewareToGroup('web', HandleCmsMaintenanceMode::class);
         $this->app['router']->pushMiddlewareToGroup('web', InjectConsentManager::class);
+        $this->app['router']->pushMiddlewareToGroup('web', HandleSeoRedirects::class);
+        $this->app['router']->pushMiddlewareToGroup('web', TrackSeoNotFound::class);
 
         $this->publishes([
             __DIR__.'/../config/cms-core.php' => config_path('cms-core.php'),
@@ -88,6 +108,7 @@ class CmsCoreServiceProvider extends ServiceProvider
         $this->registerBackupRateLimiters();
         $this->registerMediaRateLimiters();
         $this->registerMaintenanceRateLimiters();
+        $this->registerSeoExtensions();
 
         if ($this->app->runningInConsole()) {
             $this->commands([
@@ -163,7 +184,29 @@ class CmsCoreServiceProvider extends ServiceProvider
             'consent.publish' => ['label' => 'Publicar configuração de consentimentos', 'group' => 'Consentimentos'],
             'queues.view' => ['label' => 'Ver tarefas em segundo plano', 'group' => 'Tarefas'],
             'queues.manage' => ['label' => 'Gerir tarefas em segundo plano', 'group' => 'Tarefas'],
+            'seo.view' => ['label' => 'Ver SEO', 'group' => 'SEO'],
+            'seo.settings.manage' => ['label' => 'Gerir configuração SEO', 'group' => 'SEO'],
+            'seo.audit.run' => ['label' => 'Executar auditoria SEO', 'group' => 'SEO'],
+            'seo.redirects.manage' => ['label' => 'Gerir redirecionamentos SEO', 'group' => 'SEO'],
+            'seo.404.view' => ['label' => 'Ver erros 404', 'group' => 'SEO'],
+            'seo.404.manage' => ['label' => 'Gerir erros 404', 'group' => 'SEO'],
+            'seo.sitemap.manage' => ['label' => 'Gerir sitemap', 'group' => 'SEO'],
+            'seo.robots.manage' => ['label' => 'Gerir robots.txt', 'group' => 'SEO'],
         ]);
+    }
+
+    private function registerSeoExtensions(): void
+    {
+        $registry = $this->app->make(SeoRegistry::class);
+
+        $registry->registerSchemaProvider(OrganizationSchemaProvider::class);
+        $registry->registerSchemaProvider(WebSiteSchemaProvider::class);
+        $registry->registerSchemaProvider(WebPageSchemaProvider::class);
+        $registry->registerAuditRule(MissingTitleRule::class);
+        $registry->registerAuditRule(MissingDescriptionRule::class);
+        $registry->registerAuditRule(MultipleH1Rule::class);
+        $registry->registerAuditRule(MissingCanonicalRule::class);
+        $registry->registerAuditRule(MissingAltRule::class);
     }
 
     private function registerGates(): void
