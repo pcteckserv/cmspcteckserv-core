@@ -4,6 +4,11 @@ use Illuminate\Support\Facades\Route;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\ActivityLogController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\ArtisanCommandsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\BackupsController;
+use Pcteckserv\CmsCore\Http\Controllers\Admin\Consent\ConsentCategoriesController;
+use Pcteckserv\CmsCore\Http\Controllers\Admin\Consent\ConsentDashboardController;
+use Pcteckserv\CmsCore\Http\Controllers\Admin\Consent\ConsentScansController;
+use Pcteckserv\CmsCore\Http\Controllers\Admin\Consent\ConsentServicesController;
+use Pcteckserv\CmsCore\Http\Controllers\Admin\Consent\ConsentSettingsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\DashboardController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\FooterSettingsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\MaintenanceSettingsController;
@@ -14,6 +19,7 @@ use Pcteckserv\CmsCore\Http\Controllers\Admin\SmtpSettingsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\UpdatesController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\UsersController;
 use Pcteckserv\CmsCore\Http\Controllers\Auth\AuthenticatedSessionController;
+use Pcteckserv\CmsCore\Http\Controllers\Consent\ConsentRecordController;
 use Pcteckserv\CmsCore\Http\Controllers\MaintenanceAccessController;
 
 Route::middleware('web')->group(function (): void {
@@ -29,6 +35,10 @@ Route::middleware('web')->group(function (): void {
     Route::post('/maintenance/access', [MaintenanceAccessController::class, 'store'])
         ->middleware('throttle:maintenance-access')
         ->name('maintenance.access');
+
+    Route::post('/consent/records', [ConsentRecordController::class, 'store'])
+        ->middleware('throttle:60,1')
+        ->name('consent.records.store');
 
     Route::middleware('auth')
         ->prefix('admin')
@@ -52,6 +62,19 @@ Route::middleware('web')->group(function (): void {
             Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
             Route::get('/activity-logs/export', [ActivityLogController::class, 'export'])->name('activity-logs.export');
             Route::get('/activity-logs/{activityLog}', [ActivityLogController::class, 'show'])->name('activity-logs.show');
+            Route::prefix('consent')->name('consent.')->group(function (): void {
+                Route::get('/', ConsentDashboardController::class)->name('dashboard');
+                Route::get('/settings', [ConsentSettingsController::class, 'edit'])->name('settings.edit');
+                Route::put('/settings', [ConsentSettingsController::class, 'update'])->name('settings.update');
+                Route::post('/settings/publish', [ConsentSettingsController::class, 'publish'])->name('settings.publish');
+                Route::get('/categories', [ConsentCategoriesController::class, 'index'])->name('categories.index');
+                Route::put('/categories/{category}', [ConsentCategoriesController::class, 'update'])->name('categories.update');
+                Route::get('/services', [ConsentServicesController::class, 'index'])->name('services.index');
+                Route::get('/services/{service}', [ConsentServicesController::class, 'show'])->name('services.show');
+                Route::put('/services/{service}', [ConsentServicesController::class, 'update'])->name('services.update');
+                Route::get('/scans', [ConsentScansController::class, 'index'])->name('scans.index');
+                Route::post('/scans', [ConsentScansController::class, 'store'])->name('scans.store');
+            });
             Route::get('/backups', [BackupsController::class, 'index'])->name('backups.index');
             Route::put('/backups/destinations/{destination}', [BackupsController::class, 'updateDestination'])->name('backups.destinations.update');
             Route::post('/backups/destinations/{destination}/test', [BackupsController::class, 'testDestination'])->middleware('throttle:backups')->name('backups.destinations.test');

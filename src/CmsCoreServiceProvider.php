@@ -15,6 +15,9 @@ use Pcteckserv\CmsCore\ActivityLog\Contracts\ActivityLoggerContract;
 use Pcteckserv\CmsCore\Console\BackupStatusCommand;
 use Pcteckserv\CmsCore\Console\CheckUpdatesCommand;
 use Pcteckserv\CmsCore\Console\CleanupBackupsCommand;
+use Pcteckserv\CmsCore\Console\ConsentKnowledgeCommand;
+use Pcteckserv\CmsCore\Console\ConsentScanCommand;
+use Pcteckserv\CmsCore\Console\ConsentStatusCommand;
 use Pcteckserv\CmsCore\Console\CreateBackupCommand;
 use Pcteckserv\CmsCore\Console\MaintenanceOffCommand;
 use Pcteckserv\CmsCore\Console\MaintenanceOnCommand;
@@ -24,9 +27,12 @@ use Pcteckserv\CmsCore\Console\PruneActivityLogsCommand;
 use Pcteckserv\CmsCore\Console\RunDueBackupsCommand;
 use Pcteckserv\CmsCore\Console\SyncPermissionsCommand;
 use Pcteckserv\CmsCore\Console\SyncVersionsCommand;
+use Pcteckserv\CmsCore\Consent\ConsentManager;
+use Pcteckserv\CmsCore\Consent\Contracts\ConsentManagerContract;
 use Pcteckserv\CmsCore\Contracts\CmsAccessUser;
 use Pcteckserv\CmsCore\Contracts\MediaUrlGenerator;
 use Pcteckserv\CmsCore\Http\Middleware\HandleCmsMaintenanceMode;
+use Pcteckserv\CmsCore\Http\Middleware\InjectConsentManager;
 use Pcteckserv\CmsCore\Services\Maintenance\MaintenanceModeManager;
 use Pcteckserv\CmsCore\Services\Maintenance\MaintenanceTemplateRegistry;
 use Pcteckserv\CmsCore\Services\Media\StorageMediaUrlGenerator;
@@ -43,6 +49,8 @@ class CmsCoreServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/cms-core.php', 'cms-core');
         $this->mergeConfigFrom(__DIR__.'/../config/cms-backups.php', 'cms-backups');
         $this->app->singleton(PermissionRegistry::class);
+        $this->app->singleton(ConsentManagerContract::class, ConsentManager::class);
+        $this->app->alias(ConsentManagerContract::class, ConsentManager::class);
         $this->app->singleton(MaintenanceTemplateRegistry::class);
         $this->app->singleton(ActivityLoggerContract::class, ActivityLogger::class);
         $this->app->bind(MediaUrlGenerator::class, StorageMediaUrlGenerator::class);
@@ -56,6 +64,7 @@ class CmsCoreServiceProvider extends ServiceProvider
         Blade::component(CmsFooter::class, 'cms-footer');
         Blade::component(CmsMediaPicker::class, 'cms-media-picker');
         $this->app['router']->pushMiddlewareToGroup('web', HandleCmsMaintenanceMode::class);
+        $this->app['router']->pushMiddlewareToGroup('web', InjectConsentManager::class);
 
         $this->publishes([
             __DIR__.'/../config/cms-core.php' => config_path('cms-core.php'),
@@ -86,6 +95,9 @@ class CmsCoreServiceProvider extends ServiceProvider
                 BackupStatusCommand::class,
                 CheckUpdatesCommand::class,
                 CleanupBackupsCommand::class,
+                ConsentKnowledgeCommand::class,
+                ConsentScanCommand::class,
+                ConsentStatusCommand::class,
                 CreateBackupCommand::class,
                 MaintenanceOffCommand::class,
                 MaintenanceOnCommand::class,
@@ -145,6 +157,11 @@ class CmsCoreServiceProvider extends ServiceProvider
             'maintenance.toggle' => ['label' => 'Ativar ou desativar manutenÃ§Ã£o', 'group' => 'ManutenÃ§Ã£o'],
             'maintenance.preview' => ['label' => 'PrÃ©-visualizar manutenÃ§Ã£o', 'group' => 'ManutenÃ§Ã£o'],
             'maintenance.manage-access' => ['label' => 'Gerir acesso privado', 'group' => 'ManutenÃ§Ã£o'],
+            'consent.view' => ['label' => 'Ver consentimentos', 'group' => 'Consentimentos'],
+            'consent.manage' => ['label' => 'Gerir consentimentos', 'group' => 'Consentimentos'],
+            'consent.scan' => ['label' => 'Executar análises de consentimento', 'group' => 'Consentimentos'],
+            'consent.review' => ['label' => 'Rever classificações de consentimento', 'group' => 'Consentimentos'],
+            'consent.publish' => ['label' => 'Publicar configuração de consentimentos', 'group' => 'Consentimentos'],
         ]);
     }
 

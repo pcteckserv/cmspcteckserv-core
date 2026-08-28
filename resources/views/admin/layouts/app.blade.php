@@ -29,6 +29,9 @@
                 @can('core.activity-logs.view')
                     <a @class(['nav-link', 'active' => request()->routeIs('admin.activity-logs.*')]) href="{{ route('admin.activity-logs.index') }}">Logs de Atividade</a>
                 @endcan
+                @can('consent.view')
+                    <a @class(['nav-link', 'active' => request()->routeIs('admin.consent.*')]) href="{{ route('admin.consent.dashboard') }}">Consentimentos</a>
+                @endcan
                 @can('core.site-options.view')
                     <a @class(['nav-link', 'active' => request()->routeIs('admin.site-options.*')]) href="{{ route('admin.site-options.edit') }}">Opções gerais</a>
                 @endcan
