@@ -60,9 +60,20 @@ class PackageVersionRegistry
             $installedVersion = $this->installedVersion($package);
 
             if ($availableVersion === null) {
+                $currentAvailableVersion = DB::table('cms_installed_packages')
+                    ->where('name', $package)
+                    ->value('available_version');
+
+                $fallbackAvailableVersion = is_string($installedVersion)
+                    && is_string($currentAvailableVersion)
+                    && version_compare($this->normalizeVersion($installedVersion), $this->normalizeVersion($currentAvailableVersion), '>')
+                        ? $installedVersion
+                        : $currentAvailableVersion;
+
                 DB::table('cms_installed_packages')
                     ->where('name', $package)
                     ->update([
+                        'available_version' => $fallbackAvailableVersion,
                         'checked_at' => now(),
                         'updated_at' => now(),
                     ]);
