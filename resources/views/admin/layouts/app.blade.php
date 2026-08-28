@@ -51,6 +51,9 @@
                 @can('backups.view')
                     <a @class(['nav-link', 'active' => request()->routeIs('admin.backups.*')]) href="{{ route('admin.backups.index') }}">Backups</a>
                 @endcan
+                @can('queues.view')
+                    <a @class(['nav-link', 'active' => request()->routeIs('admin.queues.*')]) href="{{ route('admin.queues.dashboard') }}">Tarefas</a>
+                @endcan
                 <a @class(['nav-link', 'active' => request()->routeIs('admin.laravel-commands.*')]) href="{{ route('admin.laravel-commands.index') }}">Comandos Laravel</a>
                 <a @class(['nav-link', 'active' => request()->routeIs('admin.updates.*')]) href="{{ route('admin.updates.index') }}">Atualizações</a>
             </nav>

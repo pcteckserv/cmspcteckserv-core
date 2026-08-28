@@ -161,6 +161,8 @@ class CmsCoreServiceProvider extends ServiceProvider
             'consent.scan' => ['label' => 'Executar análises de consentimento', 'group' => 'Consentimentos'],
             'consent.review' => ['label' => 'Rever classificações de consentimento', 'group' => 'Consentimentos'],
             'consent.publish' => ['label' => 'Publicar configuração de consentimentos', 'group' => 'Consentimentos'],
+            'queues.view' => ['label' => 'Ver tarefas em segundo plano', 'group' => 'Tarefas'],
+            'queues.manage' => ['label' => 'Gerir tarefas em segundo plano', 'group' => 'Tarefas'],
         ]);
     }
 
