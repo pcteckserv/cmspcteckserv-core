@@ -48,6 +48,21 @@ class SiteOptions
         return $this->all()[$key] ?? $fallback;
     }
 
+    public function siteIconUrl(): string
+    {
+        $url = $this->get('site_icon_url');
+
+        if (is_string($url) && trim($url) !== '') {
+            return $url;
+        }
+
+        $default = $this->defaults()['site_icon_url'] ?? null;
+
+        return is_string($default) && trim($default) !== ''
+            ? $default
+            : '/vendor/cms-core/images/favicon.png';
+    }
+
     public function setMany(array $options): void
     {
         foreach ($options as $key => $value) {

@@ -14,6 +14,7 @@ use Pcteckserv\CmsCore\Models\Permission;
 use Pcteckserv\CmsCore\Models\Role;
 use Pcteckserv\CmsCore\Models\SiteOption;
 use Pcteckserv\CmsCore\Support\Permissions\PermissionRegistry;
+use Pcteckserv\CmsCore\Support\SiteOptions;
 use Tests\TestCase;
 
 class ActivityLogTest extends TestCase
@@ -132,6 +133,21 @@ class ActivityLogTest extends TestCase
             ->get(route('admin.site-options.edit'))
             ->assertOk()
             ->assertSee('placeholder="/vendor/cms-core/images/favicon.png"', false);
+    }
+
+    public function test_favicon_padrao_e_usado_quando_valor_guardado_esta_vazio(): void
+    {
+        $admin = $this->superAdmin();
+
+        SiteOption::query()->updateOrCreate(['key' => 'site_icon_url'], ['value' => '']);
+        app(SiteOptions::class)->clearCache();
+
+        $this->assertSame('/vendor/cms-core/images/favicon.png', app(SiteOptions::class)->siteIconUrl());
+
+        $this->actingAs($admin)
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSee('rel="icon" type="image/png" href="/vendor/cms-core/images/favicon.png"', false);
     }
 
     public function test_filtros_funcionam(): void

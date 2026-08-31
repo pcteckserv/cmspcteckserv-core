@@ -41,7 +41,10 @@ Route::middleware('web')->group(function (): void {
 
         abort_unless(is_file($path), 404);
 
-        return response()->file($path);
+        return response()
+            ->file($path)
+            ->setMaxAge(604800)
+            ->setPublic();
     })->where('file', '[A-Za-z0-9._-]+')->name('cms-core.images.show');
 
     Route::middleware('guest')->group(function (): void {
