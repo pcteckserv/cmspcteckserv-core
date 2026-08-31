@@ -61,9 +61,9 @@ class BackgroundTasksTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.dashboard'))
             ->assertOk()
-            ->assertSee('Acessos')
             ->assertSee('Utilizadores')
-            ->assertSee('Roles');
+            ->assertSee('Lista')
+            ->assertSee('Regras de acesso');
     }
 
     private function superAdmin(): User

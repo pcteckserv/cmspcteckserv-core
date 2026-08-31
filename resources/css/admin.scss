@@ -42,20 +42,19 @@ body {
     width: 16rem;
 }
 
-.admin-sidebar .fw-semibold {
+.cms-admin-brand {
     align-items: center;
     display: flex;
-    gap: .65rem;
-    letter-spacing: .02em;
+    min-height: 2rem;
+    text-decoration: none;
 }
 
-.admin-sidebar .fw-semibold::before {
-    background: var(--cms-admin-accent);
-    border-radius: .2rem;
-    content: "";
-    display: inline-block;
-    height: 1.15rem;
-    width: .35rem;
+.cms-admin-brand img {
+    display: block;
+    height: 2rem;
+    max-width: 10.5rem;
+    object-fit: contain;
+    width: auto;
 }
 
 .admin-sidebar .nav {
@@ -85,14 +84,23 @@ body {
 .cms-sidebar-menu-toggle {
     background: transparent;
     border: 0;
+    color: rgba(255, 255, 255, .9) !important;
+    font-weight: 700;
     width: 100%;
 }
 
+.cms-sidebar-menu-toggle.active {
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #fff !important;
+}
 
 .cms-sidebar-menu-toggle::after {
     border-bottom: .12rem solid currentColor;
     border-right: .12rem solid currentColor;
     content: "";
+    display: inline-block;
+    float: right;
     height: .45rem;
     margin-top: .4rem;
     transform: rotate(45deg);
@@ -105,15 +113,34 @@ body {
 }
 
 .cms-sidebar-submenu {
-    border-left: 1px solid rgba(255, 255, 255, .12);
-    margin: .25rem 0 .45rem .75rem;
-    padding-left: .5rem;
+    border-left: 1px solid rgba(244, 117, 60, .42);
+    display: grid;
+    gap: .15rem;
+    margin: .15rem 0 .55rem .75rem;
+    padding: .15rem 0 .15rem .65rem;
 }
 
 .cms-sidebar-submenu .nav-link {
+    background: transparent;
+    border-radius: .35rem;
+    color: rgba(255, 255, 255, .68);
     font-size: .925rem;
+    font-weight: 500;
     padding-bottom: .35rem;
+    padding-left: .65rem;
     padding-top: .35rem;
+}
+
+.cms-sidebar-submenu .nav-link:hover,
+.cms-sidebar-submenu .nav-link:focus-visible {
+    background: rgba(255, 255, 255, .07);
+    color: #fff;
+}
+
+.cms-sidebar-submenu .nav-link.active {
+    background: rgba(244, 117, 60, .16);
+    box-shadow: inset .18rem 0 0 var(--cms-admin-accent);
+    color: #fff;
 }
 
 .admin-content {

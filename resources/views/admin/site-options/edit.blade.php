@@ -45,7 +45,7 @@
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
                 <div class="input-group">
-                    <input id="site_icon_url" name="site_icon_url" type="text" class="form-control @error('site_icon_url') is-invalid @enderror" value="{{ old('site_icon_url', $options['site_icon_url']) }}" placeholder="/favicon.ico">
+                    <input id="site_icon_url" name="site_icon_url" type="text" class="form-control @error('site_icon_url') is-invalid @enderror" value="{{ old('site_icon_url', $options['site_icon_url']) }}" placeholder="{{ $defaultSiteIconUrl }}">
                     <button class="btn btn-outline-danger" type="submit" name="remove_site_icon" value="1">Remover</button>
                 </div>
                 <div class="form-text">Escolha um ficheiro ou indique uma URL. O ícone deve ser quadrado e ter pelo menos 512 por 512 píxeis.</div>

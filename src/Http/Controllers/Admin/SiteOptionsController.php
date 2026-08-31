@@ -20,6 +20,7 @@ class SiteOptionsController extends Controller
         return view('cms-core::admin.site-options.edit', [
             'options' => $siteOptions->all(),
             'locales' => $this->locales(),
+            'defaultSiteIconUrl' => $this->defaultSiteIconUrl(),
         ]);
     }
 
@@ -29,7 +30,7 @@ class SiteOptionsController extends Controller
 
         if ($request->boolean('remove_site_icon')) {
             $this->deleteStoredSiteIcon($validated['site_icon_url'] ?? null);
-            $validated['site_icon_url'] = '';
+            $validated['site_icon_url'] = $this->defaultSiteIconUrl();
         } elseif ($request->hasFile('site_icon_file')) {
             $validated['site_icon_url'] = '/storage/'.$request->file('site_icon_file')->store('cms/site-icons', 'public');
         }
@@ -65,6 +66,15 @@ class SiteOptionsController extends Controller
         }
 
         Storage::disk('public')->delete(Str::after($path, '/storage/'));
+    }
+
+    private function defaultSiteIconUrl(): string
+    {
+        $default = config('cms-core.site_options.site_icon_url');
+
+        return is_string($default) && $default !== ''
+            ? $default
+            : '/vendor/cms-core/images/favicon.png';
     }
 
     private function syncAppUrlEnv(string $url): void

@@ -12,6 +12,7 @@ use Pcteckserv\CmsCore\ActivityLog\Contracts\ActivityLoggerContract;
 use Pcteckserv\CmsCore\Models\ActivityLog;
 use Pcteckserv\CmsCore\Models\Permission;
 use Pcteckserv\CmsCore\Models\Role;
+use Pcteckserv\CmsCore\Models\SiteOption;
 use Pcteckserv\CmsCore\Support\Permissions\PermissionRegistry;
 use Tests\TestCase;
 
@@ -98,6 +99,39 @@ class ActivityLogTest extends TestCase
 
         $this->actingAs($plainUser)->get(route('admin.activity-logs.index'))->assertForbidden();
         $this->actingAs($admin)->get(route('admin.activity-logs.index'))->assertOk();
+    }
+
+    public function test_remover_favicon_repoe_icone_padrao(): void
+    {
+        $admin = $this->superAdmin();
+
+        $this->actingAs($admin)
+            ->put(route('admin.site-options.update'), [
+                'site_title' => 'CMS PCTECK',
+                'site_description' => 'Site institucional gerido pelo CMS PCTECK.',
+                'site_icon_url' => '/storage/cms/site-icons/custom.png',
+                'remove_site_icon' => '1',
+                'site_url' => 'https://example.test',
+                'admin_email' => 'admin@example.test',
+                'locale' => 'pt_PT',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('cms_site_options_success');
+
+        $this->assertSame(
+            '/vendor/cms-core/images/favicon.png',
+            SiteOption::query()->where('key', 'site_icon_url')->value('value'),
+        );
+    }
+
+    public function test_placeholder_do_favicon_mostra_icone_padrao(): void
+    {
+        $admin = $this->superAdmin();
+
+        $this->actingAs($admin)
+            ->get(route('admin.site-options.edit'))
+            ->assertOk()
+            ->assertSee('placeholder="/vendor/cms-core/images/favicon.png"', false);
     }
 
     public function test_filtros_funcionam(): void

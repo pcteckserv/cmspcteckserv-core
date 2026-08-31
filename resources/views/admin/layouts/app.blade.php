@@ -14,7 +14,9 @@
 <body>
     <div class="admin-shell d-md-flex bg-light">
         <aside class="admin-sidebar bg-dark text-white p-3">
-            <div class="fw-semibold mb-4">CMS PCTECK</div>
+            <a class="cms-admin-brand mb-4" href="{{ route('admin.dashboard') }}" aria-label="PCTECKSERV">
+                <img src="{{ asset('vendor/cms-core/images/logotipos-pcteckserv-texto.svg') }}" alt="PCTECKSERV">
+            </a>
             <nav class="nav nav-pills flex-column">
                 <a @class(['nav-link', 'active' => request()->routeIs('admin.dashboard')]) href="{{ route('admin.dashboard') }}">Dashboard</a>
                 @canany(['core.users.view', 'core.roles.view'])
@@ -27,14 +29,14 @@
                         aria-expanded="{{ $accessMenuOpen ? 'true' : 'false' }}"
                         aria-controls="cms-access-submenu"
                     >
-                        Acessos
+                        Utilizadores
                     </button>
                     <div @class(['collapse cms-sidebar-submenu', 'show' => $accessMenuOpen]) id="cms-access-submenu">
                         @can('core.users.view')
-                            <a @class(['nav-link', 'active' => request()->routeIs('admin.users.*')]) href="{{ route('admin.users.index') }}">Utilizadores</a>
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.users.*')]) href="{{ route('admin.users.index') }}">Lista</a>
                         @endcan
                         @can('core.roles.view')
-                            <a @class(['nav-link', 'active' => request()->routeIs('admin.roles.*')]) href="{{ route('admin.roles.index') }}">Roles</a>
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.roles.*')]) href="{{ route('admin.roles.index') }}">Regras de acesso</a>
                         @endcan
                     </div>
                 @endcanany
