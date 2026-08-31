@@ -45,8 +45,10 @@ body {
 .cms-admin-brand {
     align-items: center;
     display: flex;
+    justify-content: center;
     min-height: 2rem;
     text-decoration: none;
+    width: 100%;
 }
 
 .cms-admin-brand img {
@@ -121,9 +123,9 @@ body {
 }
 
 .cms-sidebar-submenu .nav-link {
-    background: transparent;
+    background: transparent !important;
     border-radius: .35rem;
-    color: rgba(255, 255, 255, .68);
+    color: rgba(255, 255, 255, .68) !important;
     font-size: .925rem;
     font-weight: 500;
     padding-bottom: .35rem;
@@ -133,14 +135,15 @@ body {
 
 .cms-sidebar-submenu .nav-link:hover,
 .cms-sidebar-submenu .nav-link:focus-visible {
-    background: rgba(255, 255, 255, .07);
-    color: #fff;
+    background: rgba(255, 255, 255, .07) !important;
+    color: #fff !important;
 }
 
 .cms-sidebar-submenu .nav-link.active {
-    background: rgba(244, 117, 60, .16);
-    box-shadow: inset .18rem 0 0 var(--cms-admin-accent);
-    color: #fff;
+    background: rgba(244, 117, 60, .18) !important;
+    box-shadow: inset .18rem 0 0 var(--cms-admin-accent) !important;
+    color: #fff !important;
+    font-weight: 700;
 }
 
 .admin-content {
