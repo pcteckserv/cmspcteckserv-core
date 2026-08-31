@@ -184,6 +184,8 @@ class CmsCoreServiceProvider extends ServiceProvider
             'consent.publish' => ['label' => 'Publicar configuração de consentimentos', 'group' => 'Consentimentos'],
             'queues.view' => ['label' => 'Ver tarefas em segundo plano', 'group' => 'Tarefas'],
             'queues.manage' => ['label' => 'Gerir tarefas em segundo plano', 'group' => 'Tarefas'],
+            'updates.view' => ['label' => 'Ver atualizações', 'group' => 'Atualizações'],
+            'updates.manage' => ['label' => 'Executar atualizações', 'group' => 'Atualizações'],
             'seo.view' => ['label' => 'Ver SEO', 'group' => 'SEO'],
             'seo.settings.manage' => ['label' => 'Gerir configuração SEO', 'group' => 'SEO'],
             'seo.audit.run' => ['label' => 'Executar auditoria SEO', 'group' => 'SEO'],

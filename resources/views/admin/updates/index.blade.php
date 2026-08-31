@@ -23,6 +23,12 @@
         <div class="alert alert-danger">{{ session('cms_update_error') }}</div>
     @endif
 
+    @if ($queueConnection === 'sync')
+        <div class="alert alert-warning">
+            A queue está configurada como sync. Para atualizar em segundo plano, configure uma queue assíncrona e mantenha um worker ativo.
+        </div>
+    @endif
+
     <div class="bg-white border rounded-2">
         <div class="table-responsive">
             <table class="table align-middle mb-0">
@@ -38,20 +44,37 @@
                 </thead>
                 <tbody>
                     @forelse ($packages as $package)
+                        @php($status = $statuses[$package->name] ?? null)
                         <tr>
                             <td class="fw-semibold">{{ $package->name }}</td>
                             <td>{{ $package->installedVersion ?? '-' }}</td>
                             <td>{{ $package->availableVersion ?? 'Não verificada' }}</td>
                             <td>{{ $package->formattedCheckedAt() }}</td>
                             <td>
-                                @if ($package->hasUpdate())
+                                @if (($status['state'] ?? null) === 'queued')
+                                    <span class="badge text-bg-info">Na fila</span>
+                                @elseif (($status['state'] ?? null) === 'running')
+                                    <span class="badge text-bg-primary">Em execução</span>
+                                @elseif (($status['state'] ?? null) === 'failed')
+                                    <span class="badge text-bg-danger">Falhou</span>
+                                @elseif (($status['state'] ?? null) === 'succeeded')
+                                    <span class="badge text-bg-success">Concluída</span>
+                                @elseif ($package->hasUpdate())
                                     <span class="badge text-bg-warning">Update disponível</span>
                                 @else
                                     <span class="badge text-bg-success">Atualizado</span>
                                 @endif
+
+                                @if ($status)
+                                    <div class="small text-secondary mt-1">
+                                        {{ $status['message'] }}
+                                    </div>
+                                @endif
                             </td>
                             <td class="text-end">
-                                @if ($package->hasUpdate())
+                                @if (in_array($status['state'] ?? null, ['queued', 'running'], true))
+                                    <button class="btn btn-outline-secondary btn-sm" type="button" disabled>A processar</button>
+                                @elseif ($package->hasUpdate())
                                     <form method="POST" action="{{ route('admin.updates.run', ['package' => $package->name]) }}">
                                         @csrf
                                         <button class="btn btn-primary btn-sm" type="submit">Atualizar</button>
