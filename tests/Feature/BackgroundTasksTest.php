@@ -68,6 +68,10 @@ class BackgroundTasksTest extends TestCase
 
     public function test_imagens_publicas_do_core_sao_servidas_sem_publicacao_manual(): void
     {
+        $this->get('/favicon.ico')
+            ->assertOk()
+            ->assertHeader('content-type', 'image/png');
+
         $this->get('/vendor/cms-core/images/logotipos-pcteckserv-texto.svg')
             ->assertOk()
             ->assertHeader('content-type', 'image/svg+xml');

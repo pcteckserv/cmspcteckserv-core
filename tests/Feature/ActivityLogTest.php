@@ -142,12 +142,12 @@ class ActivityLogTest extends TestCase
         SiteOption::query()->updateOrCreate(['key' => 'site_icon_url'], ['value' => '']);
         app(SiteOptions::class)->clearCache();
 
-        $this->assertSame('/vendor/cms-core/images/favicon.png', app(SiteOptions::class)->siteIconUrl());
+        $this->assertStringStartsWith('/favicon.ico?v=', app(SiteOptions::class)->siteIconUrl());
 
         $this->actingAs($admin)
             ->get(route('admin.dashboard'))
             ->assertOk()
-            ->assertSee('rel="icon" type="image/png" href="/vendor/cms-core/images/favicon.png"', false);
+            ->assertSee('rel="icon" type="image/png" href="/favicon.ico?v=', false);
     }
 
     public function test_filtros_funcionam(): void

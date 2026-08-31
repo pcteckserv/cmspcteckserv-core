@@ -31,6 +31,17 @@ use Pcteckserv\CmsCore\Seo\Http\Controllers\SeoSettingsController;
 use Pcteckserv\CmsCore\Seo\Http\Controllers\SitemapController;
 
 Route::middleware('web')->group(function (): void {
+    Route::get('/favicon.ico', function () {
+        $path = __DIR__.'/../resources/images/favicon.png';
+
+        abort_unless(is_file($path), 404);
+
+        return response()
+            ->file($path, ['Content-Type' => 'image/png'])
+            ->setMaxAge(604800)
+            ->setPublic();
+    })->name('cms-core.favicon');
+
     Route::get('/vendor/cms-core/images/{file}', function (string $file) {
         abort_unless(in_array($file, [
             'favicon.png',

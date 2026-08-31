@@ -53,14 +53,16 @@ class SiteOptions
         $url = $this->get('site_icon_url');
 
         if (is_string($url) && trim($url) !== '') {
-            return $url;
+            return $this->isDefaultCoreFavicon($url) ? $this->versionedCoreFaviconUrl() : $url;
         }
 
         $default = $this->defaults()['site_icon_url'] ?? null;
 
-        return is_string($default) && trim($default) !== ''
+        $defaultUrl = is_string($default) && trim($default) !== ''
             ? $default
             : '/vendor/cms-core/images/favicon.png';
+
+        return $this->isDefaultCoreFavicon($defaultUrl) ? $this->versionedCoreFaviconUrl() : $defaultUrl;
     }
 
     public function setMany(array $options): void
@@ -116,5 +118,18 @@ class SiteOptions
     private function truthy(mixed $value): bool
     {
         return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    private function isDefaultCoreFavicon(string $url): bool
+    {
+        return strtok($url, '?') === '/vendor/cms-core/images/favicon.png'
+            || strtok($url, '?') === '/favicon.ico';
+    }
+
+    private function versionedCoreFaviconUrl(): string
+    {
+        $path = __DIR__.'/../../resources/images/favicon.png';
+
+        return '/favicon.ico?v='.(is_file($path) ? filemtime($path) : 'default');
     }
 }
