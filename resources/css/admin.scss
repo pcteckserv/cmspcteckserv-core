@@ -24,6 +24,33 @@ body {
     width: 16rem;
 }
 
+.cms-sidebar-menu-toggle {
+    border: 0;
+    width: 100%;
+}
+
+.cms-sidebar-menu-toggle::after {
+    content: "▾";
+    float: right;
+    font-size: .75rem;
+    line-height: 1.75;
+}
+
+.cms-sidebar-menu-toggle[aria-expanded="false"]::after {
+    transform: rotate(-90deg);
+}
+
+.cms-sidebar-submenu {
+    margin: .15rem 0 .35rem .75rem;
+    padding-left: .5rem;
+}
+
+.cms-sidebar-submenu .nav-link {
+    font-size: .925rem;
+    padding-bottom: .35rem;
+    padding-top: .35rem;
+}
+
 .admin-content {
     display: flex;
     flex-direction: column;

@@ -17,12 +17,27 @@
             <div class="fw-semibold mb-4">CMS PCTECK</div>
             <nav class="nav nav-pills flex-column">
                 <a @class(['nav-link', 'active' => request()->routeIs('admin.dashboard')]) href="{{ route('admin.dashboard') }}">Dashboard</a>
-                @can('core.users.view')
-                    <a @class(['nav-link', 'active' => request()->routeIs('admin.users.*')]) href="{{ route('admin.users.index') }}">Utilizadores</a>
-                @endcan
-                @can('core.roles.view')
-                    <a @class(['nav-link', 'active' => request()->routeIs('admin.roles.*')]) href="{{ route('admin.roles.index') }}">Roles</a>
-                @endcan
+                @canany(['core.users.view', 'core.roles.view'])
+                    @php($accessMenuOpen = request()->routeIs('admin.users.*') || request()->routeIs('admin.roles.*'))
+                    <button
+                        @class(['nav-link cms-sidebar-menu-toggle text-start', 'active' => $accessMenuOpen])
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#cms-access-submenu"
+                        aria-expanded="{{ $accessMenuOpen ? 'true' : 'false' }}"
+                        aria-controls="cms-access-submenu"
+                    >
+                        Acessos
+                    </button>
+                    <div @class(['collapse cms-sidebar-submenu', 'show' => $accessMenuOpen]) id="cms-access-submenu">
+                        @can('core.users.view')
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.users.*')]) href="{{ route('admin.users.index') }}">Utilizadores</a>
+                        @endcan
+                        @can('core.roles.view')
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.roles.*')]) href="{{ route('admin.roles.index') }}">Roles</a>
+                        @endcan
+                    </div>
+                @endcanany
                 @can('media.view')
                     <a @class(['nav-link', 'active' => request()->routeIs('admin.media.*')]) href="{{ route('admin.media.index') }}">Media</a>
                 @endcan

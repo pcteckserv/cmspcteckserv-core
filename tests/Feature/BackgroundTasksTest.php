@@ -54,6 +54,18 @@ class BackgroundTasksTest extends TestCase
         $this->actingAs($admin)->get(route('admin.queues.dashboard'))->assertOk()->assertSee('Tarefas em segundo plano');
     }
 
+    public function test_menu_agrupa_utilizadores_e_roles_em_acessos(): void
+    {
+        $admin = $this->superAdmin();
+
+        $this->actingAs($admin)
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSee('Acessos')
+            ->assertSee('Utilizadores')
+            ->assertSee('Roles');
+    }
+
     private function superAdmin(): User
     {
         $role = Role::query()->firstOrCreate(
