@@ -66,6 +66,16 @@ class BackgroundTasksTest extends TestCase
             ->assertSee('Regras de acesso');
     }
 
+    public function test_imagens_publicas_do_core_sao_servidas_sem_publicacao_manual(): void
+    {
+        $this->get('/vendor/cms-core/images/logotipos-pcteckserv-texto.svg')
+            ->assertOk()
+            ->assertHeader('content-type', 'image/svg+xml');
+
+        $this->get('/vendor/cms-core/images/ficheiro-inexistente.svg')
+            ->assertNotFound();
+    }
+
     private function superAdmin(): User
     {
         $role = Role::query()->firstOrCreate(

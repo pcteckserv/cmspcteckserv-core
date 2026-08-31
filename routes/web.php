@@ -31,6 +31,19 @@ use Pcteckserv\CmsCore\Seo\Http\Controllers\SeoSettingsController;
 use Pcteckserv\CmsCore\Seo\Http\Controllers\SitemapController;
 
 Route::middleware('web')->group(function (): void {
+    Route::get('/vendor/cms-core/images/{file}', function (string $file) {
+        abort_unless(in_array($file, [
+            'favicon.png',
+            'logotipos-pcteckserv-texto.svg',
+        ], true), 404);
+
+        $path = __DIR__.'/../resources/images/'.$file;
+
+        abort_unless(is_file($path), 404);
+
+        return response()->file($path);
+    })->where('file', '[A-Za-z0-9._-]+')->name('cms-core.images.show');
+
     Route::middleware('guest')->group(function (): void {
         Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
         Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.store');
