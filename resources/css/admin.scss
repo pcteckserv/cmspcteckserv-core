@@ -357,7 +357,7 @@ form.bg-white.border,
 
 .cms-media-preview {
     align-items: center;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 1 / 1;
     background: #f1f5f9;
     border: 0;
     border-bottom: 1px solid rgba(15, 23, 42, .1);
@@ -370,7 +370,8 @@ form.bg-white.border,
 
 .cms-media-preview img {
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
+    object-position: center;
     width: 100%;
 }
 
@@ -522,7 +523,8 @@ form.bg-white.border,
     aspect-ratio: 1 / 1;
     background: #f1f5f9;
     display: block;
-    object-fit: contain;
+    object-fit: cover;
+    object-position: center;
     width: 100%;
 }
 
