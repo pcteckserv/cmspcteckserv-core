@@ -404,6 +404,13 @@ form.bg-white.border,
     width: 2rem;
 }
 
+.input-group .cms-input-icon-button {
+    flex: 0 0 2.75rem;
+    height: auto;
+    min-height: calc(1.5em + .75rem + calc(var(--bs-border-width) * 2));
+    width: 2.75rem;
+}
+
 .cms-public-footer {
     background: var(--cms-footer-background);
     color: var(--cms-footer-text);
