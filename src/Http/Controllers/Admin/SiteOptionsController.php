@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Pcteckserv\CmsCore\Http\Requests\Admin\UpdateSiteOptionsRequest;
+use Pcteckserv\CmsCore\Models\Media;
+use Pcteckserv\CmsCore\Services\Media\MediaService;
 use Pcteckserv\CmsCore\Support\SiteOptions;
 
 class SiteOptionsController extends Controller
@@ -24,18 +26,22 @@ class SiteOptionsController extends Controller
         ]);
     }
 
-    public function update(UpdateSiteOptionsRequest $request, SiteOptions $siteOptions): RedirectResponse
+    public function update(UpdateSiteOptionsRequest $request, SiteOptions $siteOptions, MediaService $mediaService): RedirectResponse
     {
         $validated = $request->validated();
 
         if ($request->boolean('remove_site_icon')) {
             $this->deleteStoredSiteIcon($validated['site_icon_url'] ?? null);
             $validated['site_icon_url'] = $this->defaultSiteIconUrl();
-        } elseif ($request->hasFile('site_icon_file')) {
-            $validated['site_icon_url'] = '/storage/'.$request->file('site_icon_file')->store('cms/site-icons', 'public');
+        } elseif (! empty($validated['site_icon_media_id'])) {
+            $media = Media::query()
+                ->where('media_type', 'image')
+                ->findOrFail($validated['site_icon_media_id']);
+
+            $validated['site_icon_url'] = $mediaService->url($media, 'optimized');
         }
 
-        unset($validated['site_icon_file'], $validated['remove_site_icon']);
+        unset($validated['site_icon_media_id'], $validated['remove_site_icon']);
 
         $siteOptions->setMany($validated);
         $this->syncAppUrlEnv($validated['site_url']);

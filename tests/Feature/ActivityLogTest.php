@@ -8,8 +8,11 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Pcteckserv\CmsCore\ActivityLog\Contracts\ActivityLoggerContract;
 use Pcteckserv\CmsCore\Models\ActivityLog;
+use Pcteckserv\CmsCore\Models\Media;
 use Pcteckserv\CmsCore\Models\Permission;
 use Pcteckserv\CmsCore\Models\Role;
 use Pcteckserv\CmsCore\Models\SiteOption;
@@ -129,10 +132,56 @@ class ActivityLogTest extends TestCase
     {
         $admin = $this->superAdmin();
 
+        app('view')->replaceNamespace('cms-core', [realpath(__DIR__.'/../../resources/views')]);
+
         $this->actingAs($admin)
             ->get(route('admin.site-options.edit'))
             ->assertOk()
-            ->assertSee('placeholder="/vendor/cms-core/images/favicon.png"', false);
+            ->assertSee('placeholder="/vendor/cms-core/images/favicon.png"', false)
+            ->assertSee('data-cms-media-picker-target-url="#site_icon_url"', false)
+            ->assertSee('Biblioteca de media')
+            ->assertDontSee('name="site_icon_file"', false);
+    }
+
+    public function test_favicon_pode_ser_escolhido_da_biblioteca_de_media(): void
+    {
+        $admin = $this->superAdmin();
+
+        Storage::fake('public');
+        Storage::disk('public')->put('cms/media/favicon.png', 'favicon');
+
+        $media = Media::query()->create([
+            'uuid' => (string) Str::uuid(),
+            'disk' => 'public',
+            'directory' => 'cms/media',
+            'filename' => 'favicon.png',
+            'path' => 'cms/media/favicon.png',
+            'original_filename' => 'favicon.png',
+            'extension' => 'png',
+            'mime_type' => 'image/png',
+            'media_type' => 'image',
+            'size' => 7,
+            'checksum' => hash('sha256', 'favicon'),
+            'optimization_status' => Media::STATUS_OPTIMIZED,
+        ]);
+
+        $this->actingAs($admin)
+            ->put(route('admin.site-options.update'), [
+                'site_title' => 'CMS PCTECK',
+                'site_description' => 'Site institucional gerido pelo CMS PCTECK.',
+                'site_icon_media_id' => $media->id,
+                'site_icon_url' => '',
+                'site_url' => 'https://example.test',
+                'admin_email' => 'admin@example.test',
+                'locale' => 'pt_PT',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('cms_site_options_success');
+
+        $this->assertSame(
+            Storage::disk('public')->url('cms/media/favicon.png'),
+            SiteOption::query()->where('key', 'site_icon_url')->value('value'),
+        );
     }
 
     public function test_favicon_padrao_e_usado_quando_valor_guardado_esta_vazio(): void

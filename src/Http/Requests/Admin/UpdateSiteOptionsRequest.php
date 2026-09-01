@@ -18,7 +18,13 @@ class UpdateSiteOptionsRequest extends FormRequest
             'site_title' => ['required', 'string', 'max:120'],
             'site_description' => ['nullable', 'string', 'max:255'],
             'site_icon_url' => ['nullable', 'string', 'max:2048'],
-            'site_icon_file' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp,ico', 'max:2048'],
+            'site_icon_media_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('cms_media', 'id')->where(
+                    fn ($query) => $query->where('media_type', 'image')->whereNull('deleted_at')
+                ),
+            ],
             'remove_site_icon' => ['nullable', 'boolean'],
             'site_url' => ['required', 'url', 'max:2048'],
             'admin_email' => ['required', 'email', 'max:255'],

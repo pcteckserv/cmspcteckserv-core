@@ -40,15 +40,22 @@
         <div class="row g-3 align-items-start mb-4">
             <label class="col-lg-2 col-form-label fw-semibold" for="site_icon_url">Ícone do site</label>
             <div class="col-lg-6">
-                <input id="site_icon_file" name="site_icon_file" type="file" class="form-control mb-2 @error('site_icon_file') is-invalid @enderror" accept=".png,.jpg,.jpeg,.webp,.ico">
-                @error('site_icon_file')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
+                <x-cms-media-picker
+                    class="mb-2"
+                    name="site_icon_media_id"
+                    id="site_icon_media_id"
+                    :value="old('site_icon_media_id')"
+                    button-label="Biblioteca de media"
+                    empty-label="Nenhuma imagem selecionada"
+                    help="Selecione uma imagem da biblioteca de media."
+                    data-cms-media-picker-target-url="#site_icon_url"
+                    clearable
+                />
                 <div class="input-group">
                     <input id="site_icon_url" name="site_icon_url" type="text" class="form-control @error('site_icon_url') is-invalid @enderror" value="{{ old('site_icon_url', $options['site_icon_url']) }}" placeholder="{{ $defaultSiteIconUrl }}">
                     <button class="btn btn-outline-danger" type="submit" name="remove_site_icon" value="1">Remover</button>
                 </div>
-                <div class="form-text">Escolha um ficheiro ou indique uma URL. O ícone deve ser quadrado e ter pelo menos 512 por 512 píxeis.</div>
+                <div class="form-text">Escolha uma imagem da biblioteca de media ou indique uma URL. O ícone deve ser quadrado e ter pelo menos 512 por 512 píxeis.</div>
                 @error('site_icon_url')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror

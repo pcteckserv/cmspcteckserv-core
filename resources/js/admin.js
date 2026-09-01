@@ -387,6 +387,11 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
                     input.value = item.id;
                     display.value = label.textContent;
                     selected.textContent = `Selecionado: ${label.textContent}`;
+                    const targetUrl = activePicker?.dataset.cmsMediaPickerTargetUrl;
+                    const targetUrlInput = targetUrl ? document.querySelector(targetUrl) : null;
+                    if (targetUrlInput) {
+                        targetUrlInput.value = item.url || item.original_url || '';
+                    }
                     if (clear) {
                         clear.disabled = false;
                     }
@@ -481,6 +486,8 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
                 const display = picker.querySelector('[data-cms-media-picker-display]');
                 const selected = picker.querySelector('[data-cms-media-picker-selected]');
                 const clear = picker.querySelector('[data-cms-media-picker-clear]');
+                const targetUrl = picker.dataset.cmsMediaPickerTargetUrl;
+                const targetUrlInput = targetUrl ? document.querySelector(targetUrl) : null;
 
                 if (! input || ! display || ! selected || ! clear) {
                     return;
@@ -490,6 +497,9 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
                 display.value = '';
                 selected.textContent = picker.dataset.emptyHelp || selected.textContent;
                 clear.disabled = true;
+                if (targetUrlInput) {
+                    targetUrlInput.value = '';
+                }
 
                 picker.dispatchEvent(new CustomEvent('cms:media-picker-cleared', {
                     bubbles: true,
