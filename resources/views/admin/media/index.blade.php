@@ -119,12 +119,12 @@
                                 @csrf
                                 @method('DELETE')
                                 <button class="btn btn-sm btn-outline-danger cms-media-icon-button" type="submit" title="Eliminar" aria-label="Eliminar">
-                                    <span aria-hidden="true">×</span>
+                                    @include('cms-core::components.icons.trash')
                                 </button>
                             </form>
                         @else
                             <form method="POST" action="{{ route('admin.media.restore', $media->id) }}">@csrf<button class="btn btn-sm btn-outline-primary" type="submit">Restaurar</button></form>
-                            <form method="POST" action="{{ route('admin.media.force-delete', $media->id) }}">@csrf @method('DELETE')<button class="btn btn-sm btn-outline-danger" type="submit">Eliminar definitivamente</button></form>
+                            <form method="POST" action="{{ route('admin.media.force-delete', $media->id) }}">@csrf @method('DELETE')<button class="btn btn-sm btn-outline-danger cms-media-icon-button" type="submit" title="Eliminar definitivamente" aria-label="Eliminar definitivamente">@include('cms-core::components.icons.trash')</button></form>
                         @endif
                     </div>
                 </div>

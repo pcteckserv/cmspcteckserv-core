@@ -188,7 +188,7 @@
                             <td class="small">{{ $run->checksum_sha256 ? substr($run->checksum_sha256, 0, 12) . '...' : '-' }}</td>
                             <td class="d-flex flex-wrap gap-2">
                                 <form method="POST" action="{{ route('admin.backups.runs.verify', $run) }}">@csrf<button class="btn btn-sm btn-outline-secondary">Verificar</button></form>
-                                <form method="POST" action="{{ route('admin.backups.runs.destroy', $run) }}" onsubmit="return confirm('Tem a certeza que pretende eliminar este backup do histórico?')">@csrf @method('DELETE')<button class="btn btn-sm btn-outline-danger">Eliminar</button></form>
+                                <form method="POST" action="{{ route('admin.backups.runs.destroy', $run) }}" onsubmit="return confirm('Tem a certeza que pretende eliminar este backup do histórico?')">@csrf @method('DELETE')<button class="btn btn-sm btn-outline-danger cms-media-icon-button" type="submit" title="Eliminar" aria-label="Eliminar">@include('cms-core::components.icons.trash')</button></form>
                             </td>
                         </tr>
                     @empty

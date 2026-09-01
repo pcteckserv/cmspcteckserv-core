@@ -139,7 +139,7 @@ class ActivityLogTest extends TestCase
             ->assertOk()
             ->assertSee('placeholder="/vendor/cms-core/images/favicon.png"', false)
             ->assertSee('data-cms-media-picker-target-url="#site_icon_url"', false)
-            ->assertSee('Biblioteca de media')
+            ->assertSee('Selecionar')
             ->assertDontSee('name="site_icon_file"', false);
     }
 

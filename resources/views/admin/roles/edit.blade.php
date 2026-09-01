@@ -7,7 +7,7 @@
             <form method="POST" action="{{ route('admin.roles.destroy', $role) }}" onsubmit="return confirm('Confirma a eliminação desta role?')">
                 @csrf
                 @method('DELETE')
-                <button class="btn btn-outline-danger" type="submit" @disabled($role->is_protected)>Eliminar</button>
+                <button class="btn btn-outline-danger cms-media-icon-button" type="submit" title="Eliminar" aria-label="Eliminar" @disabled($role->is_protected)>@include('cms-core::components.icons.trash')</button>
             </form>
         @endcan
     </div>

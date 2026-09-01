@@ -36,7 +36,7 @@
                             </form>
                                     <form method="POST" action="{{ route('admin.seo.redirects.destroy', $redirect) }}" class="d-inline" onsubmit="return confirm('Eliminar este redirecionamento?')">
                                         @csrf @method('DELETE')
-                                        <button class="btn btn-sm btn-outline-danger">Eliminar</button>
+                                        <button class="btn btn-sm btn-outline-danger cms-media-icon-button" type="submit" title="Eliminar" aria-label="Eliminar">@include('cms-core::components.icons.trash')</button>
                                     </form>
                                 </td>
                         </tr>

@@ -155,7 +155,7 @@
                                     <form method="POST" action="{{ route('admin.queues.failed.forget', $job['uuid']) }}">
                                         @csrf
                                         @method('DELETE')
-                                        <button class="btn btn-outline-danger btn-sm">Remover</button>
+                                        <button class="btn btn-outline-danger btn-sm cms-media-icon-button" type="submit" title="Remover" aria-label="Remover">@include('cms-core::components.icons.trash')</button>
                                     </form>
                                 </div>
                             @endcan

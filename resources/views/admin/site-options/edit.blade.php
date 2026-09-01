@@ -45,7 +45,7 @@
                     name="site_icon_media_id"
                     id="site_icon_media_id"
                     :value="old('site_icon_media_id')"
-                    button-label="Biblioteca de media"
+                    button-label="Selecionar"
                     empty-label="Nenhuma imagem selecionada"
                     help="Selecione uma imagem da biblioteca de media."
                     data-cms-media-picker-target-url="#site_icon_url"
@@ -53,7 +53,7 @@
                 />
                 <div class="input-group">
                     <input id="site_icon_url" name="site_icon_url" type="text" class="form-control @error('site_icon_url') is-invalid @enderror" value="{{ old('site_icon_url', $options['site_icon_url']) }}" placeholder="{{ $defaultSiteIconUrl }}">
-                    <button class="btn btn-outline-danger" type="submit" name="remove_site_icon" value="1">Remover</button>
+                    <button class="btn btn-outline-danger cms-media-icon-button" type="submit" name="remove_site_icon" value="1" title="Remover" aria-label="Remover">@include('cms-core::components.icons.trash')</button>
                 </div>
                 <div class="form-text">Escolha uma imagem da biblioteca de media ou indique uma URL. O ícone deve ser quadrado e ter pelo menos 512 por 512 píxeis.</div>
                 @error('site_icon_url')

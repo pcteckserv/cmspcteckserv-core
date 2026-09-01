@@ -31,7 +31,7 @@
         >
         <button class="btn btn-outline-primary" type="button" data-cms-media-picker-open>{{ $buttonLabel }}</button>
         @if ($clearable)
-            <button class="btn btn-outline-secondary" type="button" data-cms-media-picker-clear @disabled(! $selectedMediaId)>{{ $clearLabel }}</button>
+            <button class="btn btn-outline-secondary cms-media-icon-button" type="button" title="{{ $clearLabel }}" aria-label="{{ $clearLabel }}" data-cms-media-picker-clear @disabled(! $selectedMediaId)>@include('cms-core::components.icons.trash')</button>
         @endif
     </div>
 
