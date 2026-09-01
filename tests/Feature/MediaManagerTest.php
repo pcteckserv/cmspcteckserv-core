@@ -25,6 +25,53 @@ class MediaManagerTest extends TestCase
             ->assertSee('Media');
     }
 
+    public function test_preview_de_imagem_abre_modal_e_documentos_continuam_a_copiar_url(): void
+    {
+        app('view')->replaceNamespace('cms-core', [realpath(__DIR__.'/../../resources/views')]);
+
+        Storage::fake('public');
+        Storage::disk('public')->put('cms/media/foto.jpg', 'foto');
+        Storage::disk('public')->put('cms/media/manual.pdf', 'manual');
+
+        Media::query()->create([
+            'uuid' => (string) Str::uuid(),
+            'disk' => 'public',
+            'directory' => 'cms/media',
+            'filename' => 'foto.jpg',
+            'path' => 'cms/media/foto.jpg',
+            'original_filename' => 'foto.jpg',
+            'extension' => 'jpg',
+            'mime_type' => 'image/jpeg',
+            'media_type' => 'image',
+            'size' => 4,
+            'checksum' => hash('sha256', 'foto'),
+            'optimization_status' => Media::STATUS_OPTIMIZED,
+        ]);
+
+        Media::query()->create([
+            'uuid' => (string) Str::uuid(),
+            'disk' => 'public',
+            'directory' => 'cms/media',
+            'filename' => 'manual.pdf',
+            'path' => 'cms/media/manual.pdf',
+            'original_filename' => 'manual.pdf',
+            'extension' => 'pdf',
+            'mime_type' => 'application/pdf',
+            'media_type' => 'document',
+            'size' => 6,
+            'checksum' => hash('sha256', 'manual'),
+            'optimization_status' => Media::STATUS_OPTIMIZED,
+        ]);
+
+        $this->actingAs($this->superAdmin())
+            ->get(route('admin.media.index'))
+            ->assertOk()
+            ->assertSee('data-cms-media-preview-modal', false)
+            ->assertSee('data-cms-media-preview-open', false)
+            ->assertSee('data-cms-media-preview-url="'.Storage::disk('public')->url('cms/media/foto.jpg').'"', false)
+            ->assertSee('data-cms-media-copy="'.Storage::disk('public')->url('cms/media/manual.pdf').'"', false);
+    }
+
     public function test_utilizador_sem_permissao_nao_consegue_ver_media(): void
     {
         $this->actingAs(User::factory()->create())

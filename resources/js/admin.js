@@ -60,6 +60,54 @@ document.querySelectorAll('[data-cms-media-copy]').forEach((button) => {
     });
 });
 
+document.querySelectorAll('[data-cms-media-preview-modal]').forEach((modal) => {
+    const image = modal.querySelector('[data-cms-media-preview-modal-image]');
+    const title = modal.querySelector('[data-cms-media-preview-modal-title]');
+    const close = modal.querySelector('[data-cms-media-preview-close]');
+    let previouslyFocused = null;
+
+    if (! image || ! title || ! close) {
+        return;
+    }
+
+    const closeModal = () => {
+        modal.hidden = true;
+        image.removeAttribute('src');
+        image.alt = '';
+        previouslyFocused?.focus();
+    };
+
+    document.querySelectorAll('[data-cms-media-preview-open]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const url = button.dataset.cmsMediaPreviewUrl;
+            const imageTitle = button.dataset.cmsMediaPreviewTitle || 'Imagem';
+
+            if (! url) {
+                return;
+            }
+
+            previouslyFocused = button;
+            image.src = url;
+            image.alt = imageTitle;
+            title.textContent = imageTitle;
+            modal.hidden = false;
+            close.focus();
+        });
+    });
+
+    close.addEventListener('click', closeModal);
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            closeModal();
+        }
+    });
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && ! modal.hidden) {
+            closeModal();
+        }
+    });
+});
+
 document.querySelectorAll('[data-copy-target]').forEach((button) => {
     button.addEventListener('click', async () => {
         const target = document.querySelector(button.dataset.copyTarget);

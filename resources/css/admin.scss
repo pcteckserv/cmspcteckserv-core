@@ -341,6 +341,7 @@ form.bg-white.border,
 }
 
 .cms-media-grid {
+    align-items: start;
     display: grid;
     gap: 1rem;
     grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
@@ -361,18 +362,25 @@ form.bg-white.border,
     background: #f1f5f9;
     border: 0;
     border-bottom: 1px solid rgba(15, 23, 42, .1);
-    cursor: copy;
+    cursor: pointer;
     display: flex;
+    flex: 0 0 auto;
     justify-content: center;
+    overflow: hidden;
     padding: 0;
     width: 100%;
 }
 
 .cms-media-preview img {
+    display: block;
     height: 100%;
     object-fit: cover;
     object-position: center;
     width: 100%;
+}
+
+.cms-media-preview[data-cms-media-copy] {
+    cursor: copy;
 }
 
 .cms-media-file-icon {
@@ -532,6 +540,59 @@ form.bg-white.border,
     display: block;
     font-size: .8125rem;
     padding: .5rem;
+}
+
+.cms-media-preview-modal {
+    align-items: center;
+    background: rgba(15, 23, 42, .72);
+    inset: 0;
+    justify-content: center;
+    padding: 1rem;
+    position: fixed;
+    z-index: 1100;
+}
+
+.cms-media-preview-modal:not([hidden]) {
+    display: flex;
+}
+
+.cms-media-preview-modal__dialog {
+    background: #fff;
+    border-radius: .5rem;
+    box-shadow: 0 1.25rem 3rem rgba(15, 23, 42, .28);
+    max-height: min(48rem, 100vh - 2rem);
+    max-width: min(72rem, 100vw - 2rem);
+    overflow: hidden;
+    width: 100%;
+}
+
+.cms-media-preview-modal__header {
+    align-items: center;
+    border-bottom: 1px solid rgba(15, 23, 42, .1);
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    padding: 1rem;
+}
+
+.cms-media-preview-modal__body {
+    align-items: center;
+    background: #111827;
+    display: flex;
+    justify-content: center;
+    max-height: calc(100vh - 8rem);
+    min-height: 16rem;
+    overflow: auto;
+    padding: 1rem;
+}
+
+.cms-media-preview-modal__body img {
+    display: block;
+    height: auto;
+    max-height: calc(100vh - 10rem);
+    max-width: 100%;
+    object-fit: contain;
+    width: auto;
 }
 
 .cms-help-widget {

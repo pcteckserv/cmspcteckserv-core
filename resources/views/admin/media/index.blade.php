@@ -93,13 +93,15 @@
                     : $mediaService->url($media);
             @endphp
             <article class="cms-media-card bg-white border" data-cms-media-item data-url="{{ $publicUrl }}">
-                <button class="cms-media-preview" type="button" data-cms-media-copy="{{ $publicUrl }}" aria-label="Copiar URL de {{ $media->original_filename }}">
-                    @if ($media->media_type === 'image')
+                @if ($media->media_type === 'image')
+                    <button class="cms-media-preview" type="button" data-cms-media-preview-open data-cms-media-preview-url="{{ $publicUrl }}" data-cms-media-preview-title="{{ $media->original_filename }}" aria-label="Ver imagem {{ $media->original_filename }}">
                         <img src="{{ $mediaService->url($media, 'thumbnail') }}" alt="{{ $media->alt_text ?: $media->original_filename }}">
-                    @else
+                    </button>
+                @else
+                    <button class="cms-media-preview" type="button" data-cms-media-copy="{{ $publicUrl }}" aria-label="Copiar URL de {{ $media->original_filename }}">
                         <span class="cms-media-file-icon">{{ strtoupper($media->extension) }}</span>
-                    @endif
-                </button>
+                    </button>
+                @endif
                 <div class="p-3">
                     <div class="fw-semibold text-truncate" title="{{ $media->original_filename }}">{{ $media->original_filename }}</div>
                     <div class="text-secondary small">{{ strtoupper($media->extension) }} · {{ $formatBytes($media->size) }}</div>
