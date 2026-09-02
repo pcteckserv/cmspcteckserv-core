@@ -14,6 +14,7 @@ use Pcteckserv\CmsCore\Http\Requests\Admin\UpdateUserRequest;
 use Pcteckserv\CmsCore\ActivityLog\Contracts\ActivityLoggerContract;
 use Pcteckserv\CmsCore\Models\Permission;
 use Pcteckserv\CmsCore\Models\Role;
+use Pcteckserv\CmsCore\Services\DefaultRoleSynchronizer;
 use Pcteckserv\CmsCore\Services\PermissionSynchronizer;
 use Pcteckserv\CmsCore\Services\UserModelResolver;
 
@@ -23,6 +24,7 @@ class UsersController extends Controller
         private readonly UserModelResolver $users,
         private readonly ActivityLoggerContract $activityLogger,
         private readonly PermissionSynchronizer $permissions,
+        private readonly DefaultRoleSynchronizer $roles,
     )
     {
     }
@@ -188,6 +190,7 @@ class UsersController extends Controller
     private function formData(): array
     {
         $this->permissions->sync();
+        $this->roles->sync();
 
         return [
             'roles' => $this->visibleRolesQuery()->orderBy('name')->get(),

@@ -6,8 +6,8 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use InvalidArgumentException;
-use Pcteckserv\CmsCore\Models\Permission;
 use Pcteckserv\CmsCore\Models\Role;
+use Pcteckserv\CmsCore\Services\DefaultRoleSynchronizer;
 use Pcteckserv\CmsCore\Services\PermissionSynchronizer;
 
 class AdminUserSeeder extends Seeder
@@ -41,7 +41,7 @@ class AdminUserSeeder extends Seeder
             ['name' => 'Super Admin', 'is_protected' => true],
         );
 
-        $this->createDefaultRoles();
+        app(DefaultRoleSynchronizer::class)->sync();
 
         if (method_exists($user, 'cmsRoles')) {
             $user->cmsRoles()->syncWithoutDetaching([$role->id]);
@@ -50,27 +50,6 @@ class AdminUserSeeder extends Seeder
         if (method_exists($user, 'cmsState')) {
             $user->cmsState()->updateOrCreate([], ['state' => 'active']);
         }
-    }
-
-    private function createDefaultRoles(): void
-    {
-        $admin = Role::query()->firstOrCreate(
-            ['key' => 'core.admin'],
-            ['name' => 'Administrador', 'is_protected' => false],
-        );
-
-        $editor = Role::query()->firstOrCreate(
-            ['key' => 'core.editor'],
-            ['name' => 'Editor', 'is_protected' => false],
-        );
-
-        $admin->permissions()->syncWithoutDetaching(
-            Permission::query()->where('key', '!=', 'core.users.manage_roles')->pluck('id')->all(),
-        );
-
-        $editor->permissions()->syncWithoutDetaching(
-            Permission::query()->whereIn('key', ['core.users.view'])->pluck('id')->all(),
-        );
     }
 
     /**

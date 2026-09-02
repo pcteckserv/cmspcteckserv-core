@@ -53,6 +53,19 @@ class AdminAccessRulesTest extends TestCase
             ->assertSee('data-cms-direct-permissions-panel hidden', false);
     }
 
+    public function test_formulario_de_utilizador_disponibiliza_roles_predefinidas(): void
+    {
+        $admin = $this->superAdmin();
+
+        Role::query()->whereIn('key', ['core.admin', 'core.editor'])->delete();
+
+        $this->actingAs($admin)
+            ->get(route('admin.users.create'))
+            ->assertOk()
+            ->assertSee('Administrador')
+            ->assertSee('Editor');
+    }
+
     public function test_permissoes_diretas_sao_ignoradas_quando_nao_estao_ativadas(): void
     {
         app(PermissionSynchronizer::class)->sync();
