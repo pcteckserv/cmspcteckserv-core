@@ -13,6 +13,22 @@ class AdminAccessRulesTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_formulario_de_roles_sincroniza_todas_as_permissoes_registadas(): void
+    {
+        $admin = $this->superAdmin();
+
+        $this->assertSame(0, Permission::query()->count());
+
+        $this->actingAs($admin)
+            ->get(route('admin.roles.create'))
+            ->assertOk()
+            ->assertSee('Logs de atividade')
+            ->assertSee('Consentimentos')
+            ->assertSee('SEO')
+            ->assertSee('SMTP')
+            ->assertSee('Comandos Laravel');
+    }
+
     public function test_smtp_exige_permissoes_especificas(): void
     {
         app(PermissionSynchronizer::class)->sync();
@@ -74,6 +90,19 @@ class AdminAccessRulesTest extends TestCase
 
         $role->permissions()->sync(
             Permission::query()->whereIn('key', $permissionKeys)->pluck('id')->all()
+        );
+
+        $user = User::factory()->create();
+        $user->cmsRoles()->sync([$role->id]);
+
+        return $user;
+    }
+
+    private function superAdmin(): User
+    {
+        $role = Role::query()->firstOrCreate(
+            ['key' => 'core.super_admin'],
+            ['name' => 'Super Admin', 'is_protected' => true],
         );
 
         $user = User::factory()->create();

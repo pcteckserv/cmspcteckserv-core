@@ -9,9 +9,14 @@ use Pcteckserv\CmsCore\Http\Requests\Admin\StoreRoleRequest;
 use Pcteckserv\CmsCore\Http\Requests\Admin\UpdateRoleRequest;
 use Pcteckserv\CmsCore\Models\Permission;
 use Pcteckserv\CmsCore\Models\Role;
+use Pcteckserv\CmsCore\Services\PermissionSynchronizer;
 
 class RolesController
 {
+    public function __construct(private readonly PermissionSynchronizer $permissions)
+    {
+    }
+
     public function index(): View
     {
         Gate::authorize('core.roles.view');
@@ -76,6 +81,8 @@ class RolesController
 
     private function formData(): array
     {
+        $this->permissions->sync();
+
         return [
             'permissionsByGroup' => Permission::query()->orderBy('group')->orderBy('label')->get()->groupBy('group'),
         ];
