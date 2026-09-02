@@ -15,8 +15,12 @@ class AuthenticatedSessionController extends Controller
     {
     }
 
-    public function create(): View
+    public function create(): RedirectResponse|View
     {
+        if (Auth::check()) {
+            return redirect()->route('admin.dashboard');
+        }
+
         return view('cms-core::auth.login');
     }
 

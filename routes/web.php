@@ -58,10 +58,11 @@ Route::middleware('web')->group(function (): void {
             ->setPublic();
     })->where('file', '[A-Za-z0-9._-]+')->name('cms-core.images.show');
 
+    Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
+
     Route::middleware('guest')->group(function (): void {
-        Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
         Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.store');
-});
+    });
 
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
         ->middleware('auth')

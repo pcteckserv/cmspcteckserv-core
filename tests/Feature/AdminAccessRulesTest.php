@@ -33,6 +33,15 @@ class AdminAccessRulesTest extends TestCase
             ->assertSee('data-cms-permission-group-select', false);
     }
 
+    public function test_login_com_sessao_iniciada_redireciona_para_o_painel(): void
+    {
+        $admin = $this->superAdmin();
+
+        $this->actingAs($admin)
+            ->get(route('login'))
+            ->assertRedirect(route('admin.dashboard'));
+    }
+
     public function test_smtp_exige_permissoes_especificas(): void
     {
         app(PermissionSynchronizer::class)->sync();
