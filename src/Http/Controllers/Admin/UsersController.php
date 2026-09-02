@@ -193,7 +193,7 @@ class UsersController extends Controller
         $this->roles->sync();
 
         return [
-            'roles' => $this->visibleRolesQuery()->orderBy('name')->get(),
+            'roles' => $this->visibleRolesQuery()->with('permissions:id')->orderBy('name')->get(),
             'permissionsByGroup' => Permission::query()->orderBy('group')->orderBy('label')->get()->groupBy('group'),
             'states' => config('cms-core.user_states', ['active', 'inactive']),
         ];

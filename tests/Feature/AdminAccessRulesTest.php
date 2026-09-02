@@ -66,6 +66,56 @@ class AdminAccessRulesTest extends TestCase
             ->assertSee('Editor');
     }
 
+    public function test_formulario_de_utilizador_permite_apenas_uma_role(): void
+    {
+        $admin = $this->superAdmin();
+
+        $this->actingAs($admin)
+            ->get(route('admin.users.create'))
+            ->assertOk()
+            ->assertSee('type="radio" name="role_id"', false)
+            ->assertDontSee('name="roles[]"', false);
+    }
+
+    public function test_formulario_de_utilizador_expoe_permissoes_da_role_para_permissoes_diretas(): void
+    {
+        app(PermissionSynchronizer::class)->sync();
+
+        $admin = $this->superAdmin();
+        $permission = Permission::query()->where('key', 'core.smtp.view')->firstOrFail();
+        $role = Role::query()->create(['name' => 'Role com permissões', 'key' => 'core.role_with_permissions']);
+        $role->permissions()->sync([$permission->id]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.users.create'))
+            ->assertOk()
+            ->assertSee('data-cms-role-permissions', false)
+            ->assertSee('data-permission-ids=\'['.$permission->id.']\'', false);
+    }
+
+    public function test_payload_com_multiplas_roles_guarda_apenas_uma(): void
+    {
+        $admin = $this->superAdmin();
+        $firstRole = Role::query()->create(['name' => 'Primeira role', 'key' => 'core.first_role']);
+        $secondRole = Role::query()->create(['name' => 'Segunda role', 'key' => 'core.second_role']);
+
+        $response = $this->actingAs($admin)
+            ->post(route('admin.users.store'), [
+                'name' => 'Utilizador Role Única',
+                'email' => 'utilizador-role-unica@example.test',
+                'password' => 'password',
+                'password_confirmation' => 'password',
+                'state' => 'active',
+                'roles' => [$firstRole->id, $secondRole->id],
+            ]);
+
+        $response->assertRedirect(route('admin.users.index'));
+
+        $user = User::query()->where('email', 'utilizador-role-unica@example.test')->firstOrFail();
+
+        $this->assertSame([$firstRole->id], $user->cmsRoles()->pluck('cms_roles.id')->all());
+    }
+
     public function test_permissoes_diretas_sao_ignoradas_quando_nao_estao_ativadas(): void
     {
         app(PermissionSynchronizer::class)->sync();

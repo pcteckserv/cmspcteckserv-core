@@ -25,6 +25,7 @@ class StoreUserRequest extends FormRequest
             'email' => ['required', 'email', 'max:255', Rule::unique($table, 'email')],
             'password' => ['required', 'confirmed', Password::defaults()],
             'state' => ['required', Rule::in(config('cms-core.user_states', ['active', 'inactive']))],
+            'role_id' => ['nullable', 'integer', Rule::exists('cms_roles', 'id')],
             'roles' => ['array'],
             'roles.*' => ['integer', Rule::exists('cms_roles', 'id')],
             'direct_permissions_enabled' => ['boolean'],
@@ -35,11 +36,21 @@ class StoreUserRequest extends FormRequest
 
     public function roleIds(): array
     {
-        $roleIds = array_map('intval', $this->validated('roles', []));
-
         if (! $this->user()?->can('core.users.manage_roles')) {
             return [];
         }
+
+        $roleId = $this->validated('role_id');
+
+        if ($roleId === null) {
+            $roleId = $this->validated('roles.0');
+        }
+
+        if ($roleId === null) {
+            return [];
+        }
+
+        $roleIds = [(int) $roleId];
 
         if ($this->user()?->isCmsSuperAdmin()) {
             return $roleIds;

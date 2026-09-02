@@ -158,18 +158,52 @@ document.querySelectorAll('[data-cms-permissions-panel]').forEach((panel) => {
 });
 
 document.querySelectorAll('[data-cms-direct-permissions-toggle]').forEach((toggle) => {
-    const panel = toggle.closest('form')?.querySelector('[data-cms-direct-permissions-panel]');
+    const form = toggle.closest('form');
+    const panel = form?.querySelector('[data-cms-direct-permissions-panel]');
 
     if (! panel) {
         return;
     }
 
-    const setVisible = () => {
+    const roleInputs = form.querySelectorAll('[data-cms-role-permissions]');
+    const permissionInputs = panel.querySelectorAll('input[type="checkbox"][name="permissions[]"]');
+    const selectedRolePermissionIds = () => {
+        const selectedRole = form.querySelector('[data-cms-role-permissions]:checked');
+
+        if (! selectedRole?.dataset.permissionIds) {
+            return [];
+        }
+
+        try {
+            return JSON.parse(selectedRole.dataset.permissionIds).map((id) => String(id));
+        } catch (error) {
+            return [];
+        }
+    };
+    const applySelectedRolePermissions = () => {
+        const rolePermissionIds = selectedRolePermissionIds();
+
+        permissionInputs.forEach((input) => {
+            input.checked = rolePermissionIds.includes(input.value);
+        });
+    };
+    const setVisible = (syncFromRole = false) => {
         panel.hidden = ! toggle.checked;
+
+        if (toggle.checked && syncFromRole) {
+            applySelectedRolePermissions();
+        }
     };
 
-    toggle.addEventListener('change', setVisible);
-    setVisible();
+    toggle.addEventListener('change', () => setVisible(true));
+    roleInputs.forEach((input) => {
+        input.addEventListener('change', () => {
+            if (toggle.checked) {
+                applySelectedRolePermissions();
+            }
+        });
+    });
+    setVisible(false);
 });
 
 document.querySelectorAll('[data-cms-media-upload-url]').forEach((dropzone) => {

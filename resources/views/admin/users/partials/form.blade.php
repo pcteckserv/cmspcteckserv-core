@@ -41,10 +41,22 @@
     @can('core.users.manage_roles')
         <hr>
         <h2 class="h5">Roles</h2>
+        @php
+            $selectedRoleId = old('role_id', old('roles.0', $user?->cmsRoles->first()?->id));
+        @endphp
         <div class="cms-role-options">
             @foreach ($roles as $role)
                 <label class="cms-permission-option" for="role-{{ $role->id }}">
-                    <input class="form-check-input" id="role-{{ $role->id }}" type="checkbox" name="roles[]" value="{{ $role->id }}" @checked(in_array($role->id, old('roles', $user?->cmsRoles->pluck('id')->all() ?? [])))>
+                    <input
+                        class="form-check-input"
+                        id="role-{{ $role->id }}"
+                        type="radio"
+                        name="role_id"
+                        value="{{ $role->id }}"
+                        data-cms-role-permissions
+                        data-permission-ids='@json($role->permissions->pluck('id')->values())'
+                        @checked((int) $selectedRoleId === $role->id)
+                    >
                     <span>{{ $role->name }}</span>
                 </label>
             @endforeach
