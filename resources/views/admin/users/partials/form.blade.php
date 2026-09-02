@@ -41,26 +41,22 @@
     @can('core.users.manage_roles')
         <hr>
         <h2 class="h5">Roles</h2>
-        @foreach ($roles as $role)
-            <div class="form-check">
-                <input class="form-check-input" id="role-{{ $role->id }}" type="checkbox" name="roles[]" value="{{ $role->id }}" @checked(in_array($role->id, old('roles', $user?->cmsRoles->pluck('id')->all() ?? [])))>
-                <label class="form-check-label" for="role-{{ $role->id }}">{{ $role->name }}</label>
-            </div>
-        @endforeach
+        <div class="cms-role-options">
+            @foreach ($roles as $role)
+                <label class="cms-permission-option" for="role-{{ $role->id }}">
+                    <input class="form-check-input" id="role-{{ $role->id }}" type="checkbox" name="roles[]" value="{{ $role->id }}" @checked(in_array($role->id, old('roles', $user?->cmsRoles->pluck('id')->all() ?? [])))>
+                    <span>{{ $role->name }}</span>
+                </label>
+            @endforeach
+        </div>
 
         <hr>
-        <h2 class="h5">Permissões diretas</h2>
-        @foreach ($permissionsByGroup as $group => $permissions)
-            <div class="mb-3">
-                <div class="fw-semibold">{{ $group }}</div>
-                @foreach ($permissions as $permission)
-                    <div class="form-check">
-                        <input class="form-check-input" id="permission-{{ $permission->id }}" type="checkbox" name="permissions[]" value="{{ $permission->id }}" @checked(in_array($permission->id, old('permissions', $user?->cmsPermissions->pluck('id')->all() ?? [])))>
-                        <label class="form-check-label" for="permission-{{ $permission->id }}">{{ $permission->label }}</label>
-                    </div>
-                @endforeach
-            </div>
-        @endforeach
+        @include('cms-core::admin.access.partials.permissions-grid', [
+            'title' => 'Permissões diretas',
+            'fieldName' => 'permissions',
+            'permissionsByGroup' => $permissionsByGroup,
+            'selectedPermissionIds' => $user?->cmsPermissions->pluck('id')->all() ?? [],
+        ])
     @endcan
 
     <div class="mt-4 d-flex gap-2">

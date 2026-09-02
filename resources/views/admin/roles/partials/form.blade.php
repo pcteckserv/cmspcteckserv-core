@@ -22,18 +22,12 @@
     </div>
 
     <hr>
-    <h2 class="h5">Permissões</h2>
-    @foreach ($permissionsByGroup as $group => $permissions)
-        <div class="mb-3">
-            <div class="fw-semibold">{{ $group }}</div>
-            @foreach ($permissions as $permission)
-                <div class="form-check">
-                    <input class="form-check-input" id="permission-{{ $permission->id }}" type="checkbox" name="permissions[]" value="{{ $permission->id }}" @checked(in_array($permission->id, old('permissions', $role?->permissions->pluck('id')->all() ?? [])))>
-                    <label class="form-check-label" for="permission-{{ $permission->id }}">{{ $permission->label }}</label>
-                </div>
-            @endforeach
-        </div>
-    @endforeach
+    @include('cms-core::admin.access.partials.permissions-grid', [
+        'title' => 'Permissões',
+        'fieldName' => 'permissions',
+        'permissionsByGroup' => $permissionsByGroup,
+        'selectedPermissionIds' => $role?->permissions->pluck('id')->all() ?? [],
+    ])
 
     <div class="mt-4 d-flex gap-2">
         <button class="btn btn-primary" type="submit">Guardar</button>

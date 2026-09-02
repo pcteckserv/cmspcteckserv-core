@@ -26,7 +26,11 @@ class AdminAccessRulesTest extends TestCase
             ->assertSee('Consentimentos')
             ->assertSee('SEO')
             ->assertSee('SMTP')
-            ->assertSee('Comandos Laravel');
+            ->assertSee('Comandos Laravel')
+            ->assertSee('Manutenção')
+            ->assertSee('Pré-visualizar manutenção')
+            ->assertSee('Selecionar tudo')
+            ->assertSee('data-cms-permission-group-select', false);
     }
 
     public function test_smtp_exige_permissoes_especificas(): void

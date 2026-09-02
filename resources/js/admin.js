@@ -131,6 +131,32 @@ document.querySelectorAll('[data-copy-target]').forEach((button) => {
     });
 });
 
+document.querySelectorAll('[data-cms-permissions-panel]').forEach((panel) => {
+    const setChecked = (container, checked) => {
+        container.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+            input.checked = checked;
+        });
+    };
+
+    panel.querySelector('[data-cms-permissions-select-all]')?.addEventListener('click', () => {
+        setChecked(panel, true);
+    });
+
+    panel.querySelector('[data-cms-permissions-clear]')?.addEventListener('click', () => {
+        setChecked(panel, false);
+    });
+
+    panel.querySelectorAll('[data-cms-permission-group]').forEach((group) => {
+        group.querySelector('[data-cms-permission-group-select]')?.addEventListener('click', () => {
+            setChecked(group, true);
+        });
+
+        group.querySelector('[data-cms-permission-group-clear]')?.addEventListener('click', () => {
+            setChecked(group, false);
+        });
+    });
+});
+
 document.querySelectorAll('[data-cms-media-upload-url]').forEach((dropzone) => {
     const input = dropzone.querySelector('[data-cms-media-file-input]');
     const selectButton = dropzone.querySelector('[data-cms-media-select-files]');

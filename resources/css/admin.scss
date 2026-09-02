@@ -220,6 +220,91 @@ form.bg-white.border,
     box-shadow: 0 0 0 .2rem rgba(244, 117, 60, .18);
 }
 
+.cms-permissions-panel {
+    display: grid;
+    gap: 1rem;
+}
+
+.cms-permissions-panel__toolbar {
+    align-items: center;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+}
+
+.cms-permissions-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+}
+
+.cms-permission-group {
+    background: #fff;
+    border: 1px solid var(--cms-admin-border);
+    border-radius: .5rem;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    overflow: hidden;
+}
+
+.cms-permission-group__header {
+    align-items: flex-start;
+    background: #f8f9fb;
+    border-bottom: 1px solid var(--cms-admin-border);
+    display: flex;
+    gap: .75rem;
+    justify-content: space-between;
+    padding: .85rem 1rem;
+}
+
+.cms-permission-group__header h3 {
+    font-size: .98rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0;
+}
+
+.cms-permission-group__header span {
+    color: var(--cms-admin-muted);
+    display: block;
+    font-size: .78rem;
+    margin-top: .2rem;
+}
+
+.cms-permission-group__body,
+.cms-role-options {
+    display: grid;
+    gap: .45rem;
+    padding: .85rem 1rem 1rem;
+}
+
+.cms-role-options {
+    border: 1px solid var(--cms-admin-border);
+    border-radius: .5rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+    padding: .85rem;
+}
+
+.cms-permission-option {
+    align-items: flex-start;
+    border-radius: .35rem;
+    cursor: pointer;
+    display: grid;
+    gap: .55rem;
+    grid-template-columns: auto 1fr;
+    line-height: 1.25;
+    padding: .25rem .3rem;
+}
+
+.cms-permission-option:hover {
+    background: rgba(244, 117, 60, .06);
+}
+
+.cms-permission-option .form-check-input {
+    margin: .1rem 0 0;
+}
+
 .form-check-input:checked {
     background-color: var(--cms-admin-accent);
     border-color: var(--cms-admin-accent);
