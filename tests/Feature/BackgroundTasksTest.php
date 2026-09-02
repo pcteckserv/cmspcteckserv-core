@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Pcteckserv\CmsCore\Models\Role;
@@ -52,6 +53,32 @@ class BackgroundTasksTest extends TestCase
 
         $this->actingAs($plainUser)->get(route('admin.queues.dashboard'))->assertForbidden();
         $this->actingAs($admin)->get(route('admin.queues.dashboard'))->assertOk()->assertSee('Tarefas em segundo plano');
+    }
+
+    public function test_processar_agora_usa_timeout_configurado_para_jobs_lentos(): void
+    {
+        config(['cms-core.queues.work_once_timeout' => 900]);
+
+        $admin = $this->superAdmin();
+
+        Artisan::shouldReceive('call')
+            ->once()
+            ->with('queue:work', [
+                '--once' => true,
+                '--stop-when-empty' => true,
+                '--tries' => 1,
+                '--timeout' => 900,
+            ])
+            ->andReturn(0);
+
+        Artisan::shouldReceive('output')
+            ->once()
+            ->andReturn('');
+
+        $this->actingAs($admin)
+            ->post(route('admin.queues.work-once'))
+            ->assertRedirect()
+            ->assertSessionHas('queue_success');
     }
 
     public function test_menu_agrupa_utilizadores_e_roles_em_acessos(): void

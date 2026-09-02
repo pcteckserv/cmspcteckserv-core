@@ -138,6 +138,10 @@ return [
         'github_token' => env('CMS_GITHUB_TOKEN'),
     ],
 
+    'queues' => [
+        'work_once_timeout' => env('CMS_QUEUE_WORK_ONCE_TIMEOUT', 900),
+    ],
+
     'media' => [
         'disk' => env('CMS_MEDIA_DISK', 'public'),
         'directory' => env('CMS_MEDIA_DIRECTORY', 'cms/media'),

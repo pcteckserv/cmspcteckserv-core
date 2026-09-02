@@ -32,8 +32,8 @@ class QueueDashboardController extends Controller
         return $this->runCommand('queue:work', [
             '--once' => true,
             '--stop-when-empty' => true,
-            '--tries' => 3,
-            '--timeout' => 120,
+            '--tries' => 1,
+            '--timeout' => (int) config('cms-core.queues.work_once_timeout', 900),
         ], 'Foi processado um ciclo da queue.', $activityLogger);
     }
 
