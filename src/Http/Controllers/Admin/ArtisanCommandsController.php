@@ -6,12 +6,15 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Gate;
 use Throwable;
 
 class ArtisanCommandsController extends Controller
 {
     public function index(): View
     {
+        Gate::authorize('core.laravel-commands.view');
+
         return view('cms-core::admin.laravel-commands.index', [
             'commands' => $this->commands(),
         ]);
@@ -19,6 +22,8 @@ class ArtisanCommandsController extends Controller
 
     public function run(string $command): RedirectResponse
     {
+        Gate::authorize('core.laravel-commands.run');
+
         $commands = $this->commands();
 
         if (! array_key_exists($command, $commands)) {

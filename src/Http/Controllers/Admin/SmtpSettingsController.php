@@ -6,6 +6,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Pcteckserv\CmsCore\Support\SiteOptions;
@@ -15,6 +16,8 @@ class SmtpSettingsController extends Controller
 {
     public function edit(SiteOptions $siteOptions): View
     {
+        Gate::authorize('core.smtp.view');
+
         return view('cms-core::admin.smtp-settings.edit', [
             'options' => $siteOptions->all(),
             'encryptions' => $this->encryptions(),
@@ -23,6 +26,8 @@ class SmtpSettingsController extends Controller
 
     public function update(Request $request, SiteOptions $siteOptions): RedirectResponse
     {
+        Gate::authorize('core.smtp.update');
+
         $validated = $this->validateSettings($request);
 
         $siteOptions->setMany($validated);
@@ -34,6 +39,8 @@ class SmtpSettingsController extends Controller
 
     public function test(Request $request, SiteOptions $siteOptions): RedirectResponse
     {
+        Gate::authorize('core.smtp.test');
+
         $validated = $request->validate([
             'test_recipient' => ['required', 'email', 'max:255'],
         ]);
