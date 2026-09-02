@@ -157,6 +157,21 @@ document.querySelectorAll('[data-cms-permissions-panel]').forEach((panel) => {
     });
 });
 
+document.querySelectorAll('[data-cms-direct-permissions-toggle]').forEach((toggle) => {
+    const panel = toggle.closest('form')?.querySelector('[data-cms-direct-permissions-panel]');
+
+    if (! panel) {
+        return;
+    }
+
+    const setVisible = () => {
+        panel.hidden = ! toggle.checked;
+    };
+
+    toggle.addEventListener('change', setVisible);
+    setVisible();
+});
+
 document.querySelectorAll('[data-cms-media-upload-url]').forEach((dropzone) => {
     const input = dropzone.querySelector('[data-cms-media-file-input]');
     const selectButton = dropzone.querySelector('[data-cms-media-select-files]');

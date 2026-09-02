@@ -34,6 +34,7 @@ class UpdateUserRequest extends FormRequest
             'state' => ['required', Rule::in(config('cms-core.user_states', ['active', 'inactive']))],
             'roles' => ['array'],
             'roles.*' => ['integer', Rule::exists('cms_roles', 'id')],
+            'direct_permissions_enabled' => ['boolean'],
             'permissions' => ['array'],
             'permissions.*' => ['integer', Rule::exists('cms_permissions', 'id')],
         ];
@@ -60,7 +61,7 @@ class UpdateUserRequest extends FormRequest
 
     public function permissionIds(): array
     {
-        if (! $this->user()?->can('core.users.manage_roles')) {
+        if (! $this->user()?->can('core.users.manage_roles') || ! $this->boolean('direct_permissions_enabled')) {
             return [];
         }
 

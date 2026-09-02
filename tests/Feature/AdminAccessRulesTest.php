@@ -42,6 +42,66 @@ class AdminAccessRulesTest extends TestCase
             ->assertRedirect(route('admin.dashboard'));
     }
 
+    public function test_permissoes_diretas_ficam_ocultas_ate_serem_ativadas(): void
+    {
+        $admin = $this->superAdmin();
+
+        $this->actingAs($admin)
+            ->get(route('admin.users.create'))
+            ->assertOk()
+            ->assertSee('Ativar permissões diretas')
+            ->assertSee('data-cms-direct-permissions-panel hidden', false);
+    }
+
+    public function test_permissoes_diretas_sao_ignoradas_quando_nao_estao_ativadas(): void
+    {
+        app(PermissionSynchronizer::class)->sync();
+
+        $admin = $this->superAdmin();
+        $permission = Permission::query()->where('key', 'core.smtp.view')->firstOrFail();
+
+        $response = $this->actingAs($admin)
+            ->post(route('admin.users.store'), [
+                'name' => 'Utilizador Teste',
+                'email' => 'utilizador@example.test',
+                'password' => 'password',
+                'password_confirmation' => 'password',
+                'state' => 'active',
+                'permissions' => [$permission->id],
+            ]);
+
+        $response->assertRedirect(route('admin.users.index'));
+
+        $user = User::query()->where('email', 'utilizador@example.test')->firstOrFail();
+
+        $this->assertFalse($user->cmsPermissions()->whereKey($permission->id)->exists());
+    }
+
+    public function test_permissoes_diretas_sao_guardadas_quando_estao_ativadas(): void
+    {
+        app(PermissionSynchronizer::class)->sync();
+
+        $admin = $this->superAdmin();
+        $permission = Permission::query()->where('key', 'core.smtp.view')->firstOrFail();
+
+        $response = $this->actingAs($admin)
+            ->post(route('admin.users.store'), [
+                'name' => 'Utilizador com Permissão',
+                'email' => 'utilizador-permissao@example.test',
+                'password' => 'password',
+                'password_confirmation' => 'password',
+                'state' => 'active',
+                'direct_permissions_enabled' => '1',
+                'permissions' => [$permission->id],
+            ]);
+
+        $response->assertRedirect(route('admin.users.index'));
+
+        $user = User::query()->where('email', 'utilizador-permissao@example.test')->firstOrFail();
+
+        $this->assertTrue($user->cmsPermissions()->whereKey($permission->id)->exists());
+    }
+
     public function test_smtp_exige_permissoes_especificas(): void
     {
         app(PermissionSynchronizer::class)->sync();

@@ -51,12 +51,33 @@
         </div>
 
         <hr>
-        @include('cms-core::admin.access.partials.permissions-grid', [
-            'title' => 'Permissões diretas',
-            'fieldName' => 'permissions',
-            'permissionsByGroup' => $permissionsByGroup,
-            'selectedPermissionIds' => $user?->cmsPermissions->pluck('id')->all() ?? [],
-        ])
+        @php
+            $selectedDirectPermissionIds = $user?->cmsPermissions->pluck('id')->all() ?? [];
+            $directPermissionsEnabled = old('direct_permissions_enabled', ! empty($selectedDirectPermissionIds));
+        @endphp
+
+        <div class="form-check form-switch">
+            <input type="hidden" name="direct_permissions_enabled" value="0">
+            <input
+                class="form-check-input"
+                id="direct_permissions_enabled"
+                type="checkbox"
+                name="direct_permissions_enabled"
+                value="1"
+                data-cms-direct-permissions-toggle
+                @checked((bool) $directPermissionsEnabled)
+            >
+            <label class="form-check-label fw-semibold" for="direct_permissions_enabled">Ativar permissões diretas</label>
+        </div>
+
+        <div data-cms-direct-permissions-panel @if (! $directPermissionsEnabled) hidden @endif>
+            @include('cms-core::admin.access.partials.permissions-grid', [
+                'title' => 'Permissões diretas',
+                'fieldName' => 'permissions',
+                'permissionsByGroup' => $permissionsByGroup,
+                'selectedPermissionIds' => $selectedDirectPermissionIds,
+            ])
+        </div>
     @endcan
 
     <div class="mt-4 d-flex gap-2">
