@@ -208,6 +208,17 @@ class PackageUpdater
             }
         }
 
+        $composerConfigPath = storage_path('framework/cache/composer/config.json');
+        $composerConfig = json_encode([
+            'config' => [
+                'github-protocols' => ['https'],
+            ],
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+
+        if (! is_file($composerConfigPath) || file_get_contents($composerConfigPath) !== $composerConfig) {
+            file_put_contents($composerConfigPath, $composerConfig);
+        }
+
         $safeDirectory = str_replace('\\', '/', base_path());
         $gitConfig = "[safe]\n\tdirectory = {$safeDirectory}\n";
 
