@@ -18,7 +18,7 @@ class UpdatesController extends Controller
 
         $packages = config('cms-core.updates.enabled', true)
             ? $registry->checkRemoteUpdates()
-            : $registry->all();
+            : $registry->sync();
 
         return view('cms-core::admin.updates.index', [
             'packages' => $packages,

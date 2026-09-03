@@ -14,7 +14,9 @@ class PluginsManagementTest extends TestCase
 
     public function test_area_de_plugins_lista_plugins_configurados(): void
     {
-        config(['cms-plugins.plugins.core_tools' => $this->pluginConfig('core_tools', 'pcteckserv/cms-core')]);
+        config(['cms-plugins.plugins' => [
+            'blog' => $this->pluginConfig(),
+        ]]);
 
         $admin = $this->superAdmin();
 
@@ -29,7 +31,9 @@ class PluginsManagementTest extends TestCase
 
     public function test_plugin_pode_ser_ativado_e_desativado(): void
     {
-        config(['cms-plugins.plugins.blog' => $this->pluginConfig()]);
+        config(['cms-plugins.plugins' => [
+            'core_tools' => $this->pluginConfig('core_tools', 'pcteckserv/cms-core'),
+        ]]);
 
         $admin = $this->superAdmin();
 
@@ -50,7 +54,9 @@ class PluginsManagementTest extends TestCase
 
     public function test_gestao_de_plugins_exige_permissao(): void
     {
-        config(['cms-plugins.plugins.blog' => $this->pluginConfig()]);
+        config(['cms-plugins.plugins' => [
+            'blog' => $this->pluginConfig(),
+        ]]);
 
         $plainUser = User::factory()->create();
 
@@ -66,7 +72,9 @@ class PluginsManagementTest extends TestCase
     public function test_area_de_atualizacoes_tem_seccao_de_plugins(): void
     {
         config(['cms-core.updates.enabled' => false]);
-        config(['cms-plugins.plugins.blog' => $this->pluginConfig()]);
+        config(['cms-plugins.plugins' => [
+            'blog' => $this->pluginConfig(),
+        ]]);
 
         $admin = $this->superAdmin();
 
