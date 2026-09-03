@@ -136,7 +136,7 @@ class PackageUpdater
             return null;
         }
 
-        return '^'.$availableMajor.'.0';
+        return $availableMajor.'.*';
     }
 
     private function majorVersion(string $version): ?int
