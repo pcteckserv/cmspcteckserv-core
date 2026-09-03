@@ -3,6 +3,7 @@
 namespace Pcteckserv\CmsCore\Updates;
 
 use Symfony\Component\Process\Process;
+use Illuminate\Support\Facades\DB;
 
 class PackageUpdater
 {
@@ -15,7 +16,7 @@ class PackageUpdater
     {
         $installedPackage = $this->installedComposerPackage($package);
         $previousVersion = $installedPackage['version'] ?? null;
-        $availableVersion = $this->updateChecker->latestVersion($package);
+        $availableVersion = $this->availableVersion($package);
 
         $composer = $this->run([$this->composerExecutable(), 'update', $package, '--with-dependencies']);
 
@@ -107,6 +108,19 @@ class PackageUpdater
         }
 
         return mb_strimwidth($output, 0, 800, '...');
+    }
+
+    private function availableVersion(string $package): ?string
+    {
+        $storedVersion = DB::table('cms_installed_packages')
+            ->where('name', $package)
+            ->value('available_version');
+
+        if (is_string($storedVersion) && $storedVersion !== '') {
+            return $storedVersion;
+        }
+
+        return $this->updateChecker->latestVersion($package);
     }
 
     private function majorUpgradeConstraint(?string $installedVersion, ?string $availableVersion): ?string
