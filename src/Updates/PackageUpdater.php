@@ -221,6 +221,8 @@ class PackageUpdater
 
         $safeDirectory = str_replace('\\', '/', base_path());
         $gitConfig = "[safe]\n\tdirectory = {$safeDirectory}\n";
+        $gitConfig .= "[url \"https://github.com/\"]\n";
+        $gitConfig .= "\tinsteadOf = git@github.com:\n";
 
         $token = config('cms-core.updates.github_token');
 
