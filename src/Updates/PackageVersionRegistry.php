@@ -5,11 +5,13 @@ namespace Pcteckserv\CmsCore\Updates;
 use Composer\InstalledVersions;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Pcteckserv\CmsCore\Plugins\PluginCatalog;
 
 class PackageVersionRegistry
 {
     public function __construct(
         private readonly GitTagUpdateChecker $updateChecker,
+        private readonly PluginCatalog $plugins,
     ) {
     }
 
@@ -18,10 +20,7 @@ class PackageVersionRegistry
      */
     public function sync(): Collection
     {
-        $packages = collect(config('cms-core.updates.packages', []))
-            ->filter(fn (mixed $package): bool => is_string($package) && $package !== '')
-            ->unique()
-            ->values();
+        $packages = $this->configuredPackages();
 
         $channel = config('cms-core.updates.channel', 'stable');
 
@@ -50,10 +49,7 @@ class PackageVersionRegistry
     {
         $this->sync();
 
-        $packages = collect(config('cms-core.updates.packages', []))
-            ->filter(fn (mixed $package): bool => is_string($package) && $package !== '')
-            ->unique()
-            ->values();
+        $packages = $this->configuredPackages();
 
         foreach ($packages as $package) {
             $availableVersion = $this->updateChecker->latestVersion($package);
@@ -125,6 +121,18 @@ class PackageVersionRegistry
         }
 
         return InstalledVersions::getPrettyVersion($package) ?: InstalledVersions::getVersion($package);
+    }
+
+    /**
+     * @return Collection<int, string>
+     */
+    private function configuredPackages(): Collection
+    {
+        return collect(config('cms-core.updates.packages', []))
+            ->merge($this->plugins->packages())
+            ->filter(fn (mixed $package): bool => is_string($package) && $package !== '')
+            ->unique()
+            ->values();
     }
 
     private function normalizeVersion(string $version): string

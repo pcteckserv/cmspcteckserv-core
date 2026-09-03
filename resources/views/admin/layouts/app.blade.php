@@ -82,6 +82,9 @@
                 @can('updates.view')
                     <a @class(['nav-link', 'active' => request()->routeIs('admin.updates.*')]) href="{{ route('admin.updates.index') }}">Atualizações</a>
                 @endcan
+                @can('plugins.view')
+                    <a @class(['nav-link', 'active' => request()->routeIs('admin.plugins.*')]) href="{{ route('admin.plugins.index') }}">Plugins</a>
+                @endcan
             </nav>
         </aside>
 

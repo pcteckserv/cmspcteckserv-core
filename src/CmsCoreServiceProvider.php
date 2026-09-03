@@ -19,12 +19,15 @@ use Pcteckserv\CmsCore\Console\ConsentKnowledgeCommand;
 use Pcteckserv\CmsCore\Console\ConsentScanCommand;
 use Pcteckserv\CmsCore\Console\ConsentStatusCommand;
 use Pcteckserv\CmsCore\Console\CreateBackupCommand;
+use Pcteckserv\CmsCore\Console\DisablePluginCommand;
+use Pcteckserv\CmsCore\Console\EnablePluginCommand;
 use Pcteckserv\CmsCore\Console\MaintenanceOffCommand;
 use Pcteckserv\CmsCore\Console\MaintenanceOnCommand;
 use Pcteckserv\CmsCore\Console\MaintenanceStatusCommand;
 use Pcteckserv\CmsCore\Console\OptimizeMediaCommand;
 use Pcteckserv\CmsCore\Console\PruneActivityLogsCommand;
 use Pcteckserv\CmsCore\Console\RunDueBackupsCommand;
+use Pcteckserv\CmsCore\Console\SyncPluginsCommand;
 use Pcteckserv\CmsCore\Console\SyncPermissionsCommand;
 use Pcteckserv\CmsCore\Console\SyncVersionsCommand;
 use Pcteckserv\CmsCore\Consent\ConsentManager;
@@ -44,6 +47,8 @@ use Pcteckserv\CmsCore\Seo\Schema\OrganizationSchemaProvider;
 use Pcteckserv\CmsCore\Seo\Schema\WebPageSchemaProvider;
 use Pcteckserv\CmsCore\Seo\Schema\WebSiteSchemaProvider;
 use Pcteckserv\CmsCore\Seo\Support\SeoRegistry;
+use Pcteckserv\CmsCore\Plugins\PluginCatalog;
+use Pcteckserv\CmsCore\Plugins\PluginManager;
 use Pcteckserv\CmsCore\Services\Maintenance\MaintenanceModeManager;
 use Pcteckserv\CmsCore\Services\Maintenance\MaintenanceTemplateRegistry;
 use Pcteckserv\CmsCore\Services\Media\StorageMediaUrlGenerator;
@@ -61,8 +66,11 @@ class CmsCoreServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__.'/../config/cms-core.php', 'cms-core');
         $this->mergeConfigFrom(__DIR__.'/../config/cms-backups.php', 'cms-backups');
+        $this->mergeConfigFrom(__DIR__.'/../config/cms-plugins.php', 'cms-plugins');
         $this->app->singleton(PermissionRegistry::class);
         $this->app->singleton(SeoRegistry::class);
+        $this->app->singleton(PluginCatalog::class);
+        $this->app->singleton(PluginManager::class);
         $this->app->alias(SeoRegistry::class, 'cms.seo.registry');
         $this->app->singleton(ConsentManagerContract::class, ConsentManager::class);
         $this->app->singleton(MaintenanceTemplateRegistry::class);
@@ -94,6 +102,10 @@ class CmsCoreServiceProvider extends ServiceProvider
         ], 'cms-backups-config');
 
         $this->publishes([
+            __DIR__.'/../config/cms-plugins.php' => config_path('cms-plugins.php'),
+        ], 'cms-plugins-config');
+
+        $this->publishes([
             __DIR__.'/../resources/views' => resource_path('views/vendor/cms-core'),
         ], 'cms-core-views');
 
@@ -119,12 +131,15 @@ class CmsCoreServiceProvider extends ServiceProvider
                 ConsentScanCommand::class,
                 ConsentStatusCommand::class,
                 CreateBackupCommand::class,
+                DisablePluginCommand::class,
+                EnablePluginCommand::class,
                 MaintenanceOffCommand::class,
                 MaintenanceOnCommand::class,
                 MaintenanceStatusCommand::class,
                 OptimizeMediaCommand::class,
                 PruneActivityLogsCommand::class,
                 RunDueBackupsCommand::class,
+                SyncPluginsCommand::class,
                 SyncPermissionsCommand::class,
                 SyncVersionsCommand::class,
             ]);
@@ -191,6 +206,8 @@ class CmsCoreServiceProvider extends ServiceProvider
             'queues.manage' => ['label' => 'Gerir tarefas em segundo plano', 'group' => 'Tarefas'],
             'updates.view' => ['label' => 'Ver atualizações', 'group' => 'Atualizações'],
             'updates.manage' => ['label' => 'Executar atualizações', 'group' => 'Atualizações'],
+            'plugins.view' => ['label' => 'Ver plugins', 'group' => 'Plugins'],
+            'plugins.manage' => ['label' => 'Ativar ou desativar plugins', 'group' => 'Plugins'],
             'seo.view' => ['label' => 'Ver SEO', 'group' => 'SEO'],
             'seo.settings.manage' => ['label' => 'Gerir configuração SEO', 'group' => 'SEO'],
             'seo.audit.run' => ['label' => 'Executar auditoria SEO', 'group' => 'SEO'],

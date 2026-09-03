@@ -6,12 +6,13 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Pcteckserv\CmsCore\Jobs\UpdatePackageJob;
+use Pcteckserv\CmsCore\Plugins\PluginCatalog;
 use Pcteckserv\CmsCore\Updates\PackageVersionRegistry;
 use Pcteckserv\CmsCore\Updates\UpdateStatusRepository;
 
 class UpdatesController extends Controller
 {
-    public function index(PackageVersionRegistry $registry, UpdateStatusRepository $statuses): View
+    public function index(PackageVersionRegistry $registry, UpdateStatusRepository $statuses, PluginCatalog $plugins): View
     {
         abort_unless(auth()->user()?->can('updates.view'), 403);
 
@@ -25,10 +26,11 @@ class UpdatesController extends Controller
             'channel' => config('cms-core.updates.channel', 'stable'),
             'statuses' => $statuses->all(),
             'queueConnection' => config('cms-core.updates.queue_connection') ?: config('queue.default', 'sync'),
+            'pluginPackages' => $plugins->packages(),
         ]);
     }
 
-    public function update(string $package, UpdateStatusRepository $statuses): RedirectResponse
+    public function update(string $package, UpdateStatusRepository $statuses, PluginCatalog $plugins): RedirectResponse
     {
         abort_unless(auth()->user()?->can('updates.manage'), 403);
 
@@ -38,7 +40,13 @@ class UpdatesController extends Controller
                 ->with('cms_update_error', 'O sistema de atualizações está desativado.');
         }
 
-        if (! in_array($package, config('cms-core.updates.packages', []), true)) {
+        $allowedPackages = collect(config('cms-core.updates.packages', []))
+            ->merge($plugins->packages())
+            ->unique()
+            ->values()
+            ->all();
+
+        if (! in_array($package, $allowedPackages, true)) {
             return redirect()
                 ->route('admin.updates.index')
                 ->with('cms_update_error', 'Package CMS inválido.');

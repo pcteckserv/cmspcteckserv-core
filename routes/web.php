@@ -13,6 +13,7 @@ use Pcteckserv\CmsCore\Http\Controllers\Admin\DashboardController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\FooterSettingsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\MaintenanceSettingsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\MediaController;
+use Pcteckserv\CmsCore\Http\Controllers\Admin\PluginsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\Queues\QueueDashboardController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\RolesController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\SiteOptionsController;
@@ -153,6 +154,9 @@ Route::middleware('web')->group(function (): void {
             Route::post('/updates/{package}/run', [UpdatesController::class, 'update'])
                 ->where('package', '.*')
                 ->name('updates.run');
+            Route::get('/plugins', [PluginsController::class, 'index'])->name('plugins.index');
+            Route::put('/plugins/{plugin}/enable', [PluginsController::class, 'enable'])->name('plugins.enable');
+            Route::put('/plugins/{plugin}/disable', [PluginsController::class, 'disable'])->name('plugins.disable');
             Route::resource('users', UsersController::class)->except(['show']);
             Route::resource('roles', RolesController::class)->except(['show']);
         });
