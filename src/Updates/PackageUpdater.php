@@ -6,11 +6,16 @@ use Symfony\Component\Process\Process;
 
 class PackageUpdater
 {
+    public function __construct(
+        private readonly GitTagUpdateChecker $updateChecker,
+    ) {
+    }
+
     public function update(string $package): UpdateResult
     {
         $installedPackage = $this->installedComposerPackage($package);
-
         $previousVersion = $installedPackage['version'] ?? null;
+        $availableVersion = $this->updateChecker->latestVersion($package);
 
         $composer = $this->run([$this->composerExecutable(), 'update', $package, '--with-dependencies']);
 
@@ -20,6 +25,21 @@ class PackageUpdater
 
         $updatedPackage = $this->installedComposerPackage($package);
         $updatedVersion = $updatedPackage['version'] ?? null;
+
+        if ($previousVersion !== null && $updatedVersion === $previousVersion) {
+            $majorUpgrade = $this->majorUpgradeConstraint($previousVersion, $availableVersion);
+
+            if ($majorUpgrade !== null && ($installedPackage['dist']['type'] ?? null) !== 'path') {
+                $composer = $this->run([$this->composerExecutable(), 'require', $package.':'.$majorUpgrade, '--with-dependencies']);
+
+                if (! $composer->isSuccessful()) {
+                    return new UpdateResult(false, 'Composer falhou ao atualizar a constraint para '.$majorUpgrade.': '.$this->processOutput($composer));
+                }
+
+                $updatedPackage = $this->installedComposerPackage($package);
+                $updatedVersion = $updatedPackage['version'] ?? null;
+            }
+        }
 
         if ($previousVersion !== null && $updatedVersion === $previousVersion) {
             $repositoryHint = ($installedPackage['dist']['type'] ?? null) === 'path'
@@ -87,6 +107,31 @@ class PackageUpdater
         }
 
         return mb_strimwidth($output, 0, 800, '...');
+    }
+
+    private function majorUpgradeConstraint(?string $installedVersion, ?string $availableVersion): ?string
+    {
+        if (! is_string($installedVersion) || ! is_string($availableVersion)) {
+            return null;
+        }
+
+        $installedMajor = $this->majorVersion($installedVersion);
+        $availableMajor = $this->majorVersion($availableVersion);
+
+        if ($installedMajor === null || $availableMajor === null || $availableMajor <= $installedMajor) {
+            return null;
+        }
+
+        return '^'.$availableMajor.'.0';
+    }
+
+    private function majorVersion(string $version): ?int
+    {
+        if (! preg_match('/^v?(\\d+)/', $version, $matches)) {
+            return null;
+        }
+
+        return (int) $matches[1];
     }
 
     /**
