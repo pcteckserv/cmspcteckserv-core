@@ -155,6 +155,7 @@ Route::middleware('web')->group(function (): void {
                 ->where('package', '.*')
                 ->name('updates.run');
             Route::get('/plugins', [PluginsController::class, 'index'])->name('plugins.index');
+            Route::post('/plugins/install', [PluginsController::class, 'install'])->name('plugins.install');
             Route::put('/plugins/{plugin}/enable', [PluginsController::class, 'enable'])->name('plugins.enable');
             Route::put('/plugins/{plugin}/disable', [PluginsController::class, 'disable'])->name('plugins.disable');
             Route::resource('users', UsersController::class)->except(['show']);

@@ -207,6 +207,7 @@ class CmsCoreServiceProvider extends ServiceProvider
             'updates.view' => ['label' => 'Ver atualizações', 'group' => 'Atualizações'],
             'updates.manage' => ['label' => 'Executar atualizações', 'group' => 'Atualizações'],
             'plugins.view' => ['label' => 'Ver plugins', 'group' => 'Plugins'],
+            'plugins.install' => ['label' => 'Instalar plugins', 'group' => 'Plugins'],
             'plugins.manage' => ['label' => 'Ativar ou desativar plugins', 'group' => 'Plugins'],
             'seo.view' => ['label' => 'Ver SEO', 'group' => 'SEO'],
             'seo.settings.manage' => ['label' => 'Gerir configuração SEO', 'group' => 'SEO'],
