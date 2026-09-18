@@ -6,8 +6,10 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Pcteckserv\CmsCore\Models\InstalledPlugin;
 use Pcteckserv\CmsCore\Models\Role;
+use Pcteckserv\CmsCore\Plugins\DTOs\AvailablePlugin;
 use Pcteckserv\CmsCore\Plugins\PluginInstaller;
 use Pcteckserv\CmsCore\Plugins\PluginInstallResult;
+use Pcteckserv\CmsCore\Plugins\PluginRepository;
 use Tests\TestCase;
 
 class PluginsManagementTest extends TestCase
@@ -20,6 +22,11 @@ class PluginsManagementTest extends TestCase
             'blog' => $this->pluginConfig(),
         ]]);
 
+        $this->mock(PluginRepository::class)
+            ->shouldReceive('available')
+            ->once()
+            ->andReturn(collect());
+
         $admin = $this->superAdmin();
 
         $this->actingAs($admin)
@@ -29,6 +36,26 @@ class PluginsManagementTest extends TestCase
             ->assertSee('Blog')
             ->assertSee('pcteckserv/cms-blog')
             ->assertSee('Não instalado');
+    }
+
+    public function test_area_de_plugins_lista_plugins_disponiveis_no_repositorio(): void
+    {
+        config(['cms-plugins.plugins' => []]);
+
+        $this->mock(PluginRepository::class)
+            ->shouldReceive('available')
+            ->once()
+            ->andReturn(collect([$this->availablePlugin()]));
+
+        $admin = $this->superAdmin();
+
+        $this->actingAs($admin)
+            ->get(route('admin.plugins.index'))
+            ->assertOk()
+            ->assertSee('Plugins disponíveis')
+            ->assertSee('Formulários de contacto')
+            ->assertSee('pcteckserv/cms-contact-forms')
+            ->assertSee('Instalar');
     }
 
     public function test_plugin_pode_ser_ativado_e_desativado(): void
@@ -58,15 +85,21 @@ class PluginsManagementTest extends TestCase
     {
         $admin = $this->superAdmin();
 
+        $repository = $this->mock(PluginRepository::class);
+        $repository->shouldReceive('find')
+            ->once()
+            ->with('contact-forms')
+            ->andReturn($this->availablePlugin());
+
         $installer = $this->mock(PluginInstaller::class);
         $installer->shouldReceive('install')
             ->once()
             ->with([
                 'package' => 'pcteckserv/cms-contact-forms',
-                'version_constraint' => null,
+                'version_constraint' => '*@dev',
                 'slug' => 'contact-forms',
                 'label' => 'Formulários de contacto',
-                'description' => null,
+                'description' => 'Criação, gestão e processamento de formulários de contacto.',
                 'provider' => 'Pcteckserv\\CmsContactForms\\CmsContactFormsServiceProvider',
                 'repository_type' => 'path',
                 'repository_url' => '../plugins/cmspcteckserv-formularios-de-contacto',
@@ -75,12 +108,7 @@ class PluginsManagementTest extends TestCase
 
         $this->actingAs($admin)
             ->post(route('admin.plugins.install'), [
-                'package' => 'pcteckserv/cms-contact-forms',
-                'slug' => 'contact-forms',
-                'label' => 'Formulários de contacto',
-                'provider' => 'Pcteckserv\\CmsContactForms\\CmsContactFormsServiceProvider',
-                'repository_type' => 'path',
-                'repository_url' => '../plugins/cmspcteckserv-formularios-de-contacto',
+                'plugin' => 'contact-forms',
             ])
             ->assertRedirect(route('admin.plugins.index'))
             ->assertSessionHas('cms_plugin_success', 'Plugin instalado com sucesso.');
@@ -92,20 +120,20 @@ class PluginsManagementTest extends TestCase
 
         $this->actingAs($plainUser)
             ->post(route('admin.plugins.install'), [
-                'package' => 'pcteckserv/cms-contact-forms',
+                'plugin' => 'contact-forms',
             ])
             ->assertForbidden();
     }
 
-    public function test_instalacao_de_plugins_valida_package(): void
+    public function test_instalacao_de_plugins_valida_identificador(): void
     {
         $admin = $this->superAdmin();
 
         $this->actingAs($admin)
             ->post(route('admin.plugins.install'), [
-                'package' => 'package-invalida',
+                'plugin' => 'plugin invalido',
             ])
-            ->assertSessionHasErrors('package');
+            ->assertSessionHasErrors('plugin');
     }
 
     public function test_gestao_de_plugins_exige_permissao(): void
@@ -154,6 +182,20 @@ class PluginsManagementTest extends TestCase
             'description' => 'Gestão de artigos e categorias.',
             'provider' => 'Pcteckserv\\CmsBlog\\BlogServiceProvider',
         ];
+    }
+
+    private function availablePlugin(): AvailablePlugin
+    {
+        return new AvailablePlugin(
+            slug: 'contact-forms',
+            directory: 'cmspcteckserv-formularios-de-contacto',
+            package: 'pcteckserv/cms-contact-forms',
+            label: 'Formulários de contacto',
+            description: 'Criação, gestão e processamento de formulários de contacto.',
+            provider: 'Pcteckserv\\CmsContactForms\\CmsContactFormsServiceProvider',
+            versionConstraint: '*@dev',
+            repositoryPath: '../plugins/cmspcteckserv-formularios-de-contacto',
+        );
     }
 
     private function superAdmin(): User

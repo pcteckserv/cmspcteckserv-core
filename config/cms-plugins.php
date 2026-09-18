@@ -2,6 +2,9 @@
 
 return [
     'enabled' => env('CMS_PLUGINS_ENABLED', true),
+    'repository_url' => env('CMS_PLUGINS_REPOSITORY_URL', 'https://github.com/pcteckserv/cmspcteckserv-plugins.git'),
+    'repository_branch' => env('CMS_PLUGINS_REPOSITORY_BRANCH'),
+    'metadata_file' => 'cms-plugin.json',
 
     /*
     |--------------------------------------------------------------------------

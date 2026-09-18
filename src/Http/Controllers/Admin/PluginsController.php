@@ -8,15 +8,27 @@ use Illuminate\Routing\Controller;
 use Pcteckserv\CmsCore\Http\Requests\Admin\InstallPluginRequest;
 use Pcteckserv\CmsCore\Plugins\PluginInstaller;
 use Pcteckserv\CmsCore\Plugins\PluginManager;
+use Pcteckserv\CmsCore\Plugins\PluginRepository;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class PluginsController extends Controller
 {
-    public function index(PluginManager $plugins): View
+    public function index(PluginManager $plugins, PluginRepository $repository): View
     {
         abort_unless(auth()->user()?->can('plugins.view'), 403);
 
+        try {
+            $availablePlugins = $repository->available();
+            $repositoryError = null;
+        } catch (ProcessFailedException $exception) {
+            $availablePlugins = collect();
+            $repositoryError = 'Não foi possível atualizar o repositório de plugins: '.$exception->getProcess()->getErrorOutput();
+        }
+
         return view('cms-core::admin.plugins.index', [
             'plugins' => $plugins->all(),
+            'availablePlugins' => $availablePlugins,
+            'pluginRepositoryError' => $repositoryError,
             'pluginsEnabled' => config('cms-plugins.enabled', true),
         ]);
     }
@@ -38,7 +50,7 @@ class PluginsController extends Controller
             ->with('cms_plugin_success', 'Plugin ativado com sucesso.');
     }
 
-    public function install(InstallPluginRequest $request, PluginInstaller $installer): RedirectResponse
+    public function install(InstallPluginRequest $request, PluginInstaller $installer, PluginRepository $repository): RedirectResponse
     {
         if (! config('cms-plugins.enabled', true)) {
             return redirect()
@@ -46,7 +58,21 @@ class PluginsController extends Controller
                 ->with('cms_plugin_error', 'A gestão de plugins está desativada.');
         }
 
-        $result = $installer->install($request->validated());
+        try {
+            $plugin = $repository->find($request->validated('plugin'));
+        } catch (ProcessFailedException $exception) {
+            return redirect()
+                ->route('admin.plugins.index')
+                ->with('cms_plugin_error', 'Não foi possível atualizar o repositório de plugins: '.$exception->getProcess()->getErrorOutput());
+        }
+
+        if ($plugin === null) {
+            return redirect()
+                ->route('admin.plugins.index')
+                ->with('cms_plugin_error', 'O plugin selecionado não existe no repositório configurado.');
+        }
+
+        $result = $installer->install($plugin->installData());
 
         return redirect()
             ->route('admin.plugins.index')
