@@ -2,6 +2,8 @@
 
 namespace Pcteckserv\CmsCore\Updates;
 
+use Illuminate\Support\Facades\Schema;
+use Pcteckserv\CmsCore\Models\InstalledPlugin;
 use Symfony\Component\Process\Process;
 
 class GitTagUpdateChecker
@@ -9,6 +11,16 @@ class GitTagUpdateChecker
     public function latestVersion(string $package): ?string
     {
         $repository = config("cms-core.updates.repositories.{$package}");
+
+        if ((! is_string($repository) || $repository === '') && Schema::hasTable((new InstalledPlugin())->getTable())) {
+            $plugin = InstalledPlugin::query()->where('package', $package)->whereNotNull('installed_version')->first();
+            $metadata = $plugin?->metadata ?? [];
+            $repository = match ($metadata['repository_type'] ?? null) {
+                'vcs', 'git' => $metadata['repository_url'] ?? null,
+                'path' => config('cms-plugins.repository_url'),
+                default => null,
+            };
+        }
 
         if (! is_string($repository) || $repository === '') {
             return null;

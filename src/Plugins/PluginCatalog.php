@@ -3,6 +3,8 @@
 namespace Pcteckserv\CmsCore\Plugins;
 
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
+use Pcteckserv\CmsCore\Models\InstalledPlugin;
 use Pcteckserv\CmsCore\Plugins\DTOs\PluginDefinition;
 
 class PluginCatalog
@@ -43,8 +45,12 @@ class PluginCatalog
      */
     public function packages(): array
     {
-        return $this->all()
-            ->pluck('package')
+        $installed = Schema::hasTable((new InstalledPlugin())->getTable())
+            ? InstalledPlugin::query()->whereNotNull('installed_version')->pluck('package')
+            : collect();
+
+        return $this->all()->pluck('package')
+            ->merge($installed)
             ->filter()
             ->unique()
             ->values()
