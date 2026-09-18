@@ -20,6 +20,13 @@ class PathPluginUpdateTest extends TestCase
 
     protected function setUp(): void
     {
+        require_once dirname(__DIR__, 2).'/src/Plugins/DTOs/AvailablePlugin.php';
+        require_once dirname(__DIR__, 2).'/src/Plugins/PluginRepository.php';
+        require_once dirname(__DIR__, 2).'/src/Updates/GitTagUpdateChecker.php';
+        require_once dirname(__DIR__, 2).'/src/Plugins/PluginInstaller.php';
+        require_once dirname(__DIR__, 2).'/src/Plugins/PluginManager.php';
+        require_once dirname(__DIR__, 2).'/src/Plugins/PluginCatalog.php';
+        require_once dirname(__DIR__, 2).'/src/Updates/PackageVersionRegistry.php';
         require_once dirname(__DIR__, 2).'/src/Updates/PackageUpdater.php';
         require_once dirname(__DIR__, 2).'/src/Updates/InstalledPackage.php';
         parent::setUp();
@@ -32,7 +39,8 @@ class PathPluginUpdateTest extends TestCase
         $updater = $this->updater(true);
         $result = $updater->update($plugin->package);
         $this->assertTrue($result->successful);
-        $this->assertSame('v1.0.1', $plugin->fresh()->metadata['last_applied_release']);
+        $this->assertSame('1.0.1', $plugin->fresh()->metadata['version']);
+        $this->assertSame('1.0.1', $plugin->fresh()->installed_version);
         $package = new InstalledPackage($plugin->package, 'dev-main', 'v1.0.1', 'stable', null, 'v1.0.1');
         $this->assertFalse($package->hasUpdate());
         $next = new InstalledPackage($plugin->package, 'dev-main', 'v1.0.2', 'stable', null, 'v1.0.1');
@@ -46,6 +54,78 @@ class PathPluginUpdateTest extends TestCase
         $result = $this->updater(false)->update($plugin->package);
         $this->assertFalse($result->successful);
         $this->assertArrayNotHasKey('last_applied_release', $plugin->fresh()->metadata);
+    }
+
+    public function test_versao_disponivel_do_plugin_vem_dos_metadados_sem_tags_git(): void
+    {
+        $plugin = $this->plugin();
+        $this->repository();
+        $this->assertSame('1.0.1', (new GitTagUpdateChecker())->latestVersion($plugin->package));
+    }
+
+    public function test_instalacao_nova_guarda_a_versao_dos_metadados(): void
+    {
+        $installer = Mockery::mock(\Pcteckserv\CmsCore\Plugins\PluginInstaller::class)
+            ->makePartial()->shouldAllowMockingProtectedMethods();
+        $process = Mockery::mock(Process::class);
+        $process->shouldReceive('isSuccessful')->andReturn(true);
+        $installer->shouldReceive('run')->times(5)->andReturn($process);
+        $source = new AvailablePlugin('test-plugin', 'test-plugin', 'tests/plugin', 'Teste', null, null, '*@dev', '/source', '1.0.2');
+        $this->assertTrue($installer->install($source->installData())->successful);
+        $plugin = InstalledPlugin::query()->where('slug', 'test-plugin')->firstOrFail();
+        $this->assertSame('1.0.2', $plugin->installed_version);
+        $this->assertSame('1.0.2', $plugin->metadata['version']);
+    }
+
+    public function test_sincronizacao_e_atualizacoes_preservam_a_versao_do_painel(): void
+    {
+        $plugin = $this->plugin();
+        $plugin->update([
+            'package' => 'pcteckserv/cms-core',
+            'installed_version' => '1.0.2',
+            'metadata' => ['repository_type' => 'path', 'version' => '1.0.2'],
+        ]);
+        config([
+            'cms-plugins.plugins' => ['test-plugin' => ['package' => $plugin->package, 'label' => 'Teste']],
+            'cms-core.updates.packages' => [],
+        ]);
+        $catalog = new \Pcteckserv\CmsCore\Plugins\PluginCatalog();
+        $manager = new \Pcteckserv\CmsCore\Plugins\PluginManager($catalog);
+        $this->assertSame('1.0.2', $manager->all()->sole()->installed_version);
+        $checker = $this->mock(GitTagUpdateChecker::class);
+        $checker->shouldReceive('latestVersion')->twice()->with($plugin->package)
+            ->andReturn('1.0.2', '1.0.3');
+        $registry = new \Pcteckserv\CmsCore\Updates\PackageVersionRegistry($checker, $catalog);
+        $current = $registry->checkRemoteUpdates()->firstWhere('name', $plugin->package);
+        $this->assertSame('1.0.2', $current->installedVersion);
+        $this->assertFalse($current->hasUpdate());
+        $next = $registry->checkRemoteUpdates()->firstWhere('name', $plugin->package);
+        $this->assertSame('1.0.2', $next->installedVersion);
+        $this->assertSame('1.0.3', $next->availableVersion);
+        $this->assertTrue($next->hasUpdate());
+    }
+
+    public function test_metadados_invalidos_nao_sao_aceites_como_versao(): void
+    {
+        $directory = sys_get_temp_dir().'/cms-plugin-metadata-'.bin2hex(random_bytes(8));
+        \Illuminate\Support\Facades\File::makeDirectory($directory);
+        try {
+            $method = new \ReflectionMethod(PluginRepository::class, 'fromDirectory');
+            foreach (['1.0.2', 'dev-main', 12] as $version) {
+                \Illuminate\Support\Facades\File::put($directory.'/cms-plugin.json', json_encode([
+                    'slug' => 'test-plugin', 'package' => 'tests/plugin', 'version' => $version,
+                ], JSON_THROW_ON_ERROR));
+                $source = $method->invoke(new PluginRepository(), $directory, 'cms-plugin.json');
+                if ($version === '1.0.2') {
+                    $this->assertSame($version, $source->version);
+                    $this->assertSame($version, $source->installData()['version']);
+                } else {
+                    $this->assertNull($source);
+                }
+            }
+        } finally {
+            \Illuminate\Support\Facades\File::deleteDirectory($directory);
+        }
     }
 
     private function plugin(): InstalledPlugin
@@ -64,7 +144,7 @@ class PathPluginUpdateTest extends TestCase
 
     private function repository(): void
     {
-        $source = new AvailablePlugin('test-plugin', 'test-plugin', 'tests/plugin', 'Teste', null, null, '*@dev', '/source');
+        $source = new AvailablePlugin('test-plugin', 'test-plugin', 'tests/plugin', 'Teste', null, null, '*@dev', '/source', '1.0.1');
         $this->mock(PluginRepository::class)->shouldReceive('find')->once()->with('test-plugin')->andReturn($source);
     }
 

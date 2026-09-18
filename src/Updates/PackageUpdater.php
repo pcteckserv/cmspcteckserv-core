@@ -39,6 +39,12 @@ class PackageUpdater
             if ($source === null || $source->package !== $package) {
                 return new UpdateResult(false, 'O plugin não foi encontrado no repositório configurado.');
             }
+
+            if ($source->version === null) {
+                return new UpdateResult(false, 'O plugin não tem uma versão válida no ficheiro cms-plugin.json.');
+            }
+
+            $availableVersion = $source->version;
         }
 
         $composer = $this->run([$this->composerExecutable(), 'update', $package, '--with-dependencies']);
@@ -98,7 +104,8 @@ class PackageUpdater
         if ($isPathPlugin) {
             $metadata = $plugin->metadata ?? [];
             $metadata['last_applied_release'] = $availableVersion;
-            $plugin->forceFill(['metadata' => $metadata])->save();
+            $metadata['version'] = $availableVersion;
+            $plugin->forceFill(['metadata' => $metadata, 'installed_version' => $availableVersion])->save();
         }
 
         return new UpdateResult(true, 'Atualização concluída com sucesso.');

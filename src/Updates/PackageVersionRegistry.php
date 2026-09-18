@@ -122,6 +122,16 @@ class PackageVersionRegistry
 
     private function installedVersion(string $package): ?string
     {
+        $plugin = InstalledPlugin::query()->where('package', $package)->whereNotNull('installed_version')->first();
+
+        if (($plugin?->metadata['repository_type'] ?? null) === 'path') {
+            $version = $plugin->metadata['version'] ?? null;
+
+            if (is_string($version) && $version !== '') {
+                return $version;
+            }
+        }
+
         if (! InstalledVersions::isInstalled($package)) {
             return null;
         }

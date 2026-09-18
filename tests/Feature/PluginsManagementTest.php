@@ -20,9 +20,12 @@ class PluginsManagementTest extends TestCase
 
     protected function setUp(): void
     {
+        require_once dirname(__DIR__, 2).'/src/Plugins/DTOs/AvailablePlugin.php';
         require_once dirname(__DIR__, 2).'/src/Http/Controllers/Admin/PluginsController.php';
         require_once dirname(__DIR__, 2).'/src/Plugins/PluginInstaller.php';
-        require_once dirname(__DIR__, 2).'/src/Support/Navigation/AdminMenuRegistry.php';
+        if (! class_exists(\Pcteckserv\CmsCore\Support\Navigation\AdminMenuRegistry::class)) {
+            require_once dirname(__DIR__, 2).'/src/Support/Navigation/AdminMenuRegistry.php';
+        }
         parent::setUp();
         $this->app->singleton(\Pcteckserv\CmsCore\Support\Navigation\AdminMenuRegistry::class);
 
@@ -174,6 +177,7 @@ class PluginsManagementTest extends TestCase
                 'provider' => 'Pcteckserv\\CmsContactForms\\CmsContactFormsServiceProvider',
                 'repository_type' => 'path',
                 'repository_url' => '../plugins/cmspcteckserv-formularios-de-contacto',
+                'version' => null,
             ])
             ->andReturn(new PluginInstallResult(true, 'Plugin instalado com sucesso.'));
 

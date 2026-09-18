@@ -13,6 +13,7 @@ class AvailablePlugin
         public readonly ?string $provider,
         public readonly ?string $versionConstraint,
         public readonly string $repositoryPath,
+        public readonly ?string $version = null,
     ) {
     }
 
@@ -30,6 +31,7 @@ class AvailablePlugin
             'provider' => $this->provider,
             'repository_type' => 'path',
             'repository_url' => $this->repositoryPath,
+            'version' => $this->version,
         ];
     }
 }

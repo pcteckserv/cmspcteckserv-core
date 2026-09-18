@@ -30,7 +30,9 @@ class PluginManager
                     'label' => $definition->label,
                     'description' => $definition->description,
                     'provider' => $definition->provider,
-                    'installed_version' => $this->installedVersion($definition->package),
+                    'installed_version' => $isInstalled
+                        ? ($plugin->metadata['version'] ?? $this->installedVersion($definition->package))
+                        : null,
                 ]);
 
                 if ($isInstalled && $plugin->installed_at === null) {

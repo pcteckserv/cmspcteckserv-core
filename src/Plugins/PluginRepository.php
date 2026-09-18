@@ -59,6 +59,12 @@ class PluginRepository
             return null;
         }
 
+        $version = $data['version'] ?? null;
+
+        if ($version !== null && (! is_string($version) || ! preg_match('/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/', $version))) {
+            return null;
+        }
+
         return new AvailablePlugin(
             slug: $slug,
             directory: $directoryName,
@@ -68,6 +74,7 @@ class PluginRepository
             provider: isset($data['provider']) && is_string($data['provider']) ? $data['provider'] : null,
             versionConstraint: isset($data['version_constraint']) && is_string($data['version_constraint']) ? $data['version_constraint'] : null,
             repositoryPath: $directory,
+            version: $version,
         );
     }
 

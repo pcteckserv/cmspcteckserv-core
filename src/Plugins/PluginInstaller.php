@@ -44,7 +44,8 @@ class PluginInstaller
      *     description?: string|null,
      *     provider?: string|null,
      *     repository_type?: string|null,
-     *     repository_url?: string|null
+     *     repository_url?: string|null,
+     *     version?: string|null
      * } $data
      */
     public function install(array $data): PluginInstallResult
@@ -93,13 +94,14 @@ class PluginInstaller
                 'label' => $data['label'] ?: Str::headline(Str::after($package, '/')),
                 'description' => $data['description'] ?? null,
                 'provider' => $data['provider'] ?? null,
-                'installed_version' => $this->installedVersion($package),
+                'installed_version' => $data['version'] ?? $this->installedVersion($package),
                 'installed_at' => now(),
                 'last_error' => null,
                 'metadata' => [
                     'version_constraint' => $versionConstraint,
                     'repository_type' => $data['repository_type'] ?? null,
                     'repository_url' => $data['repository_url'] ?? null,
+                    'version' => $data['version'] ?? null,
                 ],
             ],
         );
@@ -122,7 +124,7 @@ class PluginInstaller
     /**
      * @param array<int, string> $command
      */
-    private function run(array $command): Process
+    protected function run(array $command): Process
     {
         $process = new Process($command, base_path());
         $process->setTimeout(300);
