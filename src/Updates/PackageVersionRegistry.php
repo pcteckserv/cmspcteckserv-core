@@ -6,6 +6,7 @@ use Composer\InstalledVersions;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Pcteckserv\CmsCore\Plugins\PluginCatalog;
+use Pcteckserv\CmsCore\Models\InstalledPlugin;
 
 class PackageVersionRegistry
 {
@@ -102,6 +103,10 @@ class PackageVersionRegistry
      */
     public function all(): Collection
     {
+        $appliedReleases = InstalledPlugin::query()->whereNotNull('installed_version')->get()
+            ->filter(fn (InstalledPlugin $plugin): bool => ($plugin->metadata['repository_type'] ?? null) === 'path')
+            ->mapWithKeys(fn (InstalledPlugin $plugin): array => [$plugin->package => $plugin->metadata['last_applied_release'] ?? null]);
+
         return DB::table('cms_installed_packages')
             ->orderBy('name')
             ->get()
@@ -111,6 +116,7 @@ class PackageVersionRegistry
                 $package->available_version,
                 $package->channel,
                 $package->checked_at,
+                $appliedReleases->get($package->name),
             ));
     }
 

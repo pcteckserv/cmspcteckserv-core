@@ -4,6 +4,10 @@ namespace Pcteckserv\CmsCore\Updates;
 
 use Symfony\Component\Process\Process;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Pcteckserv\CmsCore\Models\InstalledPlugin;
+use Pcteckserv\CmsCore\Plugins\PluginRepository;
+use Throwable;
 
 class PackageUpdater
 {
@@ -17,6 +21,25 @@ class PackageUpdater
         $installedPackage = $this->installedComposerPackage($package);
         $previousVersion = $installedPackage['version'] ?? null;
         $availableVersion = $this->availableVersion($package);
+        $plugin = InstalledPlugin::query()->where('package', $package)->whereNotNull('installed_version')->first();
+        $isPathPlugin = $plugin !== null && ($plugin->metadata['repository_type'] ?? null) === 'path';
+
+        if ($isPathPlugin) {
+            try {
+                $source = app(PluginRepository::class)->find($plugin->slug);
+            } catch (Throwable $exception) {
+                Log::warning('Falha ao atualizar a origem do plugin.', [
+                    'package' => $package,
+                    'exception' => $exception::class,
+                ]);
+
+                return new UpdateResult(false, 'Não foi possível atualizar o repositório do plugin. Verifique a ligação e as credenciais de acesso.');
+            }
+
+            if ($source === null || $source->package !== $package) {
+                return new UpdateResult(false, 'O plugin não foi encontrado no repositório configurado.');
+            }
+        }
 
         $composer = $this->run([$this->composerExecutable(), 'update', $package, '--with-dependencies']);
 
@@ -24,10 +47,18 @@ class PackageUpdater
             return new UpdateResult(false, 'Composer falhou: '.$this->processOutput($composer));
         }
 
+        if ($isPathPlugin) {
+            $reinstall = $this->run([$this->composerExecutable(), 'reinstall', $package, '--no-interaction']);
+
+            if (! $reinstall->isSuccessful()) {
+                return new UpdateResult(false, 'Não foi possível reinstalar o código atualizado do plugin. Verifique as permissões do Composer.');
+            }
+        }
+
         $updatedPackage = $this->installedComposerPackage($package);
         $updatedVersion = $updatedPackage['version'] ?? null;
 
-        if ($previousVersion !== null && $updatedVersion === $previousVersion) {
+        if (! $isPathPlugin && $previousVersion !== null && $updatedVersion === $previousVersion) {
             $majorUpgrade = $this->majorUpgradeConstraint($previousVersion, $availableVersion);
 
             if ($majorUpgrade !== null && ($installedPackage['dist']['type'] ?? null) !== 'path') {
@@ -42,7 +73,9 @@ class PackageUpdater
             }
         }
 
-        if ($previousVersion !== null && $updatedVersion === $previousVersion) {
+        if (! $isPathPlugin && $previousVersion !== null && $updatedVersion === $previousVersion
+            && ($updatedPackage['source']['reference'] ?? $updatedPackage['dist']['reference'] ?? null)
+                === ($installedPackage['source']['reference'] ?? $installedPackage['dist']['reference'] ?? null)) {
             $repositoryHint = ($installedPackage['dist']['type'] ?? null) === 'path'
                 ? ' A package continua instalada a partir do repositório local path '.($installedPackage['dist']['url'] ?? 'sem caminho').'.'
                 : '';
@@ -62,6 +95,12 @@ class PackageUpdater
             return new UpdateResult(false, 'Limpeza de cache falhou: '.$this->processOutput($cache));
         }
 
+        if ($isPathPlugin) {
+            $metadata = $plugin->metadata ?? [];
+            $metadata['last_applied_release'] = $availableVersion;
+            $plugin->forceFill(['metadata' => $metadata])->save();
+        }
+
         return new UpdateResult(true, 'Atualização concluída com sucesso.');
     }
 
@@ -78,13 +117,19 @@ class PackageUpdater
 
         $packageData = json_decode($process->getOutput(), true);
 
-        return is_array($packageData) ? $packageData : [];
+        if (! is_array($packageData)) {
+            return [];
+        }
+
+        $packageData['version'] ??= $packageData['versions'][0] ?? null;
+
+        return $packageData;
     }
 
     /**
      * @param array<int, string> $command
      */
-    private function run(array $command): Process
+    protected function run(array $command): Process
     {
         $process = new Process($command, base_path());
         $process->setTimeout(300);

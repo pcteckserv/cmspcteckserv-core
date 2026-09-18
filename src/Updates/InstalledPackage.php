@@ -12,6 +12,7 @@ final readonly class InstalledPackage
         public ?string $availableVersion,
         public string $channel,
         public ?string $checkedAt,
+        public ?string $lastAppliedRelease = null,
     ) {
     }
 
@@ -21,7 +22,11 @@ final readonly class InstalledPackage
             return false;
         }
 
-        return version_compare($this->normalizeVersion($this->availableVersion), $this->normalizeVersion($this->installedVersion), '>');
+        $comparisonVersion = str_starts_with($this->installedVersion, 'dev-') && $this->lastAppliedRelease !== null
+            ? $this->lastAppliedRelease
+            : $this->installedVersion;
+
+        return version_compare($this->normalizeVersion($this->availableVersion), $this->normalizeVersion($comparisonVersion), '>');
     }
 
     public function formattedCheckedAt(): string
