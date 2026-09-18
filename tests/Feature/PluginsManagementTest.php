@@ -11,10 +11,24 @@ use Pcteckserv\CmsCore\Plugins\PluginInstaller;
 use Pcteckserv\CmsCore\Plugins\PluginInstallResult;
 use Pcteckserv\CmsCore\Plugins\PluginRepository;
 use Tests\TestCase;
+use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class PluginsManagementTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_erro_do_repositorio_nao_expoe_detalhes_internos(): void
+    {
+        $process = new Process([PHP_BINARY, '-r', 'fwrite(STDERR, "private-server-path secret-token"); exit(1);']);
+        $process->run();
+        $this->mock(PluginRepository::class)->shouldReceive('available')
+            ->once()->andThrow(new ProcessFailedException($process));
+
+        $this->actingAs($this->superAdmin())->get(route('admin.plugins.index'))
+            ->assertOk()->assertSee('Verifique a ligação e as credenciais')
+            ->assertDontSee('private-server-path')->assertDontSee('secret-token');
+    }
 
     public function test_area_de_plugins_lista_plugins_configurados(): void
     {

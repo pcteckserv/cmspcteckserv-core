@@ -114,11 +114,25 @@ class PluginRepository
     {
         $process = new Process($command, base_path());
         $process->setTimeout(300);
-        $process->setEnv([
+        $environment = [
             'GIT_TERMINAL_PROMPT' => '0',
             'SystemRoot' => getenv('SystemRoot') ?: 'C:\\Windows',
             'WINDIR' => getenv('WINDIR') ?: getenv('SystemRoot') ?: 'C:\\Windows',
-        ]);
+        ];
+
+        $token = config('cms-core.updates.github_token');
+
+        if (is_string($token) && $token !== '') {
+            $environment += [
+                'GIT_CONFIG_COUNT' => '2',
+                'GIT_CONFIG_KEY_0' => 'credential.helper',
+                'GIT_CONFIG_VALUE_0' => '',
+                'GIT_CONFIG_KEY_1' => 'http.https://github.com/.extraheader',
+                'GIT_CONFIG_VALUE_1' => 'AUTHORIZATION: basic '.base64_encode('x-access-token:'.$token),
+            ];
+        }
+
+        $process->setEnv($environment);
         $process->mustRun();
     }
 }

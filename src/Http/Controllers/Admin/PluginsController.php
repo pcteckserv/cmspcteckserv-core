@@ -22,7 +22,7 @@ class PluginsController extends Controller
             $repositoryError = null;
         } catch (ProcessFailedException $exception) {
             $availablePlugins = collect();
-            $repositoryError = 'Não foi possível atualizar o repositório de plugins: '.$exception->getProcess()->getErrorOutput();
+            $repositoryError = 'Não foi possível atualizar o repositório de plugins. Verifique a ligação e as credenciais de acesso ao GitHub.';
         }
 
         return view('cms-core::admin.plugins.index', [
@@ -63,7 +63,7 @@ class PluginsController extends Controller
         } catch (ProcessFailedException $exception) {
             return redirect()
                 ->route('admin.plugins.index')
-                ->with('cms_plugin_error', 'Não foi possível atualizar o repositório de plugins: '.$exception->getProcess()->getErrorOutput());
+                ->with('cms_plugin_error', 'Não foi possível atualizar o repositório de plugins. Verifique a ligação e as credenciais de acesso ao GitHub.');
         }
 
         if ($plugin === null) {
