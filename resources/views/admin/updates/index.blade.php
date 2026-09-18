@@ -23,12 +23,6 @@
         <div class="alert alert-danger">{{ session('cms_update_error') }}</div>
     @endif
 
-    @if ($queueConnection === 'sync')
-        <div class="alert alert-warning">
-            A queue está configurada como sync. Para atualizar em segundo plano, configure uma queue assíncrona e mantenha um worker ativo.
-        </div>
-    @endif
-
     @php
         $pluginPackageNames = collect($pluginPackages ?? []);
         $corePackages = $packages->reject(fn ($package) => $pluginPackageNames->contains($package->name))->values();

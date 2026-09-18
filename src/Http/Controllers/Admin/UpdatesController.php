@@ -5,10 +5,11 @@ namespace Pcteckserv\CmsCore\Http\Controllers\Admin;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
-use Pcteckserv\CmsCore\Jobs\UpdatePackageJob;
 use Pcteckserv\CmsCore\Plugins\PluginCatalog;
+use Pcteckserv\CmsCore\Updates\PackageUpdater;
 use Pcteckserv\CmsCore\Updates\PackageVersionRegistry;
 use Pcteckserv\CmsCore\Updates\UpdateStatusRepository;
+use Throwable;
 
 class UpdatesController extends Controller
 {
@@ -25,12 +26,17 @@ class UpdatesController extends Controller
             'updatesEnabled' => config('cms-core.updates.enabled', true),
             'channel' => config('cms-core.updates.channel', 'stable'),
             'statuses' => $statuses->all(),
-            'queueConnection' => config('cms-core.updates.queue_connection') ?: config('queue.default', 'sync'),
             'pluginPackages' => $plugins->packages(),
         ]);
     }
 
-    public function update(string $package, UpdateStatusRepository $statuses, PluginCatalog $plugins): RedirectResponse
+    public function update(
+        string $package,
+        UpdateStatusRepository $statuses,
+        PluginCatalog $plugins,
+        PackageUpdater $updater,
+        PackageVersionRegistry $registry,
+    ): RedirectResponse
     {
         abort_unless(auth()->user()?->can('updates.manage'), 403);
 
@@ -60,26 +66,28 @@ class UpdatesController extends Controller
                 ->with('cms_update_error', 'Já existe uma atualização deste package em curso.');
         }
 
-        $connection = config('cms-core.updates.queue_connection') ?: config('queue.default', 'sync');
+        $userId = auth()->id();
 
-        if ($connection === 'sync') {
+        $statuses->markRunning($package, $userId);
+
+        try {
+            $result = $updater->update($package);
+            $registry->checkRemoteUpdates();
+
+            $statuses->markFinished($package, $result, $userId);
+        } catch (Throwable $exception) {
+            $statuses->markFailed($package, 'A atualização falhou: '.$exception->getMessage(), $userId);
+
             return redirect()
                 ->route('admin.updates.index')
-                ->with('cms_update_error', 'Configure uma queue assíncrona antes de executar atualizações em segundo plano.');
+                ->with('cms_update_error', 'A atualização falhou: '.$exception->getMessage());
         }
-
-        $statuses->markQueued($package, auth()->id());
-
-        $job = new UpdatePackageJob($package, auth()->id());
-
-        if (is_string($connection) && $connection !== '') {
-            $job->onConnection($connection);
-        }
-
-        dispatch($job);
 
         return redirect()
             ->route('admin.updates.index')
-            ->with('cms_update_success', 'Atualização colocada na fila. Pode continuar a utilizar o CMS enquanto é processada.');
+            ->with(
+                $result->successful ? 'cms_update_success' : 'cms_update_error',
+                $result->message,
+            );
     }
 }
