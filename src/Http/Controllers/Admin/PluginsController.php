@@ -25,9 +25,12 @@ class PluginsController extends Controller
             $repositoryError = 'Não foi possível atualizar o repositório de plugins. Verifique a ligação e as credenciais de acesso ao GitHub.';
         }
 
+        $installedPlugins = $plugins->all();
+        $installedPackages = $installedPlugins->whereNotNull('installed_version')->pluck('package');
+
         return view('cms-core::admin.plugins.index', [
-            'plugins' => $plugins->all(),
-            'availablePlugins' => $availablePlugins,
+            'plugins' => $installedPlugins,
+            'availablePlugins' => $availablePlugins->reject(fn ($plugin) => $installedPackages->contains($plugin->package))->values(),
             'pluginRepositoryError' => $repositoryError,
             'pluginsEnabled' => config('cms-plugins.enabled', true),
         ]);
@@ -94,5 +97,20 @@ class PluginsController extends Controller
         return redirect()
             ->route('admin.plugins.index')
             ->with('cms_plugin_success', 'Plugin desativado com sucesso.');
+    }
+
+    public function destroy(string $plugin, PluginInstaller $installer): RedirectResponse
+    {
+        abort_unless(auth()->user()?->can('plugins.manage') && auth()->user()?->can('plugins.install'), 403);
+
+        if (! config('cms-plugins.enabled', true)) {
+            return redirect()->route('admin.plugins.index')
+                ->with('cms_plugin_error', 'A gestão de plugins está desativada.');
+        }
+
+        $result = $installer->uninstall($plugin);
+
+        return redirect()->route('admin.plugins.index')
+            ->with($result->successful ? 'cms_plugin_success' : 'cms_plugin_error', $result->message);
     }
 }

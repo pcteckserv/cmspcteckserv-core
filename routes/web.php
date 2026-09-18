@@ -158,6 +158,7 @@ Route::middleware('web')->group(function (): void {
             Route::post('/plugins/install', [PluginsController::class, 'install'])->name('plugins.install');
             Route::put('/plugins/{plugin}/enable', [PluginsController::class, 'enable'])->name('plugins.enable');
             Route::put('/plugins/{plugin}/disable', [PluginsController::class, 'disable'])->name('plugins.disable');
+            Route::delete('/plugins/{plugin}', [PluginsController::class, 'destroy'])->name('plugins.destroy');
             Route::resource('users', UsersController::class)->except(['show']);
             Route::resource('roles', RolesController::class)->except(['show']);
         });

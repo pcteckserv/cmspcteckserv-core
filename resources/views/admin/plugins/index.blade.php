@@ -116,6 +116,19 @@
                                         @method('PUT')
                                         <button class="btn btn-primary btn-sm" type="submit">Ativar</button>
                                     </form>
+                                    @can('plugins.manage')
+                                        @can('plugins.install')
+                                            @if ($plugin->installed_version !== null)
+                                                <form class="mt-2" method="POST" action="{{ route('admin.plugins.destroy', $plugin->slug) }}" onsubmit="return confirm('Eliminar este plugin? Os dados existentes serão preservados.');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button class="btn btn-outline-danger btn-sm" type="submit" title="Eliminar plugin" aria-label="Eliminar plugin {{ $plugin->label }}">
+                                                        @include('cms-core::components.icons.trash')
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        @endcan
+                                    @endcan
                                 @endif
                             </td>
                         </tr>

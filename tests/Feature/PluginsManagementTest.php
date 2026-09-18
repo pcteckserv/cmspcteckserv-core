@@ -18,6 +18,59 @@ class PluginsManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        require_once dirname(__DIR__, 2).'/src/Http/Controllers/Admin/PluginsController.php';
+        require_once dirname(__DIR__, 2).'/src/Plugins/PluginInstaller.php';
+        parent::setUp();
+
+        $this->app['view']->replaceNamespace('cms-core', dirname(__DIR__, 2).'/resources/views');
+        \Illuminate\Support\Facades\Route::middleware(['web', 'auth'])
+            ->delete('/admin/plugins/{plugin}', [\Pcteckserv\CmsCore\Http\Controllers\Admin\PluginsController::class, 'destroy'])
+            ->name('admin.plugins.destroy');
+        \Illuminate\Support\Facades\Route::getRoutes()->refreshNameLookups();
+    }
+
+    public function test_plugin_instalado_nao_aparece_na_lista_de_disponiveis(): void
+    {
+        $plugin = new InstalledPlugin(['slug' => 'contact-forms', 'package' => 'pcteckserv/cms-contact-forms', 'installed_version' => '1.0.0']);
+        $this->mock(\Pcteckserv\CmsCore\Plugins\PluginManager::class)
+            ->shouldReceive('all')->once()->andReturn(collect([$plugin]));
+        $this->mock(PluginRepository::class)->shouldReceive('available')->once()
+            ->andReturn(collect([$this->availablePlugin()]));
+
+        $this->actingAs($this->superAdmin())->get(route('admin.plugins.index'))
+            ->assertOk()->assertViewHas('availablePlugins', fn ($items) => $items->isEmpty());
+    }
+
+    public function test_eliminacao_exige_autenticacao_e_permissao(): void
+    {
+        $this->mock(PluginInstaller::class)->shouldNotReceive('uninstall');
+        $this->delete(route('admin.plugins.destroy', 'contact-forms'))->assertRedirect();
+        $this->actingAs(User::factory()->create())
+            ->delete(route('admin.plugins.destroy', 'contact-forms'))->assertForbidden();
+    }
+
+    public function test_plugin_ativo_nao_pode_ser_eliminado(): void
+    {
+        InstalledPlugin::query()->create([
+            'slug' => 'contact-forms', 'name' => 'pcteckserv/cms-contact-forms',
+            'package' => 'pcteckserv/cms-contact-forms', 'label' => 'Contacto',
+            'installed_version' => '1.0.0', 'status' => 'enabled',
+        ]);
+        $this->actingAs($this->superAdmin())->delete(route('admin.plugins.destroy', 'contact-forms'))
+            ->assertSessionHas('cms_plugin_error', 'Desative o plugin antes de o eliminar.');
+        $this->assertDatabaseHas((new InstalledPlugin())->getTable(), ['slug' => 'contact-forms']);
+    }
+
+    public function test_plugin_desativado_pode_ser_eliminado(): void
+    {
+        $this->mock(PluginInstaller::class)->shouldReceive('uninstall')->once()
+            ->with('contact-forms')->andReturn(new PluginInstallResult(true, 'Plugin eliminado com sucesso.'));
+        $this->actingAs($this->superAdmin())->delete(route('admin.plugins.destroy', 'contact-forms'))
+            ->assertRedirect(route('admin.plugins.index'))->assertSessionHas('cms_plugin_success');
+    }
+
     public function test_erro_do_repositorio_nao_expoe_detalhes_internos(): void
     {
         $process = new Process([PHP_BINARY, '-r', 'fwrite(STDERR, "private-server-path secret-token"); exit(1);']);

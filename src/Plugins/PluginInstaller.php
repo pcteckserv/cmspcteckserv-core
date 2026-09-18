@@ -9,6 +9,32 @@ use Symfony\Component\Process\Process;
 
 class PluginInstaller
 {
+    public function uninstall(string $slug): PluginInstallResult
+    {
+        $plugin = InstalledPlugin::query()->where('slug', $slug)->firstOrFail();
+
+        if ($plugin->status !== 'disabled') {
+            return new PluginInstallResult(false, 'Desative o plugin antes de o eliminar.');
+        }
+
+        if ($plugin->installed_version === null || $plugin->package === 'pcteckserv/cms-core') {
+            return new PluginInstallResult(false, 'Este package não pode ser eliminado.');
+        }
+
+        $process = $this->run([$this->composerExecutable(), 'remove', $plugin->package, '--no-interaction']);
+
+        if (! $process->isSuccessful()) {
+            return new PluginInstallResult(false, 'Não foi possível desinstalar o plugin. Verifique as dependências e as permissões do Composer.');
+        }
+
+        $plugin->delete();
+        $cache = $this->run([PHP_BINARY, 'artisan', 'optimize:clear']);
+
+        return new PluginInstallResult($cache->isSuccessful(), $cache->isSuccessful()
+            ? 'Plugin eliminado com sucesso. Os dados existentes foram preservados.'
+            : 'O plugin foi desinstalado, mas não foi possível limpar a cache.');
+    }
+
     /**
      * @param array{
      *     package: string,
