@@ -9,6 +9,17 @@ use Tests\TestCase;
 
 class PluginRepositoryConfigurationTest extends TestCase
 {
+    public function test_comando_de_permissoes_usado_pelo_instalador_esta_registado(): void
+    {
+        require_once dirname(__DIR__, 2).'/src/Console/SyncPermissionsCommand.php';
+
+        $this->mock(\Pcteckserv\CmsCore\Services\PermissionSynchronizer::class)
+            ->shouldReceive('sync')->once()->andReturn(0);
+
+        $this->artisan(\Pcteckserv\CmsCore\Console\SyncPermissionsCommand::NAME)
+            ->assertExitCode(0);
+    }
+
     public function test_composer_configura_repositorio_com_tipo_e_url(): void
     {
         require_once dirname(__DIR__, 2).'/src/Plugins/PluginInstaller.php';

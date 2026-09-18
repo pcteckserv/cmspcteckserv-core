@@ -3,6 +3,7 @@
 namespace Pcteckserv\CmsCore\Plugins;
 
 use Illuminate\Support\Str;
+use Pcteckserv\CmsCore\Console\SyncPermissionsCommand;
 use Pcteckserv\CmsCore\Models\InstalledPlugin;
 use Symfony\Component\Process\Process;
 
@@ -46,7 +47,7 @@ class PluginInstaller
             return new PluginInstallResult(false, 'O plugin foi instalado, mas as migrations falharam: '.$this->processOutput($migrate));
         }
 
-        $permissions = $this->run([PHP_BINARY, 'artisan', 'cms:permissions:sync']);
+        $permissions = $this->run([PHP_BINARY, 'artisan', SyncPermissionsCommand::NAME]);
 
         if (! $permissions->isSuccessful()) {
             return new PluginInstallResult(false, 'O plugin foi instalado, mas a sincronização de permissões falhou: '.$this->processOutput($permissions));

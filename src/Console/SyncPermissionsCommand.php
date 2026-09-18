@@ -7,7 +7,9 @@ use Pcteckserv\CmsCore\Services\PermissionSynchronizer;
 
 class SyncPermissionsCommand extends Command
 {
-    protected $signature = 'cms:permissions-sync';
+    public const NAME = 'cms:permissions-sync';
+
+    protected $signature = self::NAME;
 
     protected $description = 'Sincroniza permissões registadas pelo Core e por plugins com a base de dados.';
 
