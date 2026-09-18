@@ -22,7 +22,9 @@ class PluginsManagementTest extends TestCase
     {
         require_once dirname(__DIR__, 2).'/src/Http/Controllers/Admin/PluginsController.php';
         require_once dirname(__DIR__, 2).'/src/Plugins/PluginInstaller.php';
+        require_once dirname(__DIR__, 2).'/src/Support/Navigation/AdminMenuRegistry.php';
         parent::setUp();
+        $this->app->singleton(\Pcteckserv\CmsCore\Support\Navigation\AdminMenuRegistry::class);
 
         $this->app['view']->replaceNamespace('cms-core', dirname(__DIR__, 2).'/resources/views');
         \Illuminate\Support\Facades\Route::middleware(['web', 'auth'])

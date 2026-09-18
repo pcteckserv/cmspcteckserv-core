@@ -111,6 +111,7 @@
                                         <button class="btn btn-outline-secondary btn-sm" type="submit">Desativar</button>
                                     </form>
                                 @else
+                                    <div class="d-flex justify-content-end align-items-center gap-2">
                                     <form method="POST" action="{{ route('admin.plugins.enable', $plugin->slug) }}">
                                         @csrf
                                         @method('PUT')
@@ -119,7 +120,7 @@
                                     @can('plugins.manage')
                                         @can('plugins.install')
                                             @if ($plugin->installed_version !== null)
-                                                <form class="mt-2" method="POST" action="{{ route('admin.plugins.destroy', $plugin->slug) }}" onsubmit="return confirm('Eliminar este plugin? Os dados existentes serão preservados.');">
+                                                <form method="POST" action="{{ route('admin.plugins.destroy', $plugin->slug) }}" onsubmit="return confirm('Eliminar este plugin? Os dados existentes serão preservados.');">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button class="btn btn-outline-danger btn-sm" type="submit" title="Eliminar plugin" aria-label="Eliminar plugin {{ $plugin->label }}">
@@ -129,6 +130,7 @@
                                             @endif
                                         @endcan
                                     @endcan
+                                    </div>
                                 @endif
                             </td>
                         </tr>

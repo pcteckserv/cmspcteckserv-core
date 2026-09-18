@@ -68,6 +68,7 @@ class CmsCoreServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/cms-backups.php', 'cms-backups');
         $this->mergeConfigFrom(__DIR__.'/../config/cms-plugins.php', 'cms-plugins');
         $this->app->singleton(PermissionRegistry::class);
+        $this->app->singleton(\Pcteckserv\CmsCore\Support\Navigation\AdminMenuRegistry::class);
         $this->app->singleton(SeoRegistry::class);
         $this->app->singleton(PluginCatalog::class);
         $this->app->singleton(PluginManager::class);

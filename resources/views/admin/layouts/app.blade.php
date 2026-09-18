@@ -85,6 +85,9 @@
                 @can('plugins.view')
                     <a @class(['nav-link', 'active' => request()->routeIs('admin.plugins.*')]) href="{{ route('admin.plugins.index') }}">Plugins</a>
                 @endcan
+                @foreach (app(\Pcteckserv\CmsCore\Support\Navigation\AdminMenuRegistry::class)->visible() as $menuItem)
+                    <a @class(['nav-link', 'active' => request()->routeIs($menuItem['active'])]) href="{{ route($menuItem['route']) }}">{{ $menuItem['label'] }}</a>
+                @endforeach
             </nav>
         </aside>
 
