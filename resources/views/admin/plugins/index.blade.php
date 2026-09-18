@@ -26,13 +26,6 @@
 
     @can('plugins.install')
         <div class="bg-white border rounded-2 mb-4">
-            <div class="d-flex flex-column flex-lg-row justify-content-between gap-2 p-4 border-bottom">
-                <div>
-                    <h2 class="h5 mb-1">Plugins disponíveis</h2>
-                    <p class="text-secondary mb-0">Lista carregada automaticamente a partir do repositório GitHub configurado.</p>
-                </div>
-            </div>
-
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
                     <thead>

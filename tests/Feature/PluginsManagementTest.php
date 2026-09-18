@@ -54,6 +54,8 @@ class PluginsManagementTest extends TestCase
 
     public function test_area_de_plugins_lista_plugins_disponiveis_no_repositorio(): void
     {
+        $this->app['view']->replaceNamespace('cms-core', dirname(__DIR__, 2).'/resources/views');
+
         config(['cms-plugins.plugins' => []]);
 
         $this->mock(PluginRepository::class)
@@ -66,7 +68,7 @@ class PluginsManagementTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.plugins.index'))
             ->assertOk()
-            ->assertSee('Plugins disponíveis')
+            ->assertDontSee('Plugins disponíveis')
             ->assertSee('Formulários de contacto')
             ->assertSee('pcteckserv/cms-contact-forms')
             ->assertSee('Instalar');

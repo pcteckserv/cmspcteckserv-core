@@ -30,7 +30,7 @@ class PluginInstaller
             $repository = $this->configureRepository($slug, $data['repository_type'], $data['repository_url']);
 
             if (! $repository->isSuccessful()) {
-                return new PluginInstallResult(false, 'Não foi possível configurar o repositório Composer: '.$this->processOutput($repository));
+                return new PluginInstallResult(false, 'Não foi possível configurar o repositório Composer. Verifique a configuração do repositório e as permissões de escrita.');
             }
         }
 
@@ -84,13 +84,12 @@ class PluginInstaller
     {
         $name = 'cms-plugin-'.$slug;
 
-        $typeProcess = $this->run([$this->composerExecutable(), 'config', 'repositories.'.$name.'.type', $type]);
-
-        if (! $typeProcess->isSuccessful()) {
-            return $typeProcess;
-        }
-
-        return $this->run([$this->composerExecutable(), 'config', 'repositories.'.$name.'.url', $url]);
+        return $this->run([
+            $this->composerExecutable(),
+            'config',
+            'repositories.'.$name,
+            json_encode(['type' => $type, 'url' => $url], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),
+        ]);
     }
 
     /**
