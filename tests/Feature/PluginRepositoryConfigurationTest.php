@@ -22,6 +22,8 @@ class PluginRepositoryConfigurationTest extends TestCase
 
     public function test_composer_configura_repositorio_com_tipo_e_url(): void
     {
+        require_once dirname(__DIR__, 2).'/src/Support/ComposerRepositoryCleaner.php';
+        require_once dirname(__DIR__, 2).'/src/Support/ComposerCommand.php';
         require_once dirname(__DIR__, 2).'/src/Plugins/PluginInstaller.php';
 
         $originalBasePath = $this->app->basePath();

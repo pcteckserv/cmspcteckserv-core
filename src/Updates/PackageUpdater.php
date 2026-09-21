@@ -7,13 +7,18 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Pcteckserv\CmsCore\Models\InstalledPlugin;
 use Pcteckserv\CmsCore\Plugins\PluginRepository;
+use Pcteckserv\CmsCore\Support\ComposerCommand;
 use Throwable;
 
 class PackageUpdater
 {
+    private readonly ComposerCommand $composerCommand;
+
     public function __construct(
         private readonly GitTagUpdateChecker $updateChecker,
+        ?ComposerCommand $composerCommand = null,
     ) {
+        $this->composerCommand = $composerCommand ?? new ComposerCommand();
     }
 
     public function update(string $package): UpdateResult
@@ -47,14 +52,14 @@ class PackageUpdater
             $availableVersion = $source->version;
         }
 
-        $composer = $this->run([$this->composerExecutable(), 'update', $package, '--with-dependencies']);
+        $composer = $this->run($this->composerCommand->build(['update', $package, '--with-dependencies']));
 
         if (! $composer->isSuccessful()) {
             return new UpdateResult(false, 'Composer falhou: '.$this->processOutput($composer));
         }
 
         if ($isPathPlugin) {
-            $reinstall = $this->run([$this->composerExecutable(), 'reinstall', $package, '--no-interaction']);
+            $reinstall = $this->run($this->composerCommand->build(['reinstall', $package, '--no-interaction']));
 
             if (! $reinstall->isSuccessful()) {
                 return new UpdateResult(false, 'Não foi possível reinstalar o código atualizado do plugin. Verifique as permissões do Composer.');
@@ -68,7 +73,7 @@ class PackageUpdater
             $majorUpgrade = $this->majorUpgradeConstraint($previousVersion, $availableVersion);
 
             if ($majorUpgrade !== null && ($installedPackage['dist']['type'] ?? null) !== 'path') {
-                $composer = $this->run([$this->composerExecutable(), 'require', $package.':'.$majorUpgrade, '--with-dependencies']);
+                $composer = $this->run($this->composerCommand->build(['require', $package.':'.$majorUpgrade, '--with-dependencies']));
 
                 if (! $composer->isSuccessful()) {
                     return new UpdateResult(false, 'Composer falhou ao atualizar a constraint para '.$majorUpgrade.': '.$this->processOutput($composer));
@@ -89,13 +94,13 @@ class PackageUpdater
             return new UpdateResult(false, 'O Composer terminou sem alterar a versão instalada (continua em '.$previousVersion.'). Verifique se o composer.json permite instalar a versão disponível.'.$repositoryHint);
         }
 
-        $migrate = $this->run([PHP_BINARY, 'artisan', 'migrate', '--force']);
+        $migrate = $this->run($this->composerCommand->php(['artisan', 'migrate', '--force']));
 
         if (! $migrate->isSuccessful()) {
             return new UpdateResult(false, 'Migrations falharam: '.$this->processOutput($migrate));
         }
 
-        $cache = $this->run([PHP_BINARY, 'artisan', 'optimize:clear']);
+        $cache = $this->run($this->composerCommand->php(['artisan', 'optimize:clear']));
 
         if (! $cache->isSuccessful()) {
             return new UpdateResult(false, 'Limpeza de cache falhou: '.$this->processOutput($cache));
@@ -116,7 +121,7 @@ class PackageUpdater
      */
     private function installedComposerPackage(string $package): array
     {
-        $process = $this->run([$this->composerExecutable(), 'show', $package, '--format=json']);
+        $process = $this->run($this->composerCommand->build(['show', $package, '--format=json']));
 
         if (! $process->isSuccessful()) {
             return [];
@@ -144,11 +149,6 @@ class PackageUpdater
         $process->run();
 
         return $process;
-    }
-
-    private function composerExecutable(): string
-    {
-        return PHP_OS_FAMILY === 'Windows' ? 'composer.bat' : 'composer';
     }
 
     private function processOutput(Process $process): string

@@ -5,10 +5,19 @@ namespace Pcteckserv\CmsCore\Plugins;
 use Illuminate\Support\Str;
 use Pcteckserv\CmsCore\Console\SyncPermissionsCommand;
 use Pcteckserv\CmsCore\Models\InstalledPlugin;
+use Pcteckserv\CmsCore\Support\ComposerCommand;
 use Symfony\Component\Process\Process;
 
 class PluginInstaller
 {
+    private ?ComposerCommand $composerCommand = null;
+
+    public function __construct(
+        ?ComposerCommand $composerCommand = null,
+    ) {
+        $this->composerCommand = $composerCommand ?? new ComposerCommand();
+    }
+
     public function uninstall(string $slug): PluginInstallResult
     {
         $plugin = InstalledPlugin::query()->where('slug', $slug)->firstOrFail();
@@ -21,14 +30,14 @@ class PluginInstaller
             return new PluginInstallResult(false, 'Este package não pode ser eliminado.');
         }
 
-        $process = $this->run([$this->composerExecutable(), 'remove', $plugin->package, '--no-interaction']);
+        $process = $this->run($this->composerCommand()->build(['remove', $plugin->package, '--no-interaction']));
 
         if (! $process->isSuccessful()) {
             return new PluginInstallResult(false, 'Não foi possível desinstalar o plugin. Verifique as dependências e as permissões do Composer.');
         }
 
         $plugin->delete();
-        $cache = $this->run([PHP_BINARY, 'artisan', 'optimize:clear']);
+        $cache = $this->run($this->composerCommand()->php(['artisan', 'optimize:clear']));
 
         return new PluginInstallResult($cache->isSuccessful(), $cache->isSuccessful()
             ? 'Plugin eliminado com sucesso. Os dados existentes foram preservados.'
@@ -58,29 +67,29 @@ class PluginInstaller
             $repository = $this->configureRepository($slug, $data['repository_type'], $data['repository_url']);
 
             if (! $repository->isSuccessful()) {
-                return new PluginInstallResult(false, 'Não foi possível configurar o repositório Composer. Verifique a configuração do repositório e as permissões de escrita.');
+                return new PluginInstallResult(false, 'Não foi possível configurar o repositório Composer: '.$this->processOutput($repository));
             }
         }
 
-        $composer = $this->run([$this->composerExecutable(), 'require', $package.':'.$versionConstraint, '--with-dependencies']);
+        $composer = $this->run($this->composerCommand()->build(['require', $package.':'.$versionConstraint, '--with-dependencies']));
 
         if (! $composer->isSuccessful()) {
             return new PluginInstallResult(false, 'Composer falhou: '.$this->processOutput($composer));
         }
 
-        $migrate = $this->run([PHP_BINARY, 'artisan', 'migrate', '--force']);
+        $migrate = $this->run($this->composerCommand()->php(['artisan', 'migrate', '--force']));
 
         if (! $migrate->isSuccessful()) {
             return new PluginInstallResult(false, 'O plugin foi instalado, mas as migrations falharam: '.$this->processOutput($migrate));
         }
 
-        $permissions = $this->run([PHP_BINARY, 'artisan', SyncPermissionsCommand::NAME]);
+        $permissions = $this->run($this->composerCommand()->php(['artisan', SyncPermissionsCommand::NAME]));
 
         if (! $permissions->isSuccessful()) {
             return new PluginInstallResult(false, 'O plugin foi instalado, mas a sincronização de permissões falhou: '.$this->processOutput($permissions));
         }
 
-        $cache = $this->run([PHP_BINARY, 'artisan', 'optimize:clear']);
+        $cache = $this->run($this->composerCommand()->php(['artisan', 'optimize:clear']));
 
         if (! $cache->isSuccessful()) {
             return new PluginInstallResult(false, 'O plugin foi instalado, mas a limpeza de cache falhou: '.$this->processOutput($cache));
@@ -114,8 +123,7 @@ class PluginInstaller
         $name = 'cms-plugin-'.$slug;
 
         return $this->run([
-            $this->composerExecutable(),
-            'config',
+            ...$this->composerCommand()->build(['config']),
             'repositories.'.$name,
             json_encode(['type' => $type, 'url' => $url], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),
         ]);
@@ -136,7 +144,7 @@ class PluginInstaller
 
     private function installedVersion(string $package): ?string
     {
-        $process = $this->run([$this->composerExecutable(), 'show', $package, '--format=json']);
+        $process = $this->run($this->composerCommand()->build(['show', $package, '--format=json']));
 
         if (! $process->isSuccessful()) {
             return null;
@@ -167,9 +175,9 @@ class PluginInstaller
         return $repositoryType === 'path' ? '*@dev' : '*';
     }
 
-    private function composerExecutable(): string
+    private function composerCommand(): ComposerCommand
     {
-        return PHP_OS_FAMILY === 'Windows' ? 'composer.bat' : 'composer';
+        return $this->composerCommand ??= new ComposerCommand();
     }
 
     private function processOutput(Process $process): string

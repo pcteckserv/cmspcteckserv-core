@@ -20,6 +20,8 @@ class PathPluginUpdateTest extends TestCase
 
     protected function setUp(): void
     {
+        require_once dirname(__DIR__, 2).'/src/Support/ComposerRepositoryCleaner.php';
+        require_once dirname(__DIR__, 2).'/src/Support/ComposerCommand.php';
         require_once dirname(__DIR__, 2).'/src/Plugins/DTOs/AvailablePlugin.php';
         require_once dirname(__DIR__, 2).'/src/Plugins/PluginRepository.php';
         require_once dirname(__DIR__, 2).'/src/Updates/GitTagUpdateChecker.php';

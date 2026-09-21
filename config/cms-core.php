@@ -136,6 +136,8 @@ return [
             'pcteckserv/cms-core' => env('CMS_CORE_REPOSITORY_URL', 'https://github.com/pcteckserv/cmspcteckserv-core.git'),
         ],
         'github_token' => env('CMS_GITHUB_TOKEN'),
+        'composer_binary' => env('CMS_COMPOSER_BINARY'),
+        'php_cli_binary' => env('CMS_PHP_CLI_BINARY'),
     ],
 
     'queues' => [
