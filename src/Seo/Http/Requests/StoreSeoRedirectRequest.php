@@ -2,8 +2,10 @@
 
 namespace Pcteckserv\CmsCore\Seo\Http\Requests;
 
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Pcteckserv\CmsCore\Seo\Models\SeoRedirect;
 
 class StoreSeoRedirectRequest extends FormRequest
 {
@@ -15,7 +17,19 @@ class StoreSeoRedirectRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'source' => ['required', 'string', 'max:2048', 'starts_with:/', Rule::unique('seo_redirects', 'source')],
+            'source' => [
+                'required',
+                'string',
+                'max:2048',
+                'starts_with:/',
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    $source = '/'.trim((string) $value, '/');
+
+                    if (SeoRedirect::query()->where('source_hash', hash('sha256', $source))->exists()) {
+                        $fail('Este URL de origem já está a ser utilizado.');
+                    }
+                },
+            ],
             'destination' => ['required', 'string', 'max:2048', 'different:source', 'not_regex:/^\s*(javascript|data):/i'],
             'status_code' => ['required', 'integer', Rule::in([301, 302, 307, 308])],
             'is_active' => ['nullable', 'boolean'],

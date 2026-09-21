@@ -13,4 +13,11 @@ class SeoRedirect extends Model
         'hits' => 'integer',
         'last_hit_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $redirect): void {
+            $redirect->source_hash = hash('sha256', $redirect->source);
+        });
+    }
 }

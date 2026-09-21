@@ -2,8 +2,10 @@
 
 namespace Pcteckserv\CmsCore\Seo\Http\Requests;
 
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Pcteckserv\CmsCore\Seo\Models\SeoRedirect;
 
 class UpdateSeoRedirectRequest extends FormRequest
 {
@@ -15,7 +17,25 @@ class UpdateSeoRedirectRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'source' => ['required', 'string', 'max:2048', 'starts_with:/', Rule::unique('seo_redirects', 'source')->ignore($this->route('redirect'))],
+            'source' => [
+                'required',
+                'string',
+                'max:2048',
+                'starts_with:/',
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    $source = '/'.trim((string) $value, '/');
+                    $redirect = $this->route('redirect');
+                    $redirectId = $redirect instanceof SeoRedirect ? $redirect->getKey() : $redirect;
+                    $exists = SeoRedirect::query()
+                        ->where('source_hash', hash('sha256', $source))
+                        ->when($redirectId, fn ($query) => $query->whereKeyNot($redirectId))
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('Este URL de origem já está a ser utilizado.');
+                    }
+                },
+            ],
             'destination' => ['required', 'string', 'max:2048', 'different:source', 'not_regex:/^\s*(javascript|data):/i'],
             'status_code' => ['required', 'integer', Rule::in([301, 302, 307, 308])],
             'is_active' => ['nullable', 'boolean'],

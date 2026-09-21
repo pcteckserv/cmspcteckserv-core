@@ -9,7 +9,9 @@ use Illuminate\Support\Facades\Schema;
 use Pcteckserv\CmsCore\Seo\Concerns\HasSeo;
 use Pcteckserv\CmsCore\Seo\Contracts\SitemapProviderInterface;
 use Pcteckserv\CmsCore\Seo\DTOs\SitemapUrl;
+use Pcteckserv\CmsCore\Seo\Models\SeoAudit;
 use Pcteckserv\CmsCore\Seo\Models\SeoMeta;
+use Pcteckserv\CmsCore\Seo\Models\SeoNotFound;
 use Pcteckserv\CmsCore\Seo\Models\SeoRedirect;
 use Pcteckserv\CmsCore\Seo\Services\RedirectResolver;
 use Pcteckserv\CmsCore\Seo\Services\SeoAuditor;
@@ -85,6 +87,23 @@ class SeoModuleTest extends TestCase
         $redirect = app(RedirectResolver::class)->resolve('/antiga');
 
         $this->assertSame('/nova', $redirect?->destination);
+        $this->assertSame(hash('sha256', '/antiga'), $redirect?->source_hash);
+    }
+
+    public function test_urls_seo_longos_usam_hashes_indexaveis(): void
+    {
+        $url = '/'.str_repeat('segmento-', 200);
+        $notFound = SeoNotFound::query()->create([
+            'url' => $url,
+            'method' => 'GET',
+        ]);
+        $audit = SeoAudit::query()->create([
+            'url' => 'https://example.test'.$url,
+            'score' => 100,
+        ]);
+
+        $this->assertSame(hash('sha256', $url), $notFound->url_hash);
+        $this->assertSame(hash('sha256', 'https://example.test'.$url), $audit->url_hash);
     }
 }
 

@@ -14,4 +14,11 @@ class SeoAudit extends Model
         'results' => 'array',
         'scanned_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $audit): void {
+            $audit->url_hash = hash('sha256', $audit->url);
+        });
+    }
 }

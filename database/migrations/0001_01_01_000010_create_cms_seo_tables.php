@@ -31,7 +31,8 @@ return new class extends Migration {
 
         Schema::create('seo_redirects', function (Blueprint $table): void {
             $table->id();
-            $table->string('source', 2048)->unique();
+            $table->string('source', 2048);
+            $table->string('source_hash', 64)->unique();
             $table->string('destination', 2048);
             $table->unsignedSmallInteger('status_code')->default(301);
             $table->boolean('is_active')->default(true)->index();
@@ -43,6 +44,7 @@ return new class extends Migration {
         Schema::create('seo_not_found_errors', function (Blueprint $table): void {
             $table->id();
             $table->string('url', 2048);
+            $table->string('url_hash', 64);
             $table->string('method', 10);
             $table->string('referer', 2048)->nullable();
             $table->string('user_agent', 500)->nullable();
@@ -53,12 +55,13 @@ return new class extends Migration {
             $table->boolean('is_ignored')->default(false)->index();
             $table->boolean('is_resolved')->default(false)->index();
             $table->timestamps();
-            $table->unique(['url', 'method']);
+            $table->unique(['url_hash', 'method']);
         });
 
         Schema::create('seo_audits', function (Blueprint $table): void {
             $table->id();
-            $table->string('url', 2048)->index();
+            $table->string('url', 2048);
+            $table->string('url_hash', 64)->index();
             $table->unsignedSmallInteger('status_code')->nullable();
             $table->unsignedTinyInteger('score')->default(0);
             $table->json('results')->nullable();

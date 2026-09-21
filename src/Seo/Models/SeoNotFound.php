@@ -28,4 +28,11 @@ class SeoNotFound extends Model
         'is_ignored' => 'boolean',
         'is_resolved' => 'boolean',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $notFound): void {
+            $notFound->url_hash = hash('sha256', $notFound->url);
+        });
+    }
 }
