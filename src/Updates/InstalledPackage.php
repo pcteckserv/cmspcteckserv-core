@@ -18,6 +18,10 @@ final readonly class InstalledPackage
 
     public function hasUpdate(): bool
     {
+        if (StarterPackage::is($this->name) && $this->installedVersion === null && $this->availableVersion !== null) {
+            return true;
+        }
+
         if ($this->installedVersion === null || $this->availableVersion === null) {
             return false;
         }

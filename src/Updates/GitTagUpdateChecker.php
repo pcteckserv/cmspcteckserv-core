@@ -12,6 +12,12 @@ class GitTagUpdateChecker
 {
     public function latestVersion(string $package): ?string
     {
+        if (StarterPackage::is($package)) {
+            $repository = StarterPackage::repository();
+
+            return $repository === null ? null : $this->latestVersionFromRepository($repository, StarterPackage::token());
+        }
+
         if (Schema::hasTable((new InstalledPlugin())->getTable())) {
             $plugin = InstalledPlugin::query()->where('package', $package)->whereNotNull('installed_version')->first();
 
@@ -41,13 +47,18 @@ class GitTagUpdateChecker
             return null;
         }
 
-        $githubVersion = $this->latestGithubVersion($repository);
+        return $this->latestVersionFromRepository($repository, config('cms-core.updates.github_token'));
+    }
+
+    private function latestVersionFromRepository(string $repository, mixed $token): ?string
+    {
+        $githubVersion = $this->latestGithubVersion($repository, $token);
 
         if ($githubVersion !== null) {
             return $githubVersion;
         }
 
-        $process = new Process($this->command($repository));
+        $process = new Process($this->command($repository, $token));
         $process->setTimeout(30);
         $process->run();
 
@@ -62,10 +73,8 @@ class GitTagUpdateChecker
             ->last();
     }
 
-    private function latestGithubVersion(string $repository): ?string
+    private function latestGithubVersion(string $repository, mixed $token): ?string
     {
-        $token = config('cms-core.updates.github_token');
-
         if (! is_string($token) || $token === '' || ! preg_match('#^https://github\.com/([^/]+)/([^/.]+)(?:\.git)?$#', $repository, $matches)) {
             return null;
         }
@@ -133,10 +142,8 @@ class GitTagUpdateChecker
     /**
      * @return array<int, string>
      */
-    private function command(string $repository): array
+    private function command(string $repository, mixed $token): array
     {
-        $token = config('cms-core.updates.github_token');
-
         if (! is_string($token) || $token === '' || ! str_starts_with($repository, 'https://github.com/')) {
             return ['git', 'ls-remote', '--tags', '--refs', $repository];
         }

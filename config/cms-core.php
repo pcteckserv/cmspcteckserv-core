@@ -134,8 +134,13 @@ return [
         ],
         'repositories' => [
             'pcteckserv/cms-core' => env('CMS_CORE_REPOSITORY_URL', 'https://github.com/pcteckserv/cmspcteckserv-core.git'),
+            'pcteckserv/cms-starter' => env('STARTER_GITHUB_REPOSITORY'),
         ],
         'github_token' => env('CMS_GITHUB_TOKEN'),
+        'starter' => [
+            'repository' => env('STARTER_GITHUB_REPOSITORY'),
+            'github_token' => env('STARTER_GITHUB_TOKEN', env('CMS_GITHUB_TOKEN')),
+        ],
         'composer_binary' => env('CMS_COMPOSER_BINARY'),
         'php_cli_binary' => env('CMS_PHP_CLI_BINARY'),
     ],

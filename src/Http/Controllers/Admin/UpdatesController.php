@@ -8,6 +8,7 @@ use Illuminate\Routing\Controller;
 use Pcteckserv\CmsCore\Plugins\PluginCatalog;
 use Pcteckserv\CmsCore\Updates\PackageUpdater;
 use Pcteckserv\CmsCore\Updates\PackageVersionRegistry;
+use Pcteckserv\CmsCore\Updates\StarterPackage;
 use Pcteckserv\CmsCore\Updates\UpdateStatusRepository;
 use Throwable;
 
@@ -47,6 +48,7 @@ class UpdatesController extends Controller
         }
 
         $allowedPackages = collect(config('cms-core.updates.packages', []))
+            ->when(StarterPackage::repository() !== null, fn ($packages) => $packages->push(StarterPackage::NAME))
             ->merge($plugins->packages())
             ->unique()
             ->values()

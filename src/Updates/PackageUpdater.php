@@ -16,6 +16,7 @@ class PackageUpdater
 
     public function __construct(
         private readonly GitTagUpdateChecker $updateChecker,
+        private readonly ?StarterUpdater $starterUpdater = null,
         ?ComposerCommand $composerCommand = null,
     ) {
         $this->composerCommand = $composerCommand ?? new ComposerCommand();
@@ -23,6 +24,10 @@ class PackageUpdater
 
     public function update(string $package): UpdateResult
     {
+        if (StarterPackage::is($package)) {
+            return ($this->starterUpdater ?? app(StarterUpdater::class))->update($this->availableVersion($package));
+        }
+
         $installedPackage = $this->installedComposerPackage($package);
         $previousVersion = $installedPackage['version'] ?? null;
         $availableVersion = $this->availableVersion($package);

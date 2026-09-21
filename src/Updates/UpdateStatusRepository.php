@@ -37,6 +37,14 @@ class UpdateStatusRepository
             }
         }
 
+        if (StarterPackage::repository() !== null) {
+            $status = $this->get(StarterPackage::NAME);
+
+            if ($status !== null) {
+                $statuses[StarterPackage::NAME] = $status;
+            }
+        }
+
         return $statuses;
     }
 

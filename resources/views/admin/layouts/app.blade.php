@@ -99,10 +99,19 @@
                         <div class="fw-semibold">{{ auth()->user()->name }}</div>
                     </div>
 
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button class="btn btn-outline-secondary btn-sm" type="submit">Terminar sessão</button>
-                    </form>
+                    <div class="d-flex align-items-center gap-2">
+                        @if (auth()->user()?->isCmsSuperAdmin() && \Illuminate\Support\Facades\Route::has('deploy.compile'))
+                            <a class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-2" href="{{ route('deploy.compile') }}" title="Compilar o site">
+                                @include('cms-core::components.icons.compile')
+                                <span>Compilar</span>
+                            </a>
+                        @endif
+
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button class="btn btn-outline-secondary btn-sm" type="submit">Terminar sessão</button>
+                        </form>
+                    </div>
                 </div>
             </header>
 

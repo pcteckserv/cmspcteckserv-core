@@ -25,12 +25,17 @@
 
     @php
         $pluginPackageNames = collect($pluginPackages ?? []);
-        $corePackages = $packages->reject(fn ($package) => $pluginPackageNames->contains($package->name))->values();
+        $starterPackageName = \Pcteckserv\CmsCore\Updates\StarterPackage::NAME;
+        $corePackages = $packages->reject(fn ($package) => $pluginPackageNames->contains($package->name) || $package->name === $starterPackageName)->values();
+        $starterPackages = $packages->filter(fn ($package) => $package->name === $starterPackageName)->values();
         $pluginPackagesList = $packages->filter(fn ($package) => $pluginPackageNames->contains($package->name))->values();
     @endphp
 
     <h2 class="h5 mb-3">Core</h2>
     @include('cms-core::admin.updates.partials.packages-table', ['packages' => $corePackages, 'statuses' => $statuses])
+
+    <h2 class="h5 mt-4 mb-3">Starter</h2>
+    @include('cms-core::admin.updates.partials.packages-table', ['packages' => $starterPackages, 'statuses' => $statuses])
 
     <h2 class="h5 mt-4 mb-3">Plugins</h2>
     @include('cms-core::admin.updates.partials.packages-table', ['packages' => $pluginPackagesList, 'statuses' => $statuses])

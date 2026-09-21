@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Pcteckserv\CmsCore\Models\Role;
 use Pcteckserv\CmsCore\Updates\PackageUpdater;
 use Pcteckserv\CmsCore\Updates\PackageVersionRegistry;
+use Pcteckserv\CmsCore\Updates\StarterPackage;
 use Pcteckserv\CmsCore\Updates\UpdateResult;
 use Pcteckserv\CmsCore\Updates\UpdateStatusRepository;
 use Tests\TestCase;
@@ -80,6 +81,32 @@ class UpdatesManagementTest extends TestCase
             ->assertSessionHas('cms_update_success');
 
         $status = app(UpdateStatusRepository::class)->get('pcteckserv/cms-core');
+
+        $this->assertSame('succeeded', $status['state'] ?? null);
+    }
+
+    public function test_permite_atualizar_starter_quando_repositorio_esta_configurado(): void
+    {
+        config(['cms-core.updates.starter.repository' => 'pcteckserv/site-exemplo']);
+
+        $admin = $this->superAdmin();
+
+        $this->mock(PackageUpdater::class)
+            ->shouldReceive('update')
+            ->once()
+            ->with(StarterPackage::NAME)
+            ->andReturn(new UpdateResult(true, 'Starter atualizado com sucesso para v1.0.0.'));
+
+        $this->mock(PackageVersionRegistry::class)
+            ->shouldReceive('checkRemoteUpdates')
+            ->once();
+
+        $this->actingAs($admin)
+            ->post(route('admin.updates.run', ['package' => StarterPackage::NAME]))
+            ->assertRedirect(route('admin.updates.index'))
+            ->assertSessionHas('cms_update_success');
+
+        $status = app(UpdateStatusRepository::class)->get(StarterPackage::NAME);
 
         $this->assertSame('succeeded', $status['state'] ?? null);
     }

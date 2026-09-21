@@ -122,6 +122,12 @@ class PackageVersionRegistry
 
     private function installedVersion(string $package): ?string
     {
+        if (StarterPackage::is($package)) {
+            return is_file(StarterPackage::versionFile())
+                ? trim((string) file_get_contents(StarterPackage::versionFile()))
+                : null;
+        }
+
         $plugin = InstalledPlugin::query()->where('package', $package)->whereNotNull('installed_version')->first();
 
         if (($plugin?->metadata['repository_type'] ?? null) === 'path') {
@@ -145,6 +151,7 @@ class PackageVersionRegistry
     private function configuredPackages(): Collection
     {
         return collect(config('cms-core.updates.packages', []))
+            ->when(StarterPackage::repository() !== null, fn (Collection $packages): Collection => $packages->push(StarterPackage::NAME))
             ->merge($this->plugins->packages())
             ->filter(fn (mixed $package): bool => is_string($package) && $package !== '')
             ->unique()
