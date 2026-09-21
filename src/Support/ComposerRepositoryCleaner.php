@@ -78,7 +78,7 @@ class ComposerRepositoryCleaner
                 continue;
             }
 
-            $relativePath = 'vendor/'.$name;
+            $relativePath = 'packages/'.$name;
 
             if (! is_dir(base_path($relativePath)) || $this->hasRepositoryFor($repositories, $relativePath)) {
                 continue;

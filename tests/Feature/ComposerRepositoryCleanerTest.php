@@ -49,7 +49,7 @@ class ComposerRepositoryCleanerTest extends TestCase
     {
         $originalBasePath = $this->app->basePath();
         $directory = sys_get_temp_dir().'/cms-composer-recovery-'.bin2hex(random_bytes(8));
-        File::makeDirectory($directory.'/vendor/pcteckserv/cms-contact-forms', 0755, true);
+        File::makeDirectory($directory.'/packages/pcteckserv/cms-contact-forms', 0755, true);
         File::put($directory.'/composer.json', json_encode([
             'name' => 'tests/site',
             'repositories' => [],
@@ -67,7 +67,7 @@ class ComposerRepositoryCleanerTest extends TestCase
             $cleaner->removeInvalidPathRepositories(true);
 
             $manifest = json_decode(File::get($directory.'/composer.json'), true, 512, JSON_THROW_ON_ERROR);
-            $this->assertSame('vendor/pcteckserv/cms-contact-forms', $manifest['repositories'][0]['url']);
+            $this->assertSame('packages/pcteckserv/cms-contact-forms', $manifest['repositories'][0]['url']);
 
             $cleaner->removeInvalidPathRepositories();
             $manifest = json_decode(File::get($directory.'/composer.json'), true, 512, JSON_THROW_ON_ERROR);
