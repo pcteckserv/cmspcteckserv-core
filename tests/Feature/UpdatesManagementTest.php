@@ -14,6 +14,7 @@ use Pcteckserv\CmsCore\Updates\GitTagUpdateChecker;
 use Pcteckserv\CmsCore\Updates\PackageUpdater;
 use Pcteckserv\CmsCore\Updates\PackageVersionRegistry;
 use Pcteckserv\CmsCore\Updates\StarterPackage;
+use Pcteckserv\CmsCore\Updates\StarterUpdater;
 use Pcteckserv\CmsCore\Updates\UpdateResult;
 use Pcteckserv\CmsCore\Updates\UpdateStatusRepository;
 use Symfony\Component\Process\Process;
@@ -399,6 +400,36 @@ class UpdatesManagementTest extends TestCase
         $this->actingAs($plainUser)
             ->post(route('admin.updates.run', ['package' => 'pcteckserv/cms-core']))
             ->assertForbidden();
+    }
+
+    public function test_starter_updater_inclui_autenticacao_quando_token_esta_configurado(): void
+    {
+        config([
+            'cms-core.updates.starter.github_token' => 'meu-token-secreto',
+        ]);
+
+        $updater = new StarterUpdater();
+        $command = $updater->cloneCommand('https://github.com/pcteckserv/studioranco.git', 'v0.1.0', '/tmp/destination');
+
+        $this->assertContains('-c', $command);
+        $this->assertContains('http.https://github.com/.extraheader=AUTHORIZATION: bearer meu-token-secreto', $command);
+        $this->assertContains('clone', $command);
+        $this->assertContains('--branch', $command);
+        $this->assertContains('v0.1.0', $command);
+    }
+
+    public function test_starter_updater_nao_inclui_autenticacao_sem_token(): void
+    {
+        config([
+            'cms-core.updates.starter.github_token' => null,
+            'cms-core.updates.github_token' => null,
+        ]);
+
+        $updater = new StarterUpdater();
+        $command = $updater->cloneCommand('https://github.com/pcteckserv/studioranco.git', 'v0.1.0', '/tmp/destination');
+
+        $this->assertNotContains('-c', $command);
+        $this->assertContains('clone', $command);
     }
 
     private function superAdmin(): User

@@ -3,6 +3,7 @@
 namespace Pcteckserv\CmsCore\Updates;
 
 use Illuminate\Support\Facades\File;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
 class StarterUpdater
@@ -47,6 +48,14 @@ class StarterUpdater
             $this->writeInstalledVersion($version);
             $this->runArtisan(['migrate', '--force']);
             $this->runArtisan(['optimize:clear']);
+        } catch (ProcessFailedException $exception) {
+            $errorOutput = $exception->getProcess()->getErrorOutput();
+
+            if (str_contains($errorOutput, 'could not read Username') || str_contains($errorOutput, 'Authentication failed')) {
+                return new UpdateResult(false, 'Falha de autenticação ao descarregar o Starter do GitHub. Verifique se STARTER_GITHUB_TOKEN ou CMS_GITHUB_TOKEN está configurado e com permissões de leitura no repositório.');
+            }
+
+            return new UpdateResult(false, 'Falha ao atualizar o Starter: '.$exception->getMessage());
         } finally {
             File::deleteDirectory($temporaryPath);
         }
@@ -56,8 +65,29 @@ class StarterUpdater
 
     private function cloneRepository(string $repository, string $version, string $destination): void
     {
-        $process = new Process([
-            'git',
+        $process = new Process(
+            $this->cloneCommand($repository, $version, $destination),
+            base_path(),
+            $this->environment()
+        );
+        $process->setTimeout(300);
+        $process->mustRun();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function cloneCommand(string $repository, string $version, string $destination): array
+    {
+        $command = ['git'];
+        $token = StarterPackage::token();
+
+        if (is_string($token) && $token !== '' && str_starts_with($repository, 'https://github.com/')) {
+            $command[] = '-c';
+            $command[] = 'http.https://github.com/.extraheader=AUTHORIZATION: bearer '.$token;
+        }
+
+        return array_merge($command, [
             'clone',
             '--depth',
             '1',
@@ -65,9 +95,7 @@ class StarterUpdater
             $version,
             $repository,
             $destination,
-        ], base_path(), $this->environment());
-        $process->setTimeout(300);
-        $process->mustRun();
+        ]);
     }
 
     private function copyStarterFiles(string $source, string $destination): void

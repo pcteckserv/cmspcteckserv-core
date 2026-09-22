@@ -1,6 +1,6 @@
 {
     "name": "pcteckserv/cms-core",
-    "version": "2.3.14",
+    "version": "2.3.15",
     "description": "Núcleo administrativo reutilizável do CMS PCTECK.",
     "type": "library",
     "license": "proprietary",
