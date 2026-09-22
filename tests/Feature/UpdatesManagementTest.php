@@ -23,8 +23,23 @@ class TestablePackageUpdater extends PackageUpdater
 {
     public array $commands = [];
 
+    public array $pathRepositoryVersions = [];
+
+    public bool $pathRepositoryPreparedBeforeFirstCommand = false;
+
+    protected function updateComposerPathRepositoryVersion(string $package, string $availableVersion): bool
+    {
+        $this->pathRepositoryVersions[$package] = $availableVersion;
+
+        return true;
+    }
+
     protected function run(array $command): Process
     {
+        if ($this->commands === []) {
+            $this->pathRepositoryPreparedBeforeFirstCommand = $this->pathRepositoryVersions !== [];
+        }
+
         $this->commands[] = $command;
         $process = Mockery::mock(Process::class);
         $process->shouldReceive('isSuccessful')->andReturn(true);
@@ -111,6 +126,39 @@ class UpdatesManagementTest extends TestCase
 
         $this->assertFalse($result->successful);
         $this->assertStringContainsString('continua em 2.3.3', $result->message);
+    }
+
+    public function test_update_prepara_versao_do_repositorio_path_antes_de_executar_composer(): void
+    {
+        DB::table('cms_installed_packages')->insert([
+            'name' => 'pcteckserv/cms-core',
+            'installed_version' => '2.3.6',
+            'available_version' => 'v2.3.7',
+            'channel' => 'stable',
+            'checked_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $reader = Mockery::mock(ComposerInstalledPackageReader::class);
+        $reader->shouldReceive('read')->twice()->andReturn(
+            ['version' => '2.3.6', 'dist' => ['type' => 'path', 'reference' => 'old']],
+            ['version' => '2.3.7', 'dist' => ['type' => 'path', 'reference' => 'new']],
+        );
+
+        $updater = new TestablePackageUpdater(
+            Mockery::mock(GitTagUpdateChecker::class),
+            null,
+            new TestComposerCommand(),
+            $reader,
+        );
+
+        $result = $updater->update('pcteckserv/cms-core');
+
+        $this->assertTrue($result->successful);
+        $this->assertTrue($updater->pathRepositoryPreparedBeforeFirstCommand);
+        $this->assertSame(['pcteckserv/cms-core' => 'v2.3.7'], $updater->pathRepositoryVersions);
+        $this->assertSame(['update', 'pcteckserv/cms-core', '--with-dependencies'], $updater->commands[0]);
     }
 
     public function test_update_e_executado_no_pedido_http_sem_enviar_para_queue(): void

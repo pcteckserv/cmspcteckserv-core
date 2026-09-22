@@ -58,6 +58,14 @@ class PackageUpdater
             $availableVersion = $source->version;
         }
 
+        if (! $isPathPlugin
+            && $previousVersion !== null
+            && ($installedPackage['dist']['type'] ?? null) === 'path'
+            && is_string($availableVersion)
+            && version_compare($this->normalizeVersion($availableVersion), $this->normalizeVersion($previousVersion), '>')) {
+            $this->updateComposerPathRepositoryVersion($package, $availableVersion);
+        }
+
         $composer = $this->run($this->composerCommand->build(['update', $package, '--with-dependencies']));
 
         if (! $composer->isSuccessful()) {
@@ -74,22 +82,6 @@ class PackageUpdater
 
         $updatedPackage = $this->installedComposerPackage($package);
         $updatedVersion = $updatedPackage['version'] ?? null;
-
-        if (! $isPathPlugin
-            && $previousVersion !== null
-            && ($installedPackage['dist']['type'] ?? null) === 'path'
-            && is_string($availableVersion)
-            && version_compare($this->normalizeVersion($availableVersion), $this->normalizeVersion($previousVersion), '>')
-            && $this->updateComposerPathRepositoryVersion($package, $availableVersion)) {
-            $composer = $this->run($this->composerCommand->build(['update', $package, '--with-dependencies']));
-
-            if (! $composer->isSuccessful()) {
-                return new UpdateResult(false, 'Composer falhou depois de atualizar a versão do repositório local para '.$availableVersion.': '.$this->processOutput($composer));
-            }
-
-            $updatedPackage = $this->installedComposerPackage($package);
-            $updatedVersion = $updatedPackage['version'] ?? null;
-        }
 
         if (! $isPathPlugin && $previousVersion !== null && $updatedVersion === $previousVersion
             && ($installedPackage['dist']['type'] ?? null) !== 'path'
@@ -198,7 +190,7 @@ class PackageUpdater
         return ltrim($version, 'v');
     }
 
-    private function updateComposerPathRepositoryVersion(string $package, string $availableVersion): bool
+    protected function updateComposerPathRepositoryVersion(string $package, string $availableVersion): bool
     {
         $composerPath = base_path('composer.json');
 
