@@ -75,6 +75,22 @@ class PackageUpdater
         $updatedPackage = $this->installedComposerPackage($package);
         $updatedVersion = $updatedPackage['version'] ?? null;
 
+        if (! $isPathPlugin
+            && $previousVersion !== null
+            && ($installedPackage['dist']['type'] ?? null) === 'path'
+            && is_string($availableVersion)
+            && version_compare($this->normalizeVersion($availableVersion), $this->normalizeVersion($previousVersion), '>')
+            && $this->updateComposerPathRepositoryVersion($package, $availableVersion)) {
+            $composer = $this->run($this->composerCommand->build(['update', $package, '--with-dependencies']));
+
+            if (! $composer->isSuccessful()) {
+                return new UpdateResult(false, 'Composer falhou depois de atualizar a versão do repositório local para '.$availableVersion.': '.$this->processOutput($composer));
+            }
+
+            $updatedPackage = $this->installedComposerPackage($package);
+            $updatedVersion = $updatedPackage['version'] ?? null;
+        }
+
         if (! $isPathPlugin && $previousVersion !== null && $updatedVersion === $previousVersion
             && ($installedPackage['dist']['type'] ?? null) !== 'path'
             && is_string($availableVersion)
@@ -180,6 +196,52 @@ class PackageUpdater
     private function normalizeVersion(string $version): string
     {
         return ltrim($version, 'v');
+    }
+
+    private function updateComposerPathRepositoryVersion(string $package, string $availableVersion): bool
+    {
+        $composerPath = base_path('composer.json');
+
+        if (! is_file($composerPath) || ! is_readable($composerPath) || ! is_writable($composerPath)) {
+            return false;
+        }
+
+        $manifest = json_decode((string) file_get_contents($composerPath), true);
+
+        if (! is_array($manifest) || ! isset($manifest['repositories']) || ! is_array($manifest['repositories'])) {
+            return false;
+        }
+
+        $changed = false;
+
+        foreach ($manifest['repositories'] as &$repository) {
+            if (! is_array($repository) || ($repository['type'] ?? null) !== 'path') {
+                continue;
+            }
+
+            $configuredVersion = $repository['options']['versions'][$package] ?? null;
+
+            if ($configuredVersion !== null && $configuredVersion !== $this->normalizeVersion($availableVersion)) {
+                $repository['options']['versions'][$package] = $this->normalizeVersion($availableVersion);
+                $changed = true;
+            }
+        }
+
+        unset($repository);
+
+        if (! $changed) {
+            return false;
+        }
+
+        $encoded = json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+        if (! is_string($encoded)) {
+            return false;
+        }
+
+        file_put_contents($composerPath, $encoded.PHP_EOL);
+
+        return true;
     }
 
     /**
