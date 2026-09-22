@@ -90,6 +90,97 @@ class UpdatesManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_http_update_reads_real_metadata_and_updates_path_manifest(): void
+    {
+        $admin = $this->superAdmin();
+        $originalBase = base_path();
+        $directory = sys_get_temp_dir().'/cms-http-update-'.bin2hex(random_bytes(8));
+        $files = new \Illuminate\Filesystem\Filesystem();
+        $files->makeDirectory($directory.'/vendor/composer', 0755, true);
+        $package = ['name' => 'pcteckserv/cms-core', 'version' => '2.3.10', 'dist' => ['type' => 'path']];
+        $files->put($directory.'/vendor/composer/installed.json', json_encode(['packages' => [$package]]));
+        $files->put($directory.'/composer.json', json_encode(['repositories' => [[
+            'type' => 'path', 'url' => '../core',
+            'options' => ['versions' => ['pcteckserv/cms-core' => '2.3.10']],
+        ]]]));
+        DB::table('cms_installed_packages')->insert([
+            'name' => 'pcteckserv/cms-core', 'installed_version' => '2.3.10',
+            'available_version' => 'v2.3.11', 'channel' => 'stable',
+        ]);
+        $updater = new class(Mockery::mock(GitTagUpdateChecker::class), null, new TestComposerCommand()) extends PackageUpdater {
+            public array $commands = [];
+
+            protected function run(array $command): Process
+            {
+                $this->commands[] = $command;
+                if ($command[0] === 'update') {
+                    $manifest = json_decode(file_get_contents(base_path('composer.json')), true);
+                    $path = base_path('vendor/composer/installed.json');
+                    $installed = json_decode(file_get_contents($path), true);
+                    $installed['packages'][0]['version'] = $manifest['repositories'][0]['options']['versions']['pcteckserv/cms-core'];
+                    file_put_contents($path, json_encode($installed));
+                }
+                $process = Mockery::mock(Process::class);
+                $process->shouldReceive('isSuccessful')->andReturn(true);
+
+                return $process;
+            }
+        };
+        $this->app->instance(PackageUpdater::class, $updater);
+        $registry = new PackageVersionRegistry(Mockery::mock(GitTagUpdateChecker::class), new PluginCatalog());
+        $this->mock(PackageVersionRegistry::class)->shouldReceive('checkRemoteUpdates')->once()
+            ->andReturnUsing(fn () => $registry->sync());
+
+        try {
+            $this->app->setBasePath($directory);
+            $this->actingAs($admin)
+                ->post(route('admin.updates.run', ['package' => 'pcteckserv/cms-core']))
+                ->assertSessionHas('cms_update_success')
+                ->assertSessionMissing('cms_update_error');
+            $this->assertCount(3, $updater->commands);
+            $this->assertDatabaseHas('cms_installed_packages', [
+                'name' => 'pcteckserv/cms-core', 'installed_version' => '2.3.11',
+            ]);
+            $this->assertSame('2.3.11', (new ComposerInstalledPackageReader())->read('pcteckserv/cms-core')['version']);
+        } finally {
+            $this->app->setBasePath($originalBase);
+            $files->deleteDirectory($directory);
+        }
+    }
+
+    public function test_http_update_fails_when_installed_metadata_cannot_be_read(): void
+    {
+        $reader = Mockery::mock(ComposerInstalledPackageReader::class);
+        $reader->shouldReceive('read')->once()->andReturn([]);
+        $updater = new TestablePackageUpdater(
+            Mockery::mock(GitTagUpdateChecker::class), null, new TestComposerCommand(), $reader,
+        );
+        $this->app->instance(PackageUpdater::class, $updater);
+        $this->mock(PackageVersionRegistry::class)->shouldReceive('checkRemoteUpdates')->once();
+
+        $this->actingAs($this->superAdmin())
+            ->post(route('admin.updates.run', ['package' => 'pcteckserv/cms-core']))
+            ->assertSessionHas('cms_update_error')
+            ->assertSessionMissing('cms_update_success');
+
+        $this->assertSame([], $updater->commands);
+        $this->assertSame('failed', app(UpdateStatusRepository::class)->get('pcteckserv/cms-core')['state']);
+    }
+
+    public function test_update_fails_when_composer_succeeds_but_final_metadata_is_missing(): void
+    {
+        $reader = Mockery::mock(ComposerInstalledPackageReader::class);
+        $reader->shouldReceive('read')->twice()->andReturn(
+            ['version' => '2.3.10', 'dist' => ['type' => 'zip']], [],
+        );
+        $checker = Mockery::mock(GitTagUpdateChecker::class);
+        $checker->shouldReceive('latestVersion')->andReturn('v2.3.11');
+        $updater = new TestablePackageUpdater($checker, null, new TestComposerCommand(), $reader);
+
+        $this->assertFalse($updater->update('pcteckserv/cms-core')->successful);
+        $this->assertCount(1, $updater->commands);
+    }
+
     public function test_verificacao_de_tags_prefere_git_remoto_a_api_do_github(): void
     {
         config([

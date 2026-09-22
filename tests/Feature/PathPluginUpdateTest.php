@@ -9,6 +9,8 @@ use Pcteckserv\CmsCore\Models\InstalledPlugin;
 use Pcteckserv\CmsCore\Plugins\DTOs\AvailablePlugin;
 use Pcteckserv\CmsCore\Plugins\PluginRepository;
 use Pcteckserv\CmsCore\Updates\GitTagUpdateChecker;
+use Pcteckserv\CmsCore\Updates\ComposerInstalledPackageReader;
+use Pcteckserv\CmsCore\Support\ComposerCommand;
 use Pcteckserv\CmsCore\Updates\InstalledPackage;
 use Pcteckserv\CmsCore\Updates\PackageUpdater;
 use Symfony\Component\Process\Process;
@@ -32,6 +34,7 @@ class PathPluginUpdateTest extends TestCase
         require_once dirname(__DIR__, 2).'/src/Updates/PackageUpdater.php';
         require_once dirname(__DIR__, 2).'/src/Updates/InstalledPackage.php';
         parent::setUp();
+        config(['cms-core.updates.starter.repository' => null]);
     }
 
     public function test_atualiza_origem_e_reinstala_plugin_mesmo_com_versao_dev_igual(): void
@@ -152,17 +155,24 @@ class PathPluginUpdateTest extends TestCase
 
     private function updater(bool $reinstallSuccessful): PackageUpdater
     {
-        $updater = Mockery::mock(PackageUpdater::class, [app(GitTagUpdateChecker::class)])
+        $reader = Mockery::mock(ComposerInstalledPackageReader::class);
+        $reader->shouldReceive('read')->times($reinstallSuccessful ? 2 : 1)
+            ->with('tests/plugin')->andReturn(['version' => 'dev-main', 'dist' => ['type' => 'path']]);
+        $composer = Mockery::mock(ComposerCommand::class);
+        $composer->shouldReceive('build')->andReturnUsing(fn (array $arguments) => ['composer', ...$arguments]);
+        $composer->shouldReceive('php')->andReturnUsing(fn (array $arguments) => ['php', ...$arguments]);
+        $updater = Mockery::mock(PackageUpdater::class, [app(GitTagUpdateChecker::class), null, $composer, $reader])
             ->makePartial()->shouldAllowMockingProtectedMethods();
         $commands = [];
-        $updater->shouldReceive('run')->times($reinstallSuccessful ? 6 : 3)
+        $updater->shouldReceive('run')->times($reinstallSuccessful ? 4 : 2)
             ->andReturnUsing(function (array $command) use (&$commands, $reinstallSuccessful): Process {
                 $commands[] = $command[1];
-                $expected = ['show', 'update', 'reinstall', 'show', 'artisan', 'artisan'];
+                $expected = ['update', 'reinstall', 'artisan', 'artisan'];
                 $this->assertSame($expected[count($commands) - 1], $command[1]);
                 $process = Mockery::mock(Process::class);
                 $process->shouldReceive('isSuccessful')->andReturn($command[1] !== 'reinstall' || $reinstallSuccessful);
                 $process->shouldReceive('getOutput')->andReturn(json_encode(['versions' => ['dev-main'], 'dist' => ['type' => 'path']]));
+                $process->shouldReceive('getErrorOutput')->andReturn('');
 
                 return $process;
             });

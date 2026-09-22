@@ -3,15 +3,12 @@
 namespace Pcteckserv\CmsCore\Updates;
 
 use Pcteckserv\CmsCore\Support\ComposerCommand;
-use Symfony\Component\Process\Process;
 
 class ComposerInstalledPackageReader
 {
-    private readonly ComposerCommand $composerCommand;
-
     public function __construct(?ComposerCommand $composerCommand = null)
     {
-        $this->composerCommand = $composerCommand ?? new ComposerCommand();
+        // Mantém compatibilidade com os consumidores que injetam o comando Composer.
     }
 
     /**
@@ -19,32 +16,26 @@ class ComposerInstalledPackageReader
      */
     public function read(string $package): array
     {
-        $process = $this->run($this->composerCommand->build(['show', $package, '--format=json']));
+        $path = base_path('vendor/composer/installed.json');
+        clearstatcache(true, $path);
 
-        if (! $process->isSuccessful()) {
+        if (! is_file($path) || ! is_readable($path)) {
             return [];
         }
 
-        $packageData = json_decode($process->getOutput(), true);
+        $installed = json_decode((string) file_get_contents($path), true);
 
-        if (! is_array($packageData)) {
+        if (! is_array($installed)) {
             return [];
         }
 
-        $packageData['version'] ??= $packageData['versions'][0] ?? null;
+        // Ler novamente após cada atualização, sem usar o cache de InstalledVersions.
+        foreach (($installed['packages'] ?? $installed) as $packageData) {
+            if (is_array($packageData) && ($packageData['name'] ?? null) === $package) {
+                return $packageData;
+            }
+        }
 
-        return $packageData;
-    }
-
-    /**
-     * @param array<int, string> $command
-     */
-    protected function run(array $command): Process
-    {
-        $process = new Process($command, base_path());
-        $process->setTimeout(60);
-        $process->run();
-
-        return $process;
+        return [];
     }
 }

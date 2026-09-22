@@ -31,6 +31,10 @@ class PackageUpdater
 
         $installedPackage = $this->installedComposerPackage($package);
         $previousVersion = $installedPackage['version'] ?? null;
+        if (! is_string($previousVersion) || $previousVersion === '') {
+            return new UpdateResult(false, 'Não foi possível confirmar a versão instalada. A atualização não foi iniciada.');
+        }
+
         $availableVersion = $this->availableVersion($package);
         $plugin = InstalledPlugin::query()->where('package', $package)->whereNotNull('installed_version')->first();
         $isPathPlugin = $plugin !== null && ($plugin->metadata['repository_type'] ?? null) === 'path';
@@ -82,6 +86,9 @@ class PackageUpdater
 
         $updatedPackage = $this->installedComposerPackage($package);
         $updatedVersion = $updatedPackage['version'] ?? null;
+        if (! is_string($updatedVersion) || $updatedVersion === '') {
+            return new UpdateResult(false, 'Não foi possível confirmar a versão instalada após executar o Composer. Verifique a instalação antes de tentar novamente.');
+        }
 
         if (! $isPathPlugin && $previousVersion !== null && $updatedVersion === $previousVersion
             && ($installedPackage['dist']['type'] ?? null) !== 'path'
@@ -100,6 +107,9 @@ class PackageUpdater
 
             $updatedPackage = $this->installedComposerPackage($package);
             $updatedVersion = $updatedPackage['version'] ?? null;
+            if (! is_string($updatedVersion) || $updatedVersion === '') {
+                return new UpdateResult(false, 'Não foi possível confirmar a versão instalada após executar o Composer. Verifique a instalação antes de tentar novamente.');
+            }
         }
 
         if (! $isPathPlugin && $previousVersion !== null && $updatedVersion === $previousVersion
