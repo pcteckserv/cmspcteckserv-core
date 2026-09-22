@@ -79,6 +79,11 @@ class TestGitTagUpdateChecker extends GitTagUpdateChecker
 
         return 'v2.3.8';
     }
+
+    public function processEnvironment(): array
+    {
+        return $this->gitProcess(['git', '--version'])->getEnv();
+    }
 }
 
 class UpdatesManagementTest extends TestCase
@@ -96,6 +101,14 @@ class UpdatesManagementTest extends TestCase
 
         $this->assertSame('v2.3.9', $checker->latestVersion('pcteckserv/cms-core'));
         $this->assertSame(['git'], $checker->sources);
+    }
+
+    public function test_verificacao_de_tags_nao_abre_pedidos_interativos_de_credenciais(): void
+    {
+        $environment = (new TestGitTagUpdateChecker())->processEnvironment();
+
+        $this->assertSame('0', $environment['GIT_TERMINAL_PROMPT'] ?? null);
+        $this->assertSame('Never', $environment['GCM_INTERACTIVE'] ?? null);
     }
 
     public function test_sync_usa_versao_instalada_lida_do_composer_em_disco(): void

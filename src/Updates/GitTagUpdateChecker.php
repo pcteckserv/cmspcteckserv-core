@@ -63,7 +63,7 @@ class GitTagUpdateChecker
 
     protected function latestGitVersion(string $repository, mixed $token): ?string
     {
-        $process = new Process($this->command($repository, $token));
+        $process = $this->gitProcess($this->command($repository, $token));
         $process->setTimeout(30);
         $process->run();
 
@@ -76,6 +76,18 @@ class GitTagUpdateChecker
             ->filter()
             ->sort(fn (string $a, string $b): int => version_compare($a, $b))
             ->last();
+    }
+
+    /** @param array<int, string> $command */
+    protected function gitProcess(array $command): Process
+    {
+        $process = new Process($command);
+        $process->setEnv([
+            'GIT_TERMINAL_PROMPT' => '0',
+            'GCM_INTERACTIVE' => 'Never',
+        ]);
+
+        return $process;
     }
 
     protected function latestGithubVersion(string $repository, mixed $token): ?string

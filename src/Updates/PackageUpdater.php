@@ -256,6 +256,7 @@ class PackageUpdater
             'TEMP' => storage_path('framework/cache/composer-tmp'),
             'GIT_CONFIG_GLOBAL' => $this->gitConfigPath(),
             'GIT_TERMINAL_PROMPT' => '0',
+            'GCM_INTERACTIVE' => 'Never',
         ];
 
         $token = config('cms-core.updates.github_token');
