@@ -432,6 +432,21 @@ class UpdatesManagementTest extends TestCase
         $this->assertContains('clone', $command);
     }
 
+    public function test_starter_updater_environment_nao_duplica_cabecalho_de_autenticacao(): void
+    {
+        config([
+            'cms-core.updates.starter.github_token' => 'meu-token-secreto',
+        ]);
+
+        $updater = new StarterUpdater();
+        $env = $updater->environment();
+
+        $this->assertArrayNotHasKey('GIT_CONFIG_COUNT', $env);
+        $this->assertArrayNotHasKey('GIT_CONFIG_KEY_0', $env);
+        $this->assertArrayNotHasKey('GIT_CONFIG_VALUE_0', $env);
+        $this->assertSame('0', $env['GIT_TERMINAL_PROMPT'] ?? null);
+    }
+
     private function superAdmin(): User
     {
         $role = Role::query()->firstOrCreate(

@@ -51,7 +51,7 @@ class StarterUpdater
         } catch (ProcessFailedException $exception) {
             $errorOutput = $exception->getProcess()->getErrorOutput();
 
-            if (str_contains($errorOutput, 'could not read Username') || str_contains($errorOutput, 'Authentication failed')) {
+            if (str_contains($errorOutput, 'could not read Username') || str_contains($errorOutput, 'Authentication failed') || str_contains($errorOutput, 'Duplicate header')) {
                 return new UpdateResult(false, 'Falha de autenticação ao descarregar o Starter do GitHub. Verifique se STARTER_GITHUB_TOKEN ou CMS_GITHUB_TOKEN está configurado e com permissões de leitura no repositório.');
             }
 
@@ -155,28 +155,23 @@ class StarterUpdater
     /**
      * @return array<string, string>
      */
-    private function environment(): array
+    public function environment(): array
     {
         $currentEnvironment = getenv();
         $environment = is_array($currentEnvironment) ? $currentEnvironment : [];
         $path = $environment['PATH'] ?? $environment['Path'] ?? '';
 
-        $environment = $environment + [
+        unset(
+            $environment['GIT_CONFIG_COUNT'],
+            $environment['GIT_CONFIG_KEY_0'],
+            $environment['GIT_CONFIG_VALUE_0']
+        );
+
+        return $environment + [
             'PATH' => $path,
             'Path' => $path,
             'GIT_TERMINAL_PROMPT' => '0',
-        ];
-
-        $token = StarterPackage::token();
-
-        if ($token === null) {
-            return $environment;
-        }
-
-        return $environment + [
-            'GIT_CONFIG_COUNT' => '1',
-            'GIT_CONFIG_KEY_0' => 'http.https://github.com/.extraheader',
-            'GIT_CONFIG_VALUE_0' => 'AUTHORIZATION: bearer '.$token,
+            'GCM_INTERACTIVE' => 'Never',
         ];
     }
 }
