@@ -18,6 +18,7 @@ class PackageUpdater
         private readonly GitTagUpdateChecker $updateChecker,
         private readonly ?StarterUpdater $starterUpdater = null,
         ?ComposerCommand $composerCommand = null,
+        private readonly ?ComposerInstalledPackageReader $installedPackageReader = null,
     ) {
         $this->composerCommand = $composerCommand ?? new ComposerCommand();
     }
@@ -74,19 +75,23 @@ class PackageUpdater
         $updatedPackage = $this->installedComposerPackage($package);
         $updatedVersion = $updatedPackage['version'] ?? null;
 
-        if (! $isPathPlugin && $previousVersion !== null && $updatedVersion === $previousVersion) {
-            $majorUpgrade = $this->majorUpgradeConstraint($previousVersion, $availableVersion);
+        if (! $isPathPlugin && $previousVersion !== null && $updatedVersion === $previousVersion
+            && ($installedPackage['dist']['type'] ?? null) !== 'path'
+            && is_string($availableVersion)
+            && version_compare($this->normalizeVersion($availableVersion), $this->normalizeVersion($previousVersion), '>')) {
+            $composer = $this->run($this->composerCommand->build([
+                'require',
+                $package.':'.$this->normalizeVersion($availableVersion),
+                '--with-dependencies',
+                '--no-interaction',
+            ]));
 
-            if ($majorUpgrade !== null && ($installedPackage['dist']['type'] ?? null) !== 'path') {
-                $composer = $this->run($this->composerCommand->build(['require', $package.':'.$majorUpgrade, '--with-dependencies']));
-
-                if (! $composer->isSuccessful()) {
-                    return new UpdateResult(false, 'Composer falhou ao atualizar a constraint para '.$majorUpgrade.': '.$this->processOutput($composer));
-                }
-
-                $updatedPackage = $this->installedComposerPackage($package);
-                $updatedVersion = $updatedPackage['version'] ?? null;
+            if (! $composer->isSuccessful()) {
+                return new UpdateResult(false, 'Composer falhou ao atualizar a constraint para '.$availableVersion.': '.$this->processOutput($composer));
             }
+
+            $updatedPackage = $this->installedComposerPackage($package);
+            $updatedVersion = $updatedPackage['version'] ?? null;
         }
 
         if (! $isPathPlugin && $previousVersion !== null && $updatedVersion === $previousVersion
@@ -97,6 +102,11 @@ class PackageUpdater
                 : '';
 
             return new UpdateResult(false, 'O Composer terminou sem alterar a versão instalada (continua em '.$previousVersion.'). Verifique se o composer.json permite instalar a versão disponível.'.$repositoryHint);
+        }
+
+        if (! $isPathPlugin && is_string($availableVersion) && is_string($updatedVersion)
+            && version_compare($this->normalizeVersion($updatedVersion), $this->normalizeVersion($availableVersion), '<')) {
+            return new UpdateResult(false, 'A versão instalada ('.$updatedVersion.') continua abaixo da versão disponível ('.$availableVersion.'). Verifique as constraints do composer.json.');
         }
 
         $migrate = $this->run($this->composerCommand->php(['artisan', 'migrate', '--force']));
@@ -126,21 +136,8 @@ class PackageUpdater
      */
     private function installedComposerPackage(string $package): array
     {
-        $process = $this->run($this->composerCommand->build(['show', $package, '--format=json']));
-
-        if (! $process->isSuccessful()) {
-            return [];
-        }
-
-        $packageData = json_decode($process->getOutput(), true);
-
-        if (! is_array($packageData)) {
-            return [];
-        }
-
-        $packageData['version'] ??= $packageData['versions'][0] ?? null;
-
-        return $packageData;
+        return ($this->installedPackageReader ?? new ComposerInstalledPackageReader($this->composerCommand))
+            ->read($package);
     }
 
     /**
@@ -180,29 +177,9 @@ class PackageUpdater
         return $this->updateChecker->latestVersion($package);
     }
 
-    private function majorUpgradeConstraint(?string $installedVersion, ?string $availableVersion): ?string
+    private function normalizeVersion(string $version): string
     {
-        if (! is_string($installedVersion) || ! is_string($availableVersion)) {
-            return null;
-        }
-
-        $installedMajor = $this->majorVersion($installedVersion);
-        $availableMajor = $this->majorVersion($availableVersion);
-
-        if ($installedMajor === null || $availableMajor === null || $availableMajor <= $installedMajor) {
-            return null;
-        }
-
-        return $availableMajor.'.*';
-    }
-
-    private function majorVersion(string $version): ?int
-    {
-        if (! preg_match('/^v?(\\d+)/', $version, $matches)) {
-            return null;
-        }
-
-        return (int) $matches[1];
+        return ltrim($version, 'v');
     }
 
     /**

@@ -13,6 +13,7 @@ class PackageVersionRegistry
     public function __construct(
         private readonly GitTagUpdateChecker $updateChecker,
         private readonly PluginCatalog $plugins,
+        private readonly ?ComposerInstalledPackageReader $installedPackageReader = null,
     ) {
     }
 
@@ -138,11 +139,25 @@ class PackageVersionRegistry
             }
         }
 
+        $composerVersion = $this->installedComposerVersion($package);
+
+        if ($composerVersion !== null) {
+            return $composerVersion;
+        }
+
         if (! InstalledVersions::isInstalled($package)) {
             return null;
         }
 
         return InstalledVersions::getPrettyVersion($package) ?: InstalledVersions::getVersion($package);
+    }
+
+    private function installedComposerVersion(string $package): ?string
+    {
+        $packageData = ($this->installedPackageReader ?? new ComposerInstalledPackageReader())->read($package);
+        $version = $packageData['version'] ?? null;
+
+        return is_string($version) && $version !== '' ? $version : null;
     }
 
     /**

@@ -4,17 +4,114 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Mockery;
 use Pcteckserv\CmsCore\Models\Role;
+use Pcteckserv\CmsCore\Plugins\PluginCatalog;
+use Pcteckserv\CmsCore\Support\ComposerCommand;
+use Pcteckserv\CmsCore\Updates\ComposerInstalledPackageReader;
+use Pcteckserv\CmsCore\Updates\GitTagUpdateChecker;
 use Pcteckserv\CmsCore\Updates\PackageUpdater;
 use Pcteckserv\CmsCore\Updates\PackageVersionRegistry;
 use Pcteckserv\CmsCore\Updates\StarterPackage;
 use Pcteckserv\CmsCore\Updates\UpdateResult;
 use Pcteckserv\CmsCore\Updates\UpdateStatusRepository;
+use Symfony\Component\Process\Process;
 use Tests\TestCase;
+
+class TestablePackageUpdater extends PackageUpdater
+{
+    public array $commands = [];
+
+    protected function run(array $command): Process
+    {
+        $this->commands[] = $command;
+        $process = Mockery::mock(Process::class);
+        $process->shouldReceive('isSuccessful')->andReturn(true);
+        $process->shouldReceive('getOutput')->andReturn('{}');
+
+        return $process;
+    }
+}
+
+class TestComposerCommand extends ComposerCommand
+{
+    public function build(array $arguments): array
+    {
+        return $arguments;
+    }
+
+    public function php(array $arguments): array
+    {
+        return $arguments;
+    }
+}
 
 class UpdatesManagementTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_sync_usa_versao_instalada_lida_do_composer_em_disco(): void
+    {
+        config(['cms-core.updates.packages' => ['pcteckserv/cms-core']]);
+
+        $reader = Mockery::mock(ComposerInstalledPackageReader::class);
+        $reader->shouldReceive('read')
+            ->once()
+            ->with('pcteckserv/cms-core')
+            ->andReturn(['version' => '2.3.4']);
+
+        $registry = new PackageVersionRegistry(
+            Mockery::mock(GitTagUpdateChecker::class),
+            new PluginCatalog(),
+            $reader,
+        );
+
+        $packages = $registry->sync();
+        $corePackage = $packages->firstWhere('name', 'pcteckserv/cms-core');
+
+        $this->assertNotNull($corePackage);
+        $this->assertSame('2.3.4', $corePackage->installedVersion);
+        $this->assertDatabaseHas('cms_installed_packages', [
+            'name' => 'pcteckserv/cms-core',
+            'installed_version' => '2.3.4',
+        ]);
+    }
+
+    public function test_update_falha_se_versao_instalada_continuar_abaixo_da_disponivel(): void
+    {
+        config(['cms-core.updates.packages' => ['pcteckserv/cms-core']]);
+        DB::table('cms_installed_packages')->insert([
+            'name' => 'pcteckserv/cms-core',
+            'installed_version' => '2.3.3',
+            'available_version' => 'v2.3.4',
+            'channel' => 'stable',
+            'checked_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $reader = Mockery::mock(ComposerInstalledPackageReader::class);
+        $reader->shouldReceive('read')->times(3)->andReturn(
+            ['version' => '2.3.3', 'dist' => ['type' => 'zip', 'reference' => 'same']],
+            ['version' => '2.3.3', 'dist' => ['type' => 'zip', 'reference' => 'same']],
+            ['version' => '2.3.3', 'dist' => ['type' => 'zip', 'reference' => 'same']],
+        );
+
+        $composerCommand = new TestComposerCommand();
+
+        $updater = new TestablePackageUpdater(
+            Mockery::mock(GitTagUpdateChecker::class),
+            null,
+            $composerCommand,
+            $reader,
+        );
+
+        $result = $updater->update('pcteckserv/cms-core');
+
+        $this->assertFalse($result->successful);
+        $this->assertStringContainsString('continua em 2.3.3', $result->message);
+    }
 
     public function test_update_e_executado_no_pedido_http_sem_enviar_para_queue(): void
     {
