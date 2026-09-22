@@ -43,51 +43,81 @@
                 @can('media.view')
                     <a @class(['nav-link', 'active' => request()->routeIs('admin.media.*')]) href="{{ route('admin.media.index') }}">Media</a>
                 @endcan
-                @can('core.activity-logs.view')
-                    <a @class(['nav-link', 'active' => request()->routeIs('admin.activity-logs.*')]) href="{{ route('admin.activity-logs.index') }}">Logs de Atividade</a>
-                @endcan
-                @can('consent.view')
-                    <a @class(['nav-link', 'active' => request()->routeIs('admin.consent.*')]) href="{{ route('admin.consent.dashboard') }}">Consentimentos</a>
-                @endcan
-                @can('seo.view')
-                    <a @class(['nav-link', 'active' => request()->routeIs('admin.seo.*')]) href="{{ route('admin.seo.dashboard') }}">SEO</a>
-                @endcan
-                @can('core.site-options.view')
-                    <a @class(['nav-link', 'active' => request()->routeIs('admin.site-options.*')]) href="{{ route('admin.site-options.edit') }}">Opções gerais</a>
-                @endcan
-                @can('footer.view-settings')
-                    <a @class(['nav-link', 'active' => request()->routeIs('admin.footer.*')]) href="{{ route('admin.footer.edit') }}">Footer</a>
-                @endcan
-                @can('maintenance.view')
-                    @php($cmsMaintenanceActive = app(\Pcteckserv\CmsCore\Services\Maintenance\MaintenanceModeManager::class)->isActive())
-                    <a @class(['nav-link d-flex align-items-center justify-content-between gap-2', 'active' => request()->routeIs('admin.maintenance.*')]) href="{{ route('admin.maintenance.edit') }}">
-                        <span>Modo de Manutenção</span>
-                        @if ($cmsMaintenanceActive)
-                            <span class="badge text-bg-warning">ATIVO</span>
-                        @endif
-                    </a>
-                @endcan
-                @can('core.smtp.view')
-                    <a @class(['nav-link', 'active' => request()->routeIs('admin.smtp-settings.*')]) href="{{ route('admin.smtp-settings.edit') }}">SMTP</a>
-                @endcan
-                @can('backups.view')
-                    <a @class(['nav-link', 'active' => request()->routeIs('admin.backups.*')]) href="{{ route('admin.backups.index') }}">Backups</a>
-                @endcan
-                @can('queues.view')
-                    <a @class(['nav-link', 'active' => request()->routeIs('admin.queues.*')]) href="{{ route('admin.queues.dashboard') }}">Tarefas</a>
-                @endcan
-                @can('core.laravel-commands.view')
-                    <a @class(['nav-link', 'active' => request()->routeIs('admin.laravel-commands.*')]) href="{{ route('admin.laravel-commands.index') }}">Comandos Laravel</a>
-                @endcan
-                @can('updates.view')
-                    <a @class(['nav-link', 'active' => request()->routeIs('admin.updates.*')]) href="{{ route('admin.updates.index') }}">Atualizações</a>
-                @endcan
-                @can('plugins.view')
-                    <a @class(['nav-link', 'active' => request()->routeIs('admin.plugins.*')]) href="{{ route('admin.plugins.index') }}">Plugins</a>
-                @endcan
                 @foreach (app(\Pcteckserv\CmsCore\Support\Navigation\AdminMenuRegistry::class)->visible() as $menuItem)
                     <a @class(['nav-link', 'active' => request()->routeIs($menuItem['active'])]) href="{{ route($menuItem['route']) }}">{{ $menuItem['label'] }}</a>
                 @endforeach
+                @canany(['core.site-options.view', 'footer.view-settings', 'seo.view', 'maintenance.view', 'core.smtp.view'])
+                    @php($configMenuOpen = request()->routeIs('admin.site-options.*') || request()->routeIs('admin.footer.*') || request()->routeIs('admin.seo.*') || request()->routeIs('admin.maintenance.*') || request()->routeIs('admin.smtp-settings.*'))
+                    <button
+                        @class(['nav-link cms-sidebar-menu-toggle text-start', 'active' => $configMenuOpen])
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#cms-config-submenu"
+                        aria-expanded="{{ $configMenuOpen ? 'true' : 'false' }}"
+                        aria-controls="cms-config-submenu"
+                    >
+                        Configurações
+                    </button>
+                    <div @class(['collapse cms-sidebar-submenu', 'show' => $configMenuOpen]) id="cms-config-submenu">
+                        @can('core.site-options.view')
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.site-options.*')]) href="{{ route('admin.site-options.edit') }}">Opções gerais</a>
+                        @endcan
+                        @can('footer.view-settings')
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.footer.*')]) href="{{ route('admin.footer.edit') }}">Footer</a>
+                        @endcan
+                        @can('seo.view')
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.seo.*')]) href="{{ route('admin.seo.dashboard') }}">SEO</a>
+                        @endcan
+                        @can('maintenance.view')
+                            @php($cmsMaintenanceActive = app(\Pcteckserv\CmsCore\Services\Maintenance\MaintenanceModeManager::class)->isActive())
+                            <a @class(['nav-link d-flex align-items-center justify-content-between gap-2', 'active' => request()->routeIs('admin.maintenance.*')]) href="{{ route('admin.maintenance.edit') }}">
+                                <span>Modo de Manutenção</span>
+                                @if ($cmsMaintenanceActive)
+                                    <span class="badge text-bg-warning">ATIVO</span>
+                                @endif
+                            </a>
+                        @endcan
+                        @can('core.smtp.view')
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.smtp-settings.*')]) href="{{ route('admin.smtp-settings.edit') }}">SMTP</a>
+                        @endcan
+                    </div>
+                @endcanany
+                @canany(['core.activity-logs.view', 'consent.view', 'backups.view', 'queues.view', 'core.laravel-commands.view', 'updates.view', 'plugins.view'])
+                    @php($systemMenuOpen = request()->routeIs('admin.activity-logs.*') || request()->routeIs('admin.consent.*') || request()->routeIs('admin.backups.*') || request()->routeIs('admin.queues.*') || request()->routeIs('admin.laravel-commands.*') || request()->routeIs('admin.updates.*') || request()->routeIs('admin.plugins.*'))
+                    <button
+                        @class(['nav-link cms-sidebar-menu-toggle text-start', 'active' => $systemMenuOpen])
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#cms-system-submenu"
+                        aria-expanded="{{ $systemMenuOpen ? 'true' : 'false' }}"
+                        aria-controls="cms-system-submenu"
+                    >
+                        Sistema
+                    </button>
+                    <div @class(['collapse cms-sidebar-submenu', 'show' => $systemMenuOpen]) id="cms-system-submenu">
+                        @can('core.activity-logs.view')
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.activity-logs.*')]) href="{{ route('admin.activity-logs.index') }}">Logs de Atividade</a>
+                        @endcan
+                        @can('consent.view')
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.consent.*')]) href="{{ route('admin.consent.dashboard') }}">Consentimentos</a>
+                        @endcan
+                        @can('backups.view')
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.backups.*')]) href="{{ route('admin.backups.index') }}">Backups</a>
+                        @endcan
+                        @can('queues.view')
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.queues.*')]) href="{{ route('admin.queues.dashboard') }}">Tarefas</a>
+                        @endcan
+                        @can('core.laravel-commands.view')
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.laravel-commands.*')]) href="{{ route('admin.laravel-commands.index') }}">Comandos Laravel</a>
+                        @endcan
+                        @can('updates.view')
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.updates.*')]) href="{{ route('admin.updates.index') }}">Atualizações</a>
+                        @endcan
+                        @can('plugins.view')
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.plugins.*')]) href="{{ route('admin.plugins.index') }}">Plugins</a>
+                        @endcan
+                    </div>
+                @endcanany
             </nav>
         </aside>
 
