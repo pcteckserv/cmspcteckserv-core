@@ -83,8 +83,9 @@ class StarterUpdater
         $token = StarterPackage::token();
 
         if (is_string($token) && $token !== '' && str_starts_with($repository, 'https://github.com/')) {
+            $authorization = base64_encode('x-access-token:'.$token);
             $command[] = '-c';
-            $command[] = 'http.https://github.com/.extraheader=AUTHORIZATION: bearer '.$token;
+            $command[] = 'http.https://github.com/.extraheader=AUTHORIZATION: basic '.$authorization;
         }
 
         return array_merge($command, [

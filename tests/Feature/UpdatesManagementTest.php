@@ -411,8 +411,9 @@ class UpdatesManagementTest extends TestCase
         $updater = new StarterUpdater();
         $command = $updater->cloneCommand('https://github.com/pcteckserv/studioranco.git', 'v0.1.0', '/tmp/destination');
 
+        $expectedAuth = base64_encode('x-access-token:meu-token-secreto');
         $this->assertContains('-c', $command);
-        $this->assertContains('http.https://github.com/.extraheader=AUTHORIZATION: bearer meu-token-secreto', $command);
+        $this->assertContains('http.https://github.com/.extraheader=AUTHORIZATION: basic '.$expectedAuth, $command);
         $this->assertContains('clone', $command);
         $this->assertContains('--branch', $command);
         $this->assertContains('v0.1.0', $command);

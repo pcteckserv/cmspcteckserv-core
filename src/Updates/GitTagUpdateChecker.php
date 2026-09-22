@@ -165,10 +165,12 @@ class GitTagUpdateChecker
             return ['git', 'ls-remote', '--tags', '--refs', $repository];
         }
 
+        $authorization = base64_encode('x-access-token:'.$token);
+
         return [
             'git',
             '-c',
-            "http.https://github.com/.extraheader=AUTHORIZATION: bearer {$token}",
+            "http.https://github.com/.extraheader=AUTHORIZATION: basic {$authorization}",
             'ls-remote',
             '--tags',
             '--refs',
