@@ -52,12 +52,17 @@ class GitTagUpdateChecker
 
     private function latestVersionFromRepository(string $repository, mixed $token): ?string
     {
-        $githubVersion = $this->latestGithubVersion($repository, $token);
+        $gitVersion = $this->latestGitVersion($repository, $token);
 
-        if ($githubVersion !== null) {
-            return $githubVersion;
+        if ($gitVersion !== null) {
+            return $gitVersion;
         }
 
+        return $this->latestGithubVersion($repository, $token);
+    }
+
+    protected function latestGitVersion(string $repository, mixed $token): ?string
+    {
         $process = new Process($this->command($repository, $token));
         $process->setTimeout(30);
         $process->run();
@@ -73,7 +78,7 @@ class GitTagUpdateChecker
             ->last();
     }
 
-    private function latestGithubVersion(string $repository, mixed $token): ?string
+    protected function latestGithubVersion(string $repository, mixed $token): ?string
     {
         if (! is_string($token) || $token === '' || ! preg_match('#^https://github\.com/([^/]+)/([^/.]+)(?:\.git)?$#', $repository, $matches)) {
             return null;

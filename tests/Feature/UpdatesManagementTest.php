@@ -62,9 +62,41 @@ class TestComposerCommand extends ComposerCommand
     }
 }
 
+class TestGitTagUpdateChecker extends GitTagUpdateChecker
+{
+    public array $sources = [];
+
+    protected function latestGitVersion(string $repository, mixed $token): ?string
+    {
+        $this->sources[] = 'git';
+
+        return 'v2.3.9';
+    }
+
+    protected function latestGithubVersion(string $repository, mixed $token): ?string
+    {
+        $this->sources[] = 'api';
+
+        return 'v2.3.8';
+    }
+}
+
 class UpdatesManagementTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_verificacao_de_tags_prefere_git_remoto_a_api_do_github(): void
+    {
+        config([
+            'cms-core.updates.repositories.pcteckserv/cms-core' => 'https://github.com/pcteckserv/cmspcteckserv-core.git',
+            'cms-core.updates.github_token' => 'token-de-teste',
+        ]);
+
+        $checker = new TestGitTagUpdateChecker();
+
+        $this->assertSame('v2.3.9', $checker->latestVersion('pcteckserv/cms-core'));
+        $this->assertSame(['git'], $checker->sources);
+    }
 
     public function test_sync_usa_versao_instalada_lida_do_composer_em_disco(): void
     {
