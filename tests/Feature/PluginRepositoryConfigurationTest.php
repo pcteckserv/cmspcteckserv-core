@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use Illuminate\Support\Facades\File;
 use Pcteckserv\CmsCore\Plugins\PluginInstaller;
+use Pcteckserv\CmsCore\Plugins\PluginRepository;
 use ReflectionMethod;
 use Tests\TestCase;
 
@@ -44,6 +45,31 @@ class PluginRepositoryConfigurationTest extends TestCase
             $this->assertSame('https://github.com/pcteckserv/plugin.git', $repository['url']);
         } finally {
             $this->app->setBasePath($originalBasePath);
+            File::deleteDirectory($directory);
+        }
+    }
+
+    public function test_repositorio_git_completa_clone_shallow_antes_de_atualizar(): void
+    {
+        require_once dirname(__DIR__, 2).'/src/Plugins/PluginRepository.php';
+
+        $directory = sys_get_temp_dir().'/cms-plugin-shallow-'.bin2hex(random_bytes(8));
+        File::makeDirectory($directory.'/.git', 0755, true);
+        $method = new ReflectionMethod(PluginRepository::class, 'fetchArguments');
+
+        try {
+            File::put($directory.'/.git/shallow', "commit\n");
+            $this->assertSame(
+                ['git', '-C', $directory, 'fetch', '--unshallow', 'origin'],
+                $method->invoke(new PluginRepository(), $directory),
+            );
+
+            File::delete($directory.'/.git/shallow');
+            $this->assertSame(
+                ['git', '-C', $directory, 'fetch', 'origin'],
+                $method->invoke(new PluginRepository(), $directory),
+            );
+        } finally {
             File::deleteDirectory($directory);
         }
     }

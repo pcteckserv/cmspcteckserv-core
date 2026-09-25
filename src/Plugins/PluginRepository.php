@@ -102,7 +102,8 @@ class PluginRepository
             return $target;
         }
 
-        $this->run(['git', '-C', $target, 'pull', '--ff-only']);
+        $this->run($this->fetchArguments($target));
+        $this->run(['git', '-C', $target, 'merge', '--ff-only', 'FETCH_HEAD']);
 
         return $target;
     }
@@ -112,6 +113,16 @@ class PluginRepository
         $branch = config('cms-plugins.repository_branch');
 
         return is_string($branch) && $branch !== '' ? '--branch='.$branch : null;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function fetchArguments(string $target): array
+    {
+        return File::isFile($target.DIRECTORY_SEPARATOR.'.git'.DIRECTORY_SEPARATOR.'shallow')
+            ? ['git', '-C', $target, 'fetch', '--unshallow', 'origin']
+            : ['git', '-C', $target, 'fetch', 'origin'];
     }
 
     /**
