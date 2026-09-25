@@ -11,6 +11,7 @@ class PluginManager
 {
     public function __construct(
         private readonly PluginCatalog $catalog,
+        private readonly ?InstalledPluginVersionReader $installedVersionReader = null,
     ) {
     }
 
@@ -23,6 +24,15 @@ class PluginManager
             ->map(function ($definition): InstalledPlugin {
                 $plugin = InstalledPlugin::query()->firstOrNew(['slug' => $definition->slug]);
                 $isInstalled = $this->isComposerInstalled($definition->package);
+                $metadata = $plugin->metadata ?? [];
+                $manifestVersion = $isInstalled && ($metadata['repository_type'] ?? null) === 'path'
+                    ? ($this->installedVersionReader ?? new InstalledPluginVersionReader())->read($definition->package)
+                    : null;
+
+                if ($manifestVersion !== null) {
+                    $metadata['version'] = $manifestVersion;
+                    $metadata['last_applied_release'] = $manifestVersion;
+                }
 
                 $plugin->fill([
                     'name' => $definition->name,
@@ -31,8 +41,9 @@ class PluginManager
                     'description' => $definition->description,
                     'provider' => $definition->provider,
                     'installed_version' => $isInstalled
-                        ? ($plugin->metadata['version'] ?? $this->installedVersion($definition->package))
+                        ? ($manifestVersion ?? $metadata['version'] ?? $this->installedVersion($definition->package))
                         : null,
+                    'metadata' => $metadata,
                 ]);
 
                 if ($isInstalled && $plugin->installed_at === null) {

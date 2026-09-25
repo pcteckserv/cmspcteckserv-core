@@ -6,6 +6,7 @@ use Composer\InstalledVersions;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Pcteckserv\CmsCore\Plugins\PluginCatalog;
+use Pcteckserv\CmsCore\Plugins\InstalledPluginVersionReader;
 use Pcteckserv\CmsCore\Models\InstalledPlugin;
 
 class PackageVersionRegistry
@@ -14,6 +15,7 @@ class PackageVersionRegistry
         private readonly GitTagUpdateChecker $updateChecker,
         private readonly PluginCatalog $plugins,
         private readonly ?ComposerInstalledPackageReader $installedPackageReader = null,
+        private readonly ?InstalledPluginVersionReader $installedPluginVersionReader = null,
     ) {
     }
 
@@ -132,6 +134,12 @@ class PackageVersionRegistry
         $plugin = InstalledPlugin::query()->where('package', $package)->whereNotNull('installed_version')->first();
 
         if (($plugin?->metadata['repository_type'] ?? null) === 'path') {
+            $manifestVersion = ($this->installedPluginVersionReader ?? new InstalledPluginVersionReader())->read($package);
+
+            if ($manifestVersion !== null) {
+                return $manifestVersion;
+            }
+
             $version = $plugin->metadata['version'] ?? null;
 
             if (is_string($version) && $version !== '') {

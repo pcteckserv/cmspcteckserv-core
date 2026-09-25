@@ -8,6 +8,7 @@ use Mockery;
 use Pcteckserv\CmsCore\Models\InstalledPlugin;
 use Pcteckserv\CmsCore\Plugins\DTOs\AvailablePlugin;
 use Pcteckserv\CmsCore\Plugins\PluginRepository;
+use Pcteckserv\CmsCore\Plugins\InstalledPluginVersionReader;
 use Pcteckserv\CmsCore\Updates\GitTagUpdateChecker;
 use Pcteckserv\CmsCore\Updates\ComposerInstalledPackageReader;
 use Pcteckserv\CmsCore\Support\ComposerCommand;
@@ -26,6 +27,7 @@ class PathPluginUpdateTest extends TestCase
         require_once dirname(__DIR__, 2).'/src/Support/ComposerCommand.php';
         require_once dirname(__DIR__, 2).'/src/Plugins/DTOs/AvailablePlugin.php';
         require_once dirname(__DIR__, 2).'/src/Plugins/PluginRepository.php';
+        require_once dirname(__DIR__, 2).'/src/Plugins/InstalledPluginVersionReader.php';
         require_once dirname(__DIR__, 2).'/src/Updates/GitTagUpdateChecker.php';
         require_once dirname(__DIR__, 2).'/src/Plugins/PluginInstaller.php';
         require_once dirname(__DIR__, 2).'/src/Plugins/PluginManager.php';
@@ -59,6 +61,18 @@ class PathPluginUpdateTest extends TestCase
         $result = $this->updater(false)->update($plugin->package);
         $this->assertFalse($result->successful);
         $this->assertArrayNotHasKey('last_applied_release', $plugin->fresh()->metadata);
+    }
+
+    public function test_nao_marca_release_quando_ficheiros_reinstalados_continuam_antigos(): void
+    {
+        $plugin = $this->plugin();
+        $this->repository();
+        $result = $this->updater(true, '1.0.0')->update($plugin->package);
+
+        $this->assertFalse($result->successful);
+        $this->assertStringContainsString('instalada: 1.0.0; disponível: 1.0.1', $result->message);
+        $this->assertArrayNotHasKey('last_applied_release', $plugin->fresh()->metadata);
+        $this->assertSame('dev-main', $plugin->fresh()->installed_version);
     }
 
     public function test_versao_disponivel_do_plugin_vem_dos_metadados_sem_tags_git(): void
@@ -110,6 +124,73 @@ class PathPluginUpdateTest extends TestCase
         $this->assertTrue($next->hasUpdate());
     }
 
+    public function test_gestor_reconcilia_versao_declarada_com_manifesto_instalado(): void
+    {
+        $plugin = InstalledPlugin::query()->create([
+            'slug' => 'test-plugin',
+            'name' => 'pcteckserv/cms-core',
+            'package' => 'pcteckserv/cms-core',
+            'label' => 'Teste',
+            'status' => 'enabled',
+            'installed_version' => '1.2.2',
+            'metadata' => [
+                'repository_type' => 'path',
+                'version' => '1.2.2',
+                'last_applied_release' => '1.2.2',
+            ],
+        ]);
+        config(['cms-plugins.plugins' => [
+            'test-plugin' => ['package' => 'pcteckserv/cms-core', 'label' => 'Teste'],
+        ]]);
+        $reader = Mockery::mock(InstalledPluginVersionReader::class);
+        $reader->shouldReceive('read')->once()->with('pcteckserv/cms-core')->andReturn('1.1.3');
+
+        $manager = new \Pcteckserv\CmsCore\Plugins\PluginManager(
+            new \Pcteckserv\CmsCore\Plugins\PluginCatalog(),
+            $reader,
+        );
+        $manager->sync();
+
+        $plugin->refresh();
+        $this->assertSame('1.1.3', $plugin->installed_version);
+        $this->assertSame('1.1.3', $plugin->metadata['version']);
+        $this->assertSame('1.1.3', $plugin->metadata['last_applied_release']);
+    }
+
+    public function test_registo_de_atualizacoes_prefere_manifesto_instalado_a_metadados(): void
+    {
+        $plugin = InstalledPlugin::query()->create([
+            'slug' => 'test-plugin',
+            'name' => 'tests/plugin',
+            'package' => 'tests/plugin',
+            'label' => 'Teste',
+            'status' => 'enabled',
+            'installed_version' => '1.2.2',
+            'metadata' => [
+                'repository_type' => 'path',
+                'version' => '1.2.2',
+                'last_applied_release' => '1.2.2',
+            ],
+        ]);
+        config(['cms-plugins.plugins' => [], 'cms-core.updates.packages' => []]);
+        $checker = $this->mock(GitTagUpdateChecker::class);
+        $checker->shouldReceive('latestVersion')->once()->with($plugin->package)->andReturn('1.2.2');
+        $versionReader = Mockery::mock(InstalledPluginVersionReader::class);
+        $versionReader->shouldReceive('read')->twice()->with($plugin->package)->andReturn('1.1.3');
+
+        $packages = (new \Pcteckserv\CmsCore\Updates\PackageVersionRegistry(
+            $checker,
+            new \Pcteckserv\CmsCore\Plugins\PluginCatalog(),
+            null,
+            $versionReader,
+        ))->checkRemoteUpdates();
+
+        $package = $packages->sole();
+        $this->assertSame('1.1.3', $package->installedVersion);
+        $this->assertSame('1.2.2', $package->availableVersion);
+        $this->assertTrue($package->hasUpdate());
+    }
+
     public function test_metadados_invalidos_nao_sao_aceites_como_versao(): void
     {
         $directory = sys_get_temp_dir().'/cms-plugin-metadata-'.bin2hex(random_bytes(8));
@@ -153,18 +234,27 @@ class PathPluginUpdateTest extends TestCase
         $this->mock(PluginRepository::class)->shouldReceive('find')->once()->with('test-plugin')->andReturn($source);
     }
 
-    private function updater(bool $reinstallSuccessful): PackageUpdater
+    private function updater(bool $reinstallSuccessful, string $manifestVersion = '1.0.1'): PackageUpdater
     {
         $reader = Mockery::mock(ComposerInstalledPackageReader::class);
-        $reader->shouldReceive('read')->times($reinstallSuccessful ? 2 : 1)
+        $reader->shouldReceive('read')->times($reinstallSuccessful && $manifestVersion === '1.0.1' ? 2 : 1)
             ->with('tests/plugin')->andReturn(['version' => 'dev-main', 'dist' => ['type' => 'path']]);
         $composer = Mockery::mock(ComposerCommand::class);
         $composer->shouldReceive('build')->andReturnUsing(fn (array $arguments) => ['composer', ...$arguments]);
         $composer->shouldReceive('php')->andReturnUsing(fn (array $arguments) => ['php', ...$arguments]);
-        $updater = Mockery::mock(PackageUpdater::class, [app(GitTagUpdateChecker::class), null, $composer, $reader])
+        $versionReader = Mockery::mock(InstalledPluginVersionReader::class);
+        $versionReader->shouldReceive('read')->times($reinstallSuccessful ? 1 : 0)
+            ->with('tests/plugin')->andReturn($manifestVersion);
+        $updater = Mockery::mock(PackageUpdater::class, [
+            app(GitTagUpdateChecker::class),
+            null,
+            $composer,
+            $reader,
+            $versionReader,
+        ])
             ->makePartial()->shouldAllowMockingProtectedMethods();
         $commands = [];
-        $updater->shouldReceive('run')->times($reinstallSuccessful ? 4 : 2)
+        $updater->shouldReceive('run')->times($reinstallSuccessful && $manifestVersion === '1.0.1' ? 4 : 2)
             ->andReturnUsing(function (array $command) use (&$commands, $reinstallSuccessful): Process {
                 $commands[] = $command[1];
                 $expected = ['update', 'reinstall', 'artisan', 'artisan'];

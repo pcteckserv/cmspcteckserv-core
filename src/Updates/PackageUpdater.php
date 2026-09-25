@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Pcteckserv\CmsCore\Models\InstalledPlugin;
 use Pcteckserv\CmsCore\Plugins\PluginRepository;
+use Pcteckserv\CmsCore\Plugins\InstalledPluginVersionReader;
 use Pcteckserv\CmsCore\Support\ComposerCommand;
 use Throwable;
 
@@ -19,6 +20,7 @@ class PackageUpdater
         private readonly ?StarterUpdater $starterUpdater = null,
         ?ComposerCommand $composerCommand = null,
         private readonly ?ComposerInstalledPackageReader $installedPackageReader = null,
+        private readonly ?InstalledPluginVersionReader $installedPluginVersionReader = null,
     ) {
         $this->composerCommand = $composerCommand ?? new ComposerCommand();
     }
@@ -81,6 +83,17 @@ class PackageUpdater
 
             if (! $reinstall->isSuccessful()) {
                 return new UpdateResult(false, 'Não foi possível reinstalar o código atualizado do plugin. Verifique as permissões do Composer.');
+            }
+
+            $installedManifestVersion = ($this->installedPluginVersionReader ?? new InstalledPluginVersionReader())
+                ->read($package);
+
+            if ($installedManifestVersion !== $availableVersion) {
+                return new UpdateResult(
+                    false,
+                    'A reinstalação terminou, mas os ficheiros instalados não correspondem à versão disponível'
+                        .' (instalada: '.($installedManifestVersion ?? 'desconhecida').'; disponível: '.$availableVersion.').'
+                );
             }
         }
 
