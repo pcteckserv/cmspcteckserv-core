@@ -72,12 +72,6 @@ class PackageUpdater
             $this->updateComposerPathRepositoryVersion($package, $availableVersion);
         }
 
-        $composer = $this->run($this->composerCommand->build(['update', $package, '--with-dependencies']));
-
-        if (! $composer->isSuccessful()) {
-            return new UpdateResult(false, 'Composer falhou: '.$this->processOutput($composer));
-        }
-
         if ($isPathPlugin) {
             $reinstall = $this->run($this->composerCommand->build(['reinstall', $package, '--no-interaction']));
 
@@ -94,6 +88,12 @@ class PackageUpdater
                     'A reinstalação terminou, mas os ficheiros instalados não correspondem à versão disponível'
                         .' (instalada: '.($installedManifestVersion ?? 'desconhecida').'; disponível: '.$availableVersion.').'
                 );
+            }
+        } else {
+            $composer = $this->run($this->composerCommand->build(['update', $package, '--with-dependencies']));
+
+            if (! $composer->isSuccessful()) {
+                return new UpdateResult(false, 'Composer falhou: '.$this->processOutput($composer));
             }
         }
 

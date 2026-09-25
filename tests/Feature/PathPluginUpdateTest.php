@@ -254,10 +254,10 @@ class PathPluginUpdateTest extends TestCase
         ])
             ->makePartial()->shouldAllowMockingProtectedMethods();
         $commands = [];
-        $updater->shouldReceive('run')->times($reinstallSuccessful && $manifestVersion === '1.0.1' ? 4 : 2)
+        $updater->shouldReceive('run')->times($reinstallSuccessful && $manifestVersion === '1.0.1' ? 3 : 1)
             ->andReturnUsing(function (array $command) use (&$commands, $reinstallSuccessful): Process {
                 $commands[] = $command[1];
-                $expected = ['update', 'reinstall', 'artisan', 'artisan'];
+                $expected = ['reinstall', 'artisan', 'artisan'];
                 $this->assertSame($expected[count($commands) - 1], $command[1]);
                 $process = Mockery::mock(Process::class);
                 $process->shouldReceive('isSuccessful')->andReturn($command[1] !== 'reinstall' || $reinstallSuccessful);
