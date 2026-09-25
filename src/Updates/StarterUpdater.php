@@ -18,9 +18,12 @@ class StarterUpdater
         '.cms_installed',
         'bootstrap/cache',
         'node_modules',
+        'public/.htaccess',
         'public/hot',
+        'public/index.php',
         'public/installer.php',
         'public/storage',
+        'public/web.config',
         'storage',
         'vendor',
     ];

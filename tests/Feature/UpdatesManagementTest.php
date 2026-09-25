@@ -470,7 +470,10 @@ class UpdatesManagementTest extends TestCase
         File::ensureDirectoryExists($source.'/public/storage');
         File::put($source.'/public/build/manifest.json', '{"site.css":"site.css"}');
         File::put($source.'/public/images/logo.png', 'logo');
+        File::put($source.'/public/index.php', 'starter index');
         File::put($source.'/public/storage/private.txt', 'private');
+        File::ensureDirectoryExists($customPublicPath);
+        File::put($customPublicPath.'/index.php', 'hosting index');
 
         try {
             $this->app->usePublicPath($customPublicPath);
@@ -481,6 +484,7 @@ class UpdatesManagementTest extends TestCase
             $this->assertFileExists($customPublicPath.'/build/manifest.json');
             $this->assertFileExists($customPublicPath.'/images/logo.png');
             $this->assertFileDoesNotExist($customPublicPath.'/storage/private.txt');
+            $this->assertSame('hosting index', File::get($customPublicPath.'/index.php'));
         } finally {
             $this->app->usePublicPath($originalPublicPath);
             File::deleteDirectory($temporaryRoot);
