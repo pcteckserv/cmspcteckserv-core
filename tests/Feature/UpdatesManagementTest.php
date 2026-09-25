@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Mockery;
 use Pcteckserv\CmsCore\Models\Role;
 use Pcteckserv\CmsCore\Plugins\PluginCatalog;
@@ -47,6 +48,14 @@ class TestablePackageUpdater extends PackageUpdater
         $process->shouldReceive('getOutput')->andReturn('{}');
 
         return $process;
+    }
+}
+
+class TestableStarterUpdater extends StarterUpdater
+{
+    public function copyFiles(string $source, string $destination): void
+    {
+        $this->copyStarterFiles($source, $destination);
     }
 }
 
@@ -446,6 +455,36 @@ class UpdatesManagementTest extends TestCase
         $this->assertArrayNotHasKey('GIT_CONFIG_KEY_0', $env);
         $this->assertArrayNotHasKey('GIT_CONFIG_VALUE_0', $env);
         $this->assertSame('0', $env['GIT_TERMINAL_PROMPT'] ?? null);
+    }
+
+    public function test_starter_updater_copia_assets_para_public_path_personalizado(): void
+    {
+        $temporaryRoot = storage_path('framework/testing/starter-public-path-'.bin2hex(random_bytes(6)));
+        $source = $temporaryRoot.'/source';
+        $destination = $temporaryRoot.'/application';
+        $customPublicPath = $temporaryRoot.'/public_html';
+        $originalPublicPath = public_path();
+
+        File::ensureDirectoryExists($source.'/public/build');
+        File::ensureDirectoryExists($source.'/public/images');
+        File::ensureDirectoryExists($source.'/public/storage');
+        File::put($source.'/public/build/manifest.json', '{"site.css":"site.css"}');
+        File::put($source.'/public/images/logo.png', 'logo');
+        File::put($source.'/public/storage/private.txt', 'private');
+
+        try {
+            $this->app->usePublicPath($customPublicPath);
+
+            (new TestableStarterUpdater())->copyFiles($source, $destination);
+
+            $this->assertFileExists($destination.'/public/build/manifest.json');
+            $this->assertFileExists($customPublicPath.'/build/manifest.json');
+            $this->assertFileExists($customPublicPath.'/images/logo.png');
+            $this->assertFileDoesNotExist($customPublicPath.'/storage/private.txt');
+        } finally {
+            $this->app->usePublicPath($originalPublicPath);
+            File::deleteDirectory($temporaryRoot);
+        }
     }
 
     private function superAdmin(): User

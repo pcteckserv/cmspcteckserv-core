@@ -99,7 +99,7 @@ class StarterUpdater
         ]);
     }
 
-    private function copyStarterFiles(string $source, string $destination): void
+    protected function copyStarterFiles(string $source, string $destination): void
     {
         $items = new \RecursiveIteratorIterator(
             new \RecursiveDirectoryIterator($source, \FilesystemIterator::SKIP_DOTS),
@@ -124,6 +124,52 @@ class StarterUpdater
             File::ensureDirectoryExists(dirname($target));
             File::copy($item->getPathname(), $target);
         }
+
+        $defaultPublicPath = $destination.DIRECTORY_SEPARATOR.'public';
+        $configuredPublicPath = public_path();
+
+        if ($this->normalisePath($configuredPublicPath) !== $this->normalisePath($defaultPublicPath)) {
+            $this->copyPublicFiles($source.DIRECTORY_SEPARATOR.'public', $configuredPublicPath);
+        }
+    }
+
+    private function copyPublicFiles(string $source, string $destination): void
+    {
+        if (! File::isDirectory($source)) {
+            return;
+        }
+
+        $items = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($source, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::SELF_FIRST,
+        );
+
+        foreach ($items as $item) {
+            $subPath = str_replace('\\', '/', $items->getSubPathName());
+            $relativePath = 'public/'.$subPath;
+
+            if ($this->isExcluded($relativePath)) {
+                continue;
+            }
+
+            $target = $destination.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $subPath);
+
+            if ($item->isDir()) {
+                File::ensureDirectoryExists($target);
+
+                continue;
+            }
+
+            File::ensureDirectoryExists(dirname($target));
+            File::copy($item->getPathname(), $target);
+        }
+    }
+
+    private function normalisePath(string $path): string
+    {
+        $path = rtrim(str_replace('\\', '/', $path), '/');
+
+        return DIRECTORY_SEPARATOR === '\\' ? strtolower($path) : $path;
     }
 
     private function isExcluded(string $relativePath): bool
