@@ -47,6 +47,7 @@ class PathPluginUpdateTest extends TestCase
         $result = $updater->update($plugin->package);
         $this->assertTrue($result->successful);
         $this->assertSame('1.0.1', $plugin->fresh()->metadata['version']);
+        $this->assertSame('/source', $plugin->fresh()->metadata['repository_url']);
         $this->assertSame('1.0.1', $plugin->fresh()->installed_version);
         $package = new InstalledPackage($plugin->package, 'dev-main', 'v1.0.1', 'stable', null, 'v1.0.1');
         $this->assertFalse($package->hasUpdate());
@@ -272,7 +273,10 @@ class PathPluginUpdateTest extends TestCase
             ->makePartial()->shouldAllowMockingProtectedMethods();
         $commands = [];
         $requiresReinstall = $initialManifestVersion !== '1.0.1';
-        $expectedCommands = $requiresReinstall ? ['reinstall'] : [];
+        $expectedCommands = ['config', 'update'];
+        if ($requiresReinstall) {
+            $expectedCommands[] = 'reinstall';
+        }
         if ($reinstallSuccessful && $manifestVersion === '1.0.1') {
             $expectedCommands = [...$expectedCommands, 'artisan', 'artisan'];
         }
@@ -280,6 +284,18 @@ class PathPluginUpdateTest extends TestCase
             ->andReturnUsing(function (array $command) use (&$commands, $expectedCommands, $reinstallSuccessful): Process {
                 $commands[] = $command[1];
                 $this->assertSame($expectedCommands[count($commands) - 1], $command[1]);
+                if ($command[1] === 'config') {
+                    $this->assertSame('repositories.cms-plugin-test-plugin', $command[2]);
+                    $this->assertSame(
+                        [
+                            'type' => 'path',
+                            'url' => '/source',
+                            'options' => ['versions' => ['tests/plugin' => '1.0.1']],
+                        ],
+                        json_decode($command[3], true, 512, JSON_THROW_ON_ERROR),
+                    );
+                }
+
                 $process = Mockery::mock(Process::class);
                 $process->shouldReceive('isSuccessful')->andReturn($command[1] !== 'reinstall' || $reinstallSuccessful);
                 $process->shouldReceive('getOutput')->andReturn(json_encode(['versions' => ['dev-main'], 'dist' => ['type' => 'path']]));

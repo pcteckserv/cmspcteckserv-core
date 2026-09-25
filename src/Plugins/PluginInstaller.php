@@ -64,7 +64,13 @@ class PluginInstaller
         $slug = $this->slug($data['slug'] ?? null, $package);
 
         if (! empty($data['repository_type']) && ! empty($data['repository_url'])) {
-            $repository = $this->configureRepository($slug, $data['repository_type'], $data['repository_url']);
+            $repository = $this->configureRepository(
+                $slug,
+                $data['repository_type'],
+                $data['repository_url'],
+                $package,
+                $data['version'] ?? null,
+            );
 
             if (! $repository->isSuccessful()) {
                 return new PluginInstallResult(false, 'Não foi possível configurar o repositório Composer: '.$this->processOutput($repository));
@@ -118,14 +124,25 @@ class PluginInstaller
         return new PluginInstallResult(true, 'Plugin instalado com sucesso.');
     }
 
-    private function configureRepository(string $slug, string $type, string $url): Process
+    private function configureRepository(
+        string $slug,
+        string $type,
+        string $url,
+        ?string $package = null,
+        ?string $version = null,
+    ): Process
     {
         $name = 'cms-plugin-'.$slug;
+        $repository = ['type' => $type, 'url' => $url];
+
+        if ($type === 'path' && $package !== null && $version !== null) {
+            $repository['options'] = ['versions' => [$package => $version]];
+        }
 
         return $this->run([
             ...$this->composerCommand()->build(['config']),
             'repositories.'.$name,
-            json_encode(['type' => $type, 'url' => $url], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),
+            json_encode($repository, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),
         ]);
     }
 

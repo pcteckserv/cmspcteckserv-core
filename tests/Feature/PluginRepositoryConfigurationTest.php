@@ -43,6 +43,24 @@ class PluginRepositoryConfigurationTest extends TestCase
             $repository = array_values($configuration['repositories'])[0];
             $this->assertSame('vcs', $repository['type']);
             $this->assertSame('https://github.com/pcteckserv/plugin.git', $repository['url']);
+
+            $pathProcess = $method->invoke(
+                new PluginInstaller(),
+                'contact-forms',
+                'path',
+                $directory.'/plugin',
+                'tests/contact-forms',
+                '1.2.6',
+            );
+
+            $this->assertTrue($pathProcess->isSuccessful(), $pathProcess->getErrorOutput());
+            $configuration = json_decode(File::get($directory.'/composer.json'), true, 512, JSON_THROW_ON_ERROR);
+            $repository = array_values(array_filter(
+                $configuration['repositories'],
+                fn (array $repository): bool => ($repository['type'] ?? null) === 'path',
+            ))[0];
+            $this->assertSame($directory.'/plugin', $repository['url']);
+            $this->assertSame(['tests/contact-forms' => '1.2.6'], $repository['options']['versions']);
         } finally {
             $this->app->setBasePath($originalBasePath);
             File::deleteDirectory($directory);

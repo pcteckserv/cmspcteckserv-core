@@ -73,6 +73,33 @@ class PackageUpdater
         }
 
         if ($isPathPlugin) {
+            $repository = $this->run($this->composerCommand->build([
+                'config',
+                'repositories.cms-plugin-'.$plugin->slug,
+                json_encode([
+                    'type' => 'path',
+                    'url' => $source->repositoryPath,
+                    'options' => [
+                        'versions' => [$package => $availableVersion],
+                    ],
+                ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),
+            ]));
+
+            if (! $repository->isSuccessful()) {
+                return new UpdateResult(false, 'Não foi possível alinhar o repositório Composer do plugin com a origem atualizada: '.$this->processOutput($repository));
+            }
+
+            $composer = $this->run($this->composerCommand->build([
+                'update',
+                $package,
+                '--with-dependencies',
+                '--no-interaction',
+            ]));
+
+            if (! $composer->isSuccessful()) {
+                return new UpdateResult(false, 'Composer falhou ao atualizar o plugin a partir da origem atualizada: '.$this->processOutput($composer));
+            }
+
             $versionReader = $this->installedPluginVersionReader ?? new InstalledPluginVersionReader();
             $installedManifestVersion = $versionReader->read($package);
 
@@ -160,6 +187,7 @@ class PackageUpdater
             $metadata = $plugin->metadata ?? [];
             $metadata['last_applied_release'] = $availableVersion;
             $metadata['version'] = $availableVersion;
+            $metadata['repository_url'] = $source->repositoryPath;
             $plugin->forceFill(['metadata' => $metadata, 'installed_version' => $availableVersion])->save();
         }
 
