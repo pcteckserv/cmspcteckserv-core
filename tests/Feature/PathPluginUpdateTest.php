@@ -54,6 +54,16 @@ class PathPluginUpdateTest extends TestCase
         $this->assertTrue($next->hasUpdate());
     }
 
+    public function test_nao_reinstala_plugin_path_quando_junction_ja_reflete_nova_versao(): void
+    {
+        $plugin = $this->plugin();
+        $this->repository();
+        $result = $this->updater(true, '1.0.1', '1.0.1')->update($plugin->package);
+
+        $this->assertTrue($result->successful);
+        $this->assertSame('1.0.1', $plugin->fresh()->installed_version);
+    }
+
     public function test_falha_de_reinstalacao_nao_marca_release_como_aplicada(): void
     {
         $plugin = $this->plugin();
@@ -234,7 +244,11 @@ class PathPluginUpdateTest extends TestCase
         $this->mock(PluginRepository::class)->shouldReceive('find')->once()->with('test-plugin')->andReturn($source);
     }
 
-    private function updater(bool $reinstallSuccessful, string $manifestVersion = '1.0.1'): PackageUpdater
+    private function updater(
+        bool $reinstallSuccessful,
+        string $manifestVersion = '1.0.1',
+        string $initialManifestVersion = '1.0.0',
+    ): PackageUpdater
     {
         $reader = Mockery::mock(ComposerInstalledPackageReader::class);
         $reader->shouldReceive('read')->times($reinstallSuccessful && $manifestVersion === '1.0.1' ? 2 : 1)
@@ -243,8 +257,11 @@ class PathPluginUpdateTest extends TestCase
         $composer->shouldReceive('build')->andReturnUsing(fn (array $arguments) => ['composer', ...$arguments]);
         $composer->shouldReceive('php')->andReturnUsing(fn (array $arguments) => ['php', ...$arguments]);
         $versionReader = Mockery::mock(InstalledPluginVersionReader::class);
-        $versionReader->shouldReceive('read')->times($reinstallSuccessful ? 1 : 0)
-            ->with('tests/plugin')->andReturn($manifestVersion);
+        $manifestVersions = $initialManifestVersion === '1.0.1' || ! $reinstallSuccessful
+            ? [$initialManifestVersion]
+            : [$initialManifestVersion, $manifestVersion];
+        $versionReader->shouldReceive('read')->times(count($manifestVersions))
+            ->with('tests/plugin')->andReturnValues($manifestVersions);
         $updater = Mockery::mock(PackageUpdater::class, [
             app(GitTagUpdateChecker::class),
             null,
@@ -254,11 +271,15 @@ class PathPluginUpdateTest extends TestCase
         ])
             ->makePartial()->shouldAllowMockingProtectedMethods();
         $commands = [];
-        $updater->shouldReceive('run')->times($reinstallSuccessful && $manifestVersion === '1.0.1' ? 3 : 1)
-            ->andReturnUsing(function (array $command) use (&$commands, $reinstallSuccessful): Process {
+        $requiresReinstall = $initialManifestVersion !== '1.0.1';
+        $expectedCommands = $requiresReinstall ? ['reinstall'] : [];
+        if ($reinstallSuccessful && $manifestVersion === '1.0.1') {
+            $expectedCommands = [...$expectedCommands, 'artisan', 'artisan'];
+        }
+        $updater->shouldReceive('run')->times(count($expectedCommands))
+            ->andReturnUsing(function (array $command) use (&$commands, $expectedCommands, $reinstallSuccessful): Process {
                 $commands[] = $command[1];
-                $expected = ['reinstall', 'artisan', 'artisan'];
-                $this->assertSame($expected[count($commands) - 1], $command[1]);
+                $this->assertSame($expectedCommands[count($commands) - 1], $command[1]);
                 $process = Mockery::mock(Process::class);
                 $process->shouldReceive('isSuccessful')->andReturn($command[1] !== 'reinstall' || $reinstallSuccessful);
                 $process->shouldReceive('getOutput')->andReturn(json_encode(['versions' => ['dev-main'], 'dist' => ['type' => 'path']]));

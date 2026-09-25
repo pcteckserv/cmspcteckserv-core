@@ -73,14 +73,18 @@ class PackageUpdater
         }
 
         if ($isPathPlugin) {
-            $reinstall = $this->run($this->composerCommand->build(['reinstall', $package, '--no-interaction']));
+            $versionReader = $this->installedPluginVersionReader ?? new InstalledPluginVersionReader();
+            $installedManifestVersion = $versionReader->read($package);
 
-            if (! $reinstall->isSuccessful()) {
-                return new UpdateResult(false, 'Não foi possível reinstalar o código atualizado do plugin. Verifique as permissões do Composer.');
+            if ($installedManifestVersion !== $availableVersion) {
+                $reinstall = $this->run($this->composerCommand->build(['reinstall', $package, '--no-interaction']));
+
+                if (! $reinstall->isSuccessful()) {
+                    return new UpdateResult(false, 'Não foi possível reinstalar o código atualizado do plugin. Verifique as permissões do Composer.');
+                }
+
+                $installedManifestVersion = $versionReader->read($package);
             }
-
-            $installedManifestVersion = ($this->installedPluginVersionReader ?? new InstalledPluginVersionReader())
-                ->read($package);
 
             if ($installedManifestVersion !== $availableVersion) {
                 return new UpdateResult(
