@@ -513,38 +513,66 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
                 return;
             }
 
+            const selectedFiles = Array.from(file.files);
+
+            if (selectedFiles.length > 20) {
+                setStatus('Selecione até 20 imagens de cada vez.', true);
+                file.value = '';
+                return;
+            }
+
             if (! csrfToken) {
                 setStatus('Não foi possível validar a sessão. Atualize a página e tente novamente.', true);
                 return;
             }
 
-            const formData = new FormData();
-            Array.from(file.files).forEach((selectedFile) => formData.append('files[]', selectedFile));
-            setStatus(`A carregar ${file.files.length} imagem(ns)...`);
+            const uploadedItems = [];
+            const failures = [];
 
-            try {
-                const response = await fetch(activePicker.dataset.uploadUrl, {
-                    body: formData,
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken,
-                    },
-                    method: 'POST',
-                });
+            for (const [index, selectedFile] of selectedFiles.entries()) {
+                const formData = new FormData();
+                formData.append('files[]', selectedFile);
+                setStatus(`A carregar imagem ${index + 1} de ${selectedFiles.length}...`);
 
-                if (! response.ok) {
-                    const payload = await response.json().catch(() => ({}));
-                    const firstError = Object.values(payload.errors ?? {})?.[0]?.[0];
-                    throw new Error(firstError || payload.message || 'Não foi possível carregar as imagens.');
+                try {
+                    const response = await fetch(activePicker.dataset.uploadUrl, {
+                        body: formData,
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+                        method: 'POST',
+                    });
+
+                    if (! response.ok) {
+                        const payload = await response.json().catch(() => ({}));
+                        const messages = Object.values(payload.errors ?? {}).flatMap((value) => Array.isArray(value) ? value : [value]);
+                        const message = response.status === 413
+                            ? 'O ficheiro excede o limite de envio do servidor.'
+                            : messages[0] || payload.message || 'Não foi possível carregar este ficheiro.';
+                        failures.push(`${selectedFile.name}: ${message}`);
+                        continue;
+                    }
+
+                    const payload = await response.json();
+                    uploadedItems.push(...(payload.items || []));
+                } catch (error) {
+                    failures.push(`${selectedFile.name}: ${error.message || 'Não foi possível carregar este ficheiro.'}`);
                 }
-
-                const payload = await response.json();
-                renderItems(payload.items || []);
-            } catch (error) {
-                setStatus(error.message || 'Não foi possível carregar as imagens.', true);
-            } finally {
-                file.value = '';
             }
+
+            file.value = '';
+            renderItems(uploadedItems);
+
+            if (failures.length) {
+                const uploadedMessage = uploadedItems.length
+                    ? `${uploadedItems.length} imagem(ns) carregada(s). `
+                    : '';
+                setStatus(`${uploadedMessage}${failures.join(' ')}`, true);
+                return;
+            }
+
+            setStatus(`${uploadedItems.length} imagem(ns) carregada(s). Selecione a imagem que pretende associar.`, false);
         };
 
         pickers.forEach((picker) => {
