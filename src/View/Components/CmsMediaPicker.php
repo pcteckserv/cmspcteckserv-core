@@ -19,6 +19,7 @@ class CmsMediaPicker extends Component
         public readonly string $emptyLabel = 'Sem imagem selecionada',
         public readonly string $help = 'Selecione ou carregue uma imagem do Media Manager.',
         public readonly bool $clearable = false,
+        public readonly bool $multiple = false,
     ) {
     }
 
@@ -38,6 +39,10 @@ class CmsMediaPicker extends Component
 
         if (! $selectedValue) {
             return '';
+        }
+
+        if ($this->multiple && is_array($selectedValue)) {
+            return Media::query()->whereIn('id', $selectedValue)->orderBy('original_filename')->pluck('original_filename')->implode(', ');
         }
 
         return Media::query()->whereKey($selectedValue)->value('original_filename') ?: '';

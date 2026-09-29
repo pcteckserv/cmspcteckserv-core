@@ -417,10 +417,13 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
     const file = modal?.querySelector('[data-cms-media-picker-file]');
     const grid = modal?.querySelector('[data-cms-media-picker-grid]');
     const status = modal?.querySelector('[data-cms-media-picker-status]');
+    const multipleActions = modal?.querySelector('[data-cms-media-picker-actions]');
+    const confirmMultiple = modal?.querySelector('[data-cms-media-picker-confirm]');
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     let activePicker = null;
+    let selectedItems = new Map();
 
-    if (modal && pickers.length && close && search && file && grid && status) {
+    if (modal && pickers.length && close && search && file && grid && status && multipleActions && confirmMultiple) {
         const setStatus = (message, isError = false) => {
             status.textContent = message;
             status.classList.toggle('text-danger', isError);
@@ -444,12 +447,35 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
 
                 button.className = 'cms-media-picker__item';
                 button.type = 'button';
+                button.setAttribute('aria-pressed', 'false');
                 image.src = item.thumbnail_url || item.url;
                 image.alt = item.alt_text || item.name || 'Imagem';
                 label.textContent = item.name || `Media #${item.id}`;
 
                 button.append(image, label);
                 button.addEventListener('click', () => {
+                    if (activePicker?.dataset.cmsMediaPickerMultiple === 'true') {
+                        const key = String(item.id);
+                        if (selectedItems.has(key)) {
+                            selectedItems.delete(key);
+                        } else {
+                            if (selectedItems.size >= 20) {
+                                setStatus('Pode selecionar até 20 imagens de cada vez.', true);
+                                return;
+                            }
+                            selectedItems.set(key, item);
+                        }
+
+                        button.classList.toggle('is-selected', selectedItems.has(key));
+                        button.setAttribute('aria-pressed', selectedItems.has(key) ? 'true' : 'false');
+                        confirmMultiple.disabled = selectedItems.size === 0;
+                        confirmMultiple.textContent = selectedItems.size
+                            ? `Adicionar ${selectedItems.size} ${selectedItems.size === 1 ? 'imagem' : 'imagens'}`
+                            : 'Adicionar imagens';
+                        setStatus(`${selectedItems.size} ${selectedItems.size === 1 ? 'imagem selecionada' : 'imagens selecionadas'}.`);
+                        return;
+                    }
+
                     const input = activePicker?.querySelector('[data-cms-media-picker-input]');
                     const display = activePicker?.querySelector('[data-cms-media-picker-display]');
                     const selected = activePicker?.querySelector('[data-cms-media-picker-selected]');
@@ -479,6 +505,11 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
                     }));
                     modal.hidden = true;
                 });
+
+                if (selectedItems.has(String(item.id))) {
+                    button.classList.add('is-selected');
+                    button.setAttribute('aria-pressed', 'true');
+                }
 
                 grid.append(button);
             });
@@ -566,18 +597,30 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
 
             if (failures.length) {
                 const uploadedMessage = uploadedItems.length
-                    ? `${uploadedItems.length} imagem(ns) carregada(s). `
+                    ? `${uploadedItems.length} ${uploadedItems.length === 1 ? 'imagem carregada' : 'imagens carregadas'}. `
                     : '';
                 setStatus(`${uploadedMessage}${failures.join(' ')}`, true);
                 return;
             }
 
-            setStatus(`${uploadedItems.length} imagem(ns) carregada(s). Selecione a imagem que pretende associar.`, false);
+            const uploadedLabel = uploadedItems.length === 1 ? 'imagem carregada' : 'imagens carregadas';
+            setStatus(`${uploadedItems.length} ${uploadedLabel}. Selecione a imagem que pretende associar.`, false);
         };
 
         pickers.forEach((picker) => {
             picker.querySelector('[data-cms-media-picker-open]')?.addEventListener('click', () => {
                 activePicker = picker;
+                const isMultiple = picker.dataset.cmsMediaPickerMultiple === 'true';
+                selectedItems = new Map();
+                multipleActions.hidden = ! isMultiple;
+                confirmMultiple.disabled = true;
+                confirmMultiple.textContent = 'Adicionar imagens';
+
+                if (isMultiple) {
+                    const existingItems = JSON.parse(picker.dataset.cmsMediaPickerSelectedItems || '[]');
+                    selectedItems = new Map(existingItems.map((item) => [String(item.id), item]));
+                }
+
                 search.value = '';
                 modal.hidden = false;
                 loadItems();
@@ -592,11 +635,16 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
                 const targetUrl = picker.dataset.cmsMediaPickerTargetUrl;
                 const targetUrlInput = targetUrl ? document.querySelector(targetUrl) : null;
 
-                if (! input || ! display || ! selected || ! clear) {
+                if (! display || ! selected || ! clear) {
                     return;
                 }
 
-                input.value = '';
+                if (picker.dataset.cmsMediaPickerMultiple === 'true') {
+                    picker.querySelector('[data-cms-media-picker-values]')?.replaceChildren();
+                    picker.dataset.cmsMediaPickerSelectedItems = '[]';
+                } else if (input) {
+                    input.value = '';
+                }
                 display.value = '';
                 selected.textContent = picker.dataset.emptyHelp || selected.textContent;
                 clear.disabled = true;
@@ -607,10 +655,48 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
                 picker.dispatchEvent(new CustomEvent('cms:media-picker-cleared', {
                     bubbles: true,
                     detail: {
-                        inputName: input.name,
+                        inputName: picker.dataset.cmsMediaPickerName || input?.name,
                     },
                 }));
             });
+        });
+
+        confirmMultiple.addEventListener('click', () => {
+            if (activePicker?.dataset.cmsMediaPickerMultiple !== 'true' || selectedItems.size === 0) {
+                return;
+            }
+
+            const values = activePicker.querySelector('[data-cms-media-picker-values]');
+            const display = activePicker.querySelector('[data-cms-media-picker-display]');
+            const selected = activePicker.querySelector('[data-cms-media-picker-selected]');
+            const clear = activePicker.querySelector('[data-cms-media-picker-clear]');
+            const items = Array.from(selectedItems.values());
+
+            if (! values || ! display || ! selected) {
+                return;
+            }
+
+            values.replaceChildren();
+            items.forEach((item) => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = `${activePicker.dataset.cmsMediaPickerName}[]`;
+                input.value = item.id;
+                input.dataset.cmsMediaPickerInput = '';
+                values.append(input);
+            });
+
+            activePicker.dataset.cmsMediaPickerSelectedItems = JSON.stringify(items);
+            display.value = `${items.length} ${items.length === 1 ? 'imagem selecionada' : 'imagens selecionadas'}`;
+            selected.textContent = items.map((item) => item.name || `Media #${item.id}`).join(', ');
+            if (clear) {
+                clear.disabled = false;
+            }
+            activePicker.dispatchEvent(new CustomEvent('cms:media-picker-multiple-selected', {
+                bubbles: true,
+                detail: { inputName: activePicker.dataset.cmsMediaPickerName, items },
+            }));
+            modal.hidden = true;
         });
 
         close.addEventListener('click', () => {

@@ -29,3 +29,18 @@ As rotas usadas pelo selector mantêm as permissões do Media Manager:
 
 - `media.view` para consultar a biblioteca;
 - `media.upload` para carregar novas imagens.
+
+Para um campo que aceite várias imagens, defina `multiple`. O formulário recebe uma lista de IDs no campo indicado por `name`:
+
+```blade
+<x-cms-media-picker
+    name="media_ids"
+    label="Imagens"
+    help="Escolha uma ou várias imagens da biblioteca do CMS."
+    button-label="Escolher imagens"
+    :multiple="true"
+    clearable
+/>
+```
+
+Na modal, selecione as imagens pretendidas e confirme em **Adicionar imagens**. O selector envia os IDs como `media_ids[]`; valide sempre a lista no servidor.

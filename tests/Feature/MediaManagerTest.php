@@ -7,6 +7,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\ViewErrorBag;
 use Pcteckserv\CmsCore\Models\Media;
 use Pcteckserv\CmsCore\Models\Role;
 use Pcteckserv\CmsCore\Services\Media\MediaService;
@@ -31,6 +33,15 @@ class MediaManagerTest extends TestCase
             ->get(route('admin.media.index'))
             ->assertOk()
             ->assertSee('multiple data-cms-media-picker-file', false);
+    }
+
+    public function test_selector_de_media_pode_selecionar_varias_imagens_existentes(): void
+    {
+        view()->share('errors', new ViewErrorBag());
+        $html = Blade::render('<x-cms-media-picker name="gallery_media_ids" label="Imagens" multiple clearable />');
+
+        $this->assertStringContainsString('data-cms-media-picker-multiple="true"', $html);
+        $this->assertStringContainsString('data-cms-media-picker-values', $html);
     }
 
     public function test_preview_de_imagem_abre_modal_e_documentos_continuam_a_copiar_url(): void

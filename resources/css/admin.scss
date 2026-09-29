@@ -610,6 +610,17 @@ form.bg-white.border,
     padding: 1rem;
 }
 
+.cms-media-picker__actions {
+    border-top: 1px solid rgba(15, 23, 42, .1);
+    display: flex;
+    justify-content: flex-end;
+    padding: .75rem 1rem;
+}
+
+.cms-media-picker__actions[hidden] {
+    display: none;
+}
+
 .cms-media-picker__item {
     background: #fff;
     border: 1px solid rgba(15, 23, 42, .1);
@@ -617,6 +628,11 @@ form.bg-white.border,
     overflow: hidden;
     padding: 0;
     text-align: left;
+}
+
+.cms-media-picker__item.is-selected {
+    border-color: var(--bs-primary, #f66b3a);
+    box-shadow: 0 0 0 .15rem color-mix(in srgb, var(--bs-primary, #f66b3a) 25%, transparent);
 }
 
 .cms-media-picker__item img {

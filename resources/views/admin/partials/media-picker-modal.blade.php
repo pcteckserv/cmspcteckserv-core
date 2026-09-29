@@ -21,5 +21,8 @@
 
         <div class="cms-media-picker__status text-secondary small" data-cms-media-picker-status></div>
         <div class="cms-media-picker__grid" data-cms-media-picker-grid></div>
+        <div class="cms-media-picker__actions" data-cms-media-picker-actions hidden>
+            <button class="btn btn-primary" type="button" data-cms-media-picker-confirm disabled>Adicionar imagens</button>
+        </div>
     </div>
 </div>
