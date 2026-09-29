@@ -1,6 +1,6 @@
 # Selector de media
 
-O selector de media reutilizável permite escolher uma imagem existente da biblioteca ou carregar uma nova através do Media Manager.
+O selector de media reutilizável permite escolher uma imagem existente da biblioteca ou carregar até 20 imagens de uma vez através do Media Manager. Depois do carregamento, selecione a imagem que pretende associar ao campo.
 
 Utilização base:
 

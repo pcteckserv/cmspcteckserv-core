@@ -508,7 +508,7 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
             }
         };
 
-        const uploadFile = async () => {
+        const uploadFiles = async () => {
             if (! activePicker?.dataset.uploadUrl || ! file.files.length) {
                 return;
             }
@@ -519,8 +519,8 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
             }
 
             const formData = new FormData();
-            formData.append('files[]', file.files[0]);
-            setStatus('A carregar imagem...');
+            Array.from(file.files).forEach((selectedFile) => formData.append('files[]', selectedFile));
+            setStatus(`A carregar ${file.files.length} imagem(ns)...`);
 
             try {
                 const response = await fetch(activePicker.dataset.uploadUrl, {
@@ -535,13 +535,13 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
                 if (! response.ok) {
                     const payload = await response.json().catch(() => ({}));
                     const firstError = Object.values(payload.errors ?? {})?.[0]?.[0];
-                    throw new Error(firstError || payload.message || 'Não foi possível carregar a imagem.');
+                    throw new Error(firstError || payload.message || 'Não foi possível carregar as imagens.');
                 }
 
                 const payload = await response.json();
                 renderItems(payload.items || []);
             } catch (error) {
-                setStatus(error.message || 'Não foi possível carregar a imagem.', true);
+                setStatus(error.message || 'Não foi possível carregar as imagens.', true);
             } finally {
                 file.value = '';
             }
@@ -606,6 +606,6 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
             search.dataset.cmsMediaPickerTimeout = window.setTimeout(loadItems, 250);
         });
 
-        file.addEventListener('change', uploadFile);
+        file.addEventListener('change', uploadFiles);
     }
 }

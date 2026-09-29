@@ -25,6 +25,14 @@ class MediaManagerTest extends TestCase
             ->assertSee('Media');
     }
 
+    public function test_selector_de_media_permite_selecionar_multiplos_ficheiros_para_upload(): void
+    {
+        $this->actingAs($this->superAdmin())
+            ->get(route('admin.media.index'))
+            ->assertOk()
+            ->assertSee('multiple data-cms-media-picker-file', false);
+    }
+
     public function test_preview_de_imagem_abre_modal_e_documentos_continuam_a_copiar_url(): void
     {
         app('view')->replaceNamespace('cms-core', [realpath(__DIR__.'/../../resources/views')]);
@@ -97,6 +105,23 @@ class MediaManagerTest extends TestCase
         $this->assertSame('document', $media->media_type);
         $this->assertSame(hash_file('sha256', Storage::disk('public')->path($media->path)), $media->checksum);
         $this->assertStringContainsString($media->path, app(MediaService::class)->url($media));
+    }
+
+    public function test_upload_multiplos_ficheiros_cria_um_registo_para_cada_ficheiro(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs($this->superAdmin())
+            ->postJson(route('admin.media.store'), [
+                'files' => [
+                    UploadedFile::fake()->createWithContent('catalogo-a.pdf', '%PDF-1.4 catalogo A'),
+                    UploadedFile::fake()->createWithContent('catalogo-b.pdf', '%PDF-1.4 catalogo B'),
+                ],
+            ])
+            ->assertCreated()
+            ->assertJsonCount(2, 'items');
+
+        $this->assertDatabaseCount('cms_media', 2);
     }
 
     public function test_upload_php_e_rejeitado(): void
