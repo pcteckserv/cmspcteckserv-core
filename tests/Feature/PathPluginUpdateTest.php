@@ -296,6 +296,16 @@ class PathPluginUpdateTest extends TestCase
                     );
                 }
 
+                if ($command[1] === 'update') {
+                    $this->assertSame([
+                        'composer',
+                        'update',
+                        'tests/plugin',
+                        '--with-all-dependencies',
+                        '--no-interaction',
+                    ], $command);
+                }
+
                 $process = Mockery::mock(Process::class);
                 $process->shouldReceive('isSuccessful')->andReturn($command[1] !== 'reinstall' || $reinstallSuccessful);
                 $process->shouldReceive('getOutput')->andReturn(json_encode(['versions' => ['dev-main'], 'dist' => ['type' => 'path']]));

@@ -304,7 +304,7 @@ class UpdatesManagementTest extends TestCase
         $this->assertTrue($result->successful);
         $this->assertTrue($updater->pathRepositoryPreparedBeforeFirstCommand);
         $this->assertSame(['pcteckserv/cms-core' => 'v2.3.7'], $updater->pathRepositoryVersions);
-        $this->assertSame(['update', 'pcteckserv/cms-core', '--with-dependencies'], $updater->commands[0]);
+        $this->assertSame(['update', 'pcteckserv/cms-core', '--with-all-dependencies'], $updater->commands[0]);
     }
 
     public function test_update_e_executado_no_pedido_http_sem_enviar_para_queue(): void

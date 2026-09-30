@@ -92,7 +92,7 @@ class PackageUpdater
             $composer = $this->run($this->composerCommand->build([
                 'update',
                 $package,
-                '--with-dependencies',
+                '--with-all-dependencies',
                 '--no-interaction',
             ]));
 
@@ -121,7 +121,11 @@ class PackageUpdater
                 );
             }
         } else {
-            $composer = $this->run($this->composerCommand->build(['update', $package, '--with-dependencies']));
+            $composer = $this->run($this->composerCommand->build([
+                'update',
+                $package,
+                ...$this->dependencyUpdateOption($package),
+            ]));
 
             if (! $composer->isSuccessful()) {
                 return new UpdateResult(false, 'Composer falhou: '.$this->processOutput($composer));
@@ -141,7 +145,7 @@ class PackageUpdater
             $composer = $this->run($this->composerCommand->build([
                 'require',
                 $package.':'.$this->normalizeVersion($availableVersion),
-                '--with-dependencies',
+                ...$this->dependencyUpdateOption($package),
                 '--no-interaction',
             ]));
 
@@ -243,6 +247,14 @@ class PackageUpdater
     private function normalizeVersion(string $version): string
     {
         return ltrim($version, 'v');
+    }
+
+    /** @return array<int, string> */
+    private function dependencyUpdateOption(string $package): array
+    {
+        return $package === 'pcteckserv/cms-core'
+            ? ['--with-all-dependencies']
+            : ['--with-dependencies'];
     }
 
     protected function updateComposerPathRepositoryVersion(string $package, string $availableVersion): bool
