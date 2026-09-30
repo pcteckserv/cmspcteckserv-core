@@ -1,4 +1,5 @@
 import './bootstrap';
+import './components/icon-picker';
 
 document.querySelectorAll('[data-cms-help-widget]').forEach((widget) => {
     const toggle = widget.querySelector('[data-cms-help-toggle]');

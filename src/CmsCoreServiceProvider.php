@@ -57,6 +57,7 @@ use Pcteckserv\CmsCore\Services\UserModelResolver;
 use Pcteckserv\CmsCore\Support\SiteOptions;
 use Pcteckserv\CmsCore\View\Components\CmsFooter;
 use Pcteckserv\CmsCore\View\Components\CmsMediaPicker;
+use Pcteckserv\CmsCore\View\Components\CmsIconPicker;
 use Pcteckserv\CmsCore\View\Components\CmsSeo;
 use Pcteckserv\CmsCore\View\Components\CmsSeoEditor;
 
@@ -87,6 +88,7 @@ class CmsCoreServiceProvider extends ServiceProvider
         Blade::anonymousComponentPath(__DIR__.'/../resources/views/components', 'cms');
         Blade::component(CmsFooter::class, 'cms-footer');
         Blade::component(CmsMediaPicker::class, 'cms-media-picker');
+        Blade::component(CmsIconPicker::class, 'cms-icon-picker');
         Blade::component(CmsSeo::class, 'cms-seo');
         Blade::component(CmsSeoEditor::class, 'cms-seo-editor');
         $this->app['router']->pushMiddlewareToGroup('web', HandleCmsMaintenanceMode::class);
