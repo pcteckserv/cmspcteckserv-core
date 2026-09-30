@@ -26,6 +26,8 @@ class ActivityLogTest extends TestCase
 
     public function test_login_com_sucesso_cria_log(): void
     {
+        $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\PreventRequestForgery::class);
+
         $user = User::factory()->create(['password' => Hash::make('palavra-passe-segura')]);
 
         $this->post(route('login.store'), [
@@ -43,6 +45,8 @@ class ActivityLogTest extends TestCase
 
     public function test_login_falhado_cria_log_sem_password(): void
     {
+        $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\PreventRequestForgery::class);
+
         $user = User::factory()->create(['password' => Hash::make('palavra-passe-segura')]);
 
         $this->post(route('login.store'), [
@@ -52,8 +56,7 @@ class ActivityLogTest extends TestCase
 
         $log = ActivityLog::query()->where('action', 'auth.login_failed')->firstOrFail();
 
-        $this->assertSame($user->email, $log->properties['email']);
-        $this->assertSame('[REMOVIDO]', $log->properties['password']);
+        $this->assertSame(['email' => $user->email], $log->properties);
         $this->assertStringNotContainsString('errada', json_encode($log->properties));
     }
 

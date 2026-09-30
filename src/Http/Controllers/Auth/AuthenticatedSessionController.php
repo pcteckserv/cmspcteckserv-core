@@ -36,7 +36,7 @@ class AuthenticatedSessionController extends Controller
                 action: 'auth.login_failed',
                 category: 'authentication',
                 description: 'Tentativa de autenticação falhada.',
-                properties: ['email' => $request->input('email'), 'password' => $request->input('password')],
+                properties: ['email' => $request->input('email')],
             );
 
             return back()

@@ -191,6 +191,53 @@ class PluginsManagementTest extends TestCase
             ->assertSessionHas('cms_plugin_success', 'Plugin instalado com sucesso.');
     }
 
+    public function test_instalacao_de_plugin_permite_atualizar_dependencias_principais_do_projeto(): void
+    {
+        $composerCommand = new class extends \Pcteckserv\CmsCore\Support\ComposerCommand
+        {
+            public function build(array $arguments): array
+            {
+                return ['composer', ...$arguments];
+            }
+
+            public function php(array $arguments): array
+            {
+                return [PHP_BINARY, ...$arguments];
+            }
+        };
+
+        $installer = new class($composerCommand) extends PluginInstaller
+        {
+            /** @var array<int, array<int, string>> */
+            public array $commands = [];
+
+            protected function run(array $command): Process
+            {
+                $this->commands[] = $command;
+                $process = new Process([PHP_BINARY, '-r', 'exit(0);']);
+                $process->run();
+
+                return $process;
+            }
+        };
+
+        $result = $installer->install([
+            'package' => 'pcteckserv/test-plugin',
+            'version_constraint' => '^1.0',
+            'slug' => 'test-plugin',
+            'label' => 'Plugin de teste',
+            'version' => '1.0.0',
+        ]);
+
+        $this->assertTrue($result->successful);
+        $this->assertSame([
+            'composer',
+            'require',
+            'pcteckserv/test-plugin:^1.0',
+            '--with-all-dependencies',
+        ], $installer->commands[0]);
+    }
+
     public function test_instalacao_de_plugins_exige_permissao(): void
     {
         $plainUser = User::factory()->create();
