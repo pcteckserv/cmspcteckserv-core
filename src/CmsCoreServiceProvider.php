@@ -35,6 +35,7 @@ use Pcteckserv\CmsCore\Consent\Contracts\ConsentManagerContract;
 use Pcteckserv\CmsCore\Contracts\CmsAccessUser;
 use Pcteckserv\CmsCore\Contracts\MediaUrlGenerator;
 use Pcteckserv\CmsCore\Http\Middleware\HandleCmsMaintenanceMode;
+use Pcteckserv\CmsCore\Http\Middleware\InjectAdminShortcut;
 use Pcteckserv\CmsCore\Http\Middleware\InjectConsentManager;
 use Pcteckserv\CmsCore\Seo\Http\Middleware\HandleSeoRedirects;
 use Pcteckserv\CmsCore\Seo\Http\Middleware\TrackSeoNotFound;
@@ -93,6 +94,7 @@ class CmsCoreServiceProvider extends ServiceProvider
         Blade::component(CmsSeoEditor::class, 'cms-seo-editor');
         $this->app['router']->pushMiddlewareToGroup('web', HandleCmsMaintenanceMode::class);
         $this->app['router']->pushMiddlewareToGroup('web', InjectConsentManager::class);
+        $this->app['router']->pushMiddlewareToGroup('web', InjectAdminShortcut::class);
         $this->app['router']->pushMiddlewareToGroup('web', HandleSeoRedirects::class);
         $this->app['router']->pushMiddlewareToGroup('web', TrackSeoNotFound::class);
 
