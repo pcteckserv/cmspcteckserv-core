@@ -35,11 +35,22 @@ class PermissionSynchronizer
     {
         $this->sync();
 
-        return Permission::query()
+        $permissions = Permission::query()
             ->whereIn('key', array_keys($this->registry->all()))
             ->orderBy('group')
             ->orderBy('label')
             ->get();
+
+        $pluginGroups = collect($this->registry->all())
+            ->filter(fn ($definition): bool => $definition->plugin !== null)
+            ->pluck('group')
+            ->unique()
+            ->flip();
+        $groups = $permissions->groupBy('group');
+        $coreGroups = $groups->reject(fn ($groupPermissions, string $group): bool => $pluginGroups->has($group))->sortKeys();
+        $registeredPluginGroups = $groups->filter(fn ($groupPermissions, string $group): bool => $pluginGroups->has($group))->sortKeys();
+
+        return $coreGroups->concat($registeredPluginGroups)->flatten(1)->values();
     }
 
     /**

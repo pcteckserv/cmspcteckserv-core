@@ -11,12 +11,13 @@ class PermissionRegistry
 
     /**
      * @param  array<string, array{label:string, group:string, description?:string|null}|string>  $permissions
+     * @param  string|null  $plugin  Slug do plugin proprietário das permissões.
      */
-    public function register(array $permissions, string $defaultGroup = 'Core'): void
+    public function register(array $permissions, string $defaultGroup = 'Core', ?string $plugin = null): void
     {
         foreach ($permissions as $key => $definition) {
             if (is_string($definition)) {
-                $this->registerOne(new PermissionDefinition($key, $definition, $defaultGroup));
+                $this->registerOne(new PermissionDefinition($key, $definition, $defaultGroup, plugin: $plugin));
 
                 continue;
             }
@@ -26,6 +27,7 @@ class PermissionRegistry
                 label: $definition['label'],
                 group: $definition['group'] ?? $defaultGroup,
                 description: $definition['description'] ?? null,
+                plugin: $plugin,
             ));
         }
     }

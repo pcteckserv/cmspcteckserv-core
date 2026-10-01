@@ -9,6 +9,6 @@ final readonly class PermissionDefinition
         public string $label,
         public string $group,
         public ?string $description = null,
-    ) {
-    }
+        public ?string $plugin = null,
+    ) {}
 }

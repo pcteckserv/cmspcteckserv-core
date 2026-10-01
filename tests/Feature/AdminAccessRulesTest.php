@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Pcteckserv\CmsCore\Models\Permission;
 use Pcteckserv\CmsCore\Models\Role;
 use Pcteckserv\CmsCore\Services\PermissionSynchronizer;
+use Pcteckserv\CmsCore\Support\Permissions\PermissionRegistry;
 use Tests\TestCase;
 
 class AdminAccessRulesTest extends TestCase
@@ -65,6 +66,29 @@ class AdminAccessRulesTest extends TestCase
             ->assertRedirect(route('admin.roles.edit', $role));
 
         $this->assertSame([$legacyPermission->id], $role->fresh()->permissions()->pluck('cms_permissions.id')->all());
+    }
+
+    public function test_grupos_de_permissoes_de_plugins_ficam_depois_dos_grupos_do_core(): void
+    {
+        app(PermissionRegistry::class)->register([
+            'orderingplugin.test.view' => ['label' => 'Ver teste', 'group' => 'A plugin'],
+        ], plugin: 'ordering-plugin');
+
+        $groups = app(PermissionSynchronizer::class)
+            ->registeredPermissions()
+            ->groupBy('group')
+            ->keys();
+        $pluginGroups = collect(app(PermissionRegistry::class)->all())
+            ->filter(fn ($permission): bool => $permission->plugin !== null)
+            ->pluck('group')
+            ->unique()
+            ->sort()
+            ->values();
+
+        $this->assertSame(
+            $pluginGroups->all(),
+            array_slice($groups->all(), -$pluginGroups->count()),
+        );
     }
 
     public function test_login_com_sessao_iniciada_redireciona_para_o_painel(): void
