@@ -7,15 +7,12 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 use Pcteckserv\CmsCore\Http\Requests\Admin\StoreRoleRequest;
 use Pcteckserv\CmsCore\Http\Requests\Admin\UpdateRoleRequest;
-use Pcteckserv\CmsCore\Models\Permission;
 use Pcteckserv\CmsCore\Models\Role;
 use Pcteckserv\CmsCore\Services\PermissionSynchronizer;
 
 class RolesController
 {
-    public function __construct(private readonly PermissionSynchronizer $permissions)
-    {
-    }
+    public function __construct(private readonly PermissionSynchronizer $permissions) {}
 
     public function index(): View
     {
@@ -60,7 +57,11 @@ class RolesController
         }
 
         $role->update($request->safe()->only(['name', 'key']));
-        $role->permissions()->sync($request->validated('permissions', []));
+        $permissionIds = $this->permissions->preservingUnregistered(
+            $request->validated('permissions', []),
+            $role->permissions()->pluck('cms_permissions.id')->all(),
+        );
+        $role->permissions()->sync($permissionIds);
 
         return redirect()->route('admin.roles.edit', $role)->with('status', 'Role atualizada com sucesso.');
     }
@@ -81,10 +82,8 @@ class RolesController
 
     private function formData(): array
     {
-        $this->permissions->sync();
-
         return [
-            'permissionsByGroup' => Permission::query()->orderBy('group')->orderBy('label')->get()->groupBy('group'),
+            'permissionsByGroup' => $this->permissions->registeredPermissions()->groupBy('group'),
         ];
     }
 

@@ -33,6 +33,40 @@ class AdminAccessRulesTest extends TestCase
             ->assertSee('data-cms-permission-group-select', false);
     }
 
+    public function test_formulario_de_roles_omite_permissoes_antigas_que_ja_nao_estao_registadas(): void
+    {
+        $legacyPermission = Permission::query()->create([
+            'key' => 'old-plugin.forms.view',
+            'label' => 'Ver formulários antigos',
+            'group' => 'Plugin antigo',
+        ]);
+
+        $admin = $this->superAdmin();
+
+        $this->actingAs($admin)
+            ->get(route('admin.roles.create'))
+            ->assertOk()
+            ->assertDontSee('Plugin antigo')
+            ->assertDontSee('Ver formulários antigos');
+
+        $this->assertDatabaseHas('cms_permissions', [
+            'key' => 'old-plugin.forms.view',
+        ]);
+
+        $role = Role::query()->create(['name' => 'Role antiga', 'key' => 'legacy.forms_role']);
+        $role->permissions()->sync([$legacyPermission->id]);
+
+        $this->actingAs($admin)
+            ->put(route('admin.roles.update', $role), [
+                'name' => 'Role antiga atualizada',
+                'key' => 'legacy.forms_role',
+                'permissions' => [],
+            ])
+            ->assertRedirect(route('admin.roles.edit', $role));
+
+        $this->assertSame([$legacyPermission->id], $role->fresh()->permissions()->pluck('cms_permissions.id')->all());
+    }
+
     public function test_login_com_sessao_iniciada_redireciona_para_o_painel(): void
     {
         $admin = $this->superAdmin();

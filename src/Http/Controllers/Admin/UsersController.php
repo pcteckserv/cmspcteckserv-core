@@ -9,10 +9,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
+use Pcteckserv\CmsCore\ActivityLog\Contracts\ActivityLoggerContract;
 use Pcteckserv\CmsCore\Http\Requests\Admin\StoreUserRequest;
 use Pcteckserv\CmsCore\Http\Requests\Admin\UpdateUserRequest;
-use Pcteckserv\CmsCore\ActivityLog\Contracts\ActivityLoggerContract;
-use Pcteckserv\CmsCore\Models\Permission;
 use Pcteckserv\CmsCore\Models\Role;
 use Pcteckserv\CmsCore\Services\DefaultRoleSynchronizer;
 use Pcteckserv\CmsCore\Services\PermissionSynchronizer;
@@ -25,9 +24,7 @@ class UsersController extends Controller
         private readonly ActivityLoggerContract $activityLogger,
         private readonly PermissionSynchronizer $permissions,
         private readonly DefaultRoleSynchronizer $roles,
-    )
-    {
-    }
+    ) {}
 
     public function index(Request $request): View
     {
@@ -126,7 +123,7 @@ class UsersController extends Controller
             'permissions' => $user->cmsPermissions()->pluck('cms_permissions.id')->all(),
         ];
 
-        DB::transaction(function () use ($data, $request, $user): void {
+        DB::transaction(function () use ($data, $request, $user, $oldValues): void {
             $payload = [
                 'name' => $data['name'],
                 'email' => $data['email'],
@@ -139,7 +136,11 @@ class UsersController extends Controller
             $user->update($payload);
             $user->cmsState()->updateOrCreate([], ['state' => $data['state']]);
             $user->cmsRoles()->sync($request->roleIds());
-            $user->cmsPermissions()->sync($request->permissionIds());
+            $permissionIds = $this->permissions->preservingUnregistered(
+                $request->permissionIds(),
+                $oldValues['permissions'],
+            );
+            $user->cmsPermissions()->sync($permissionIds);
         });
 
         $user->refresh()->load(['cmsRoles', 'cmsPermissions', 'cmsState']);
@@ -194,7 +195,7 @@ class UsersController extends Controller
 
         return [
             'roles' => $this->visibleRolesQuery()->with('permissions:id')->orderBy('name')->get(),
-            'permissionsByGroup' => Permission::query()->orderBy('group')->orderBy('label')->get()->groupBy('group'),
+            'permissionsByGroup' => $this->permissions->registeredPermissions()->groupBy('group'),
             'states' => config('cms-core.user_states', ['active', 'inactive']),
         ];
     }
