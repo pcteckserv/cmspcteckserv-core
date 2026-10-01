@@ -418,13 +418,17 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
     const file = modal?.querySelector('[data-cms-media-picker-file]');
     const grid = modal?.querySelector('[data-cms-media-picker-grid]');
     const status = modal?.querySelector('[data-cms-media-picker-status]');
+    const dialog = modal?.querySelector('.cms-media-picker__dialog');
+    const dropOverlay = modal?.querySelector('[data-cms-media-picker-drop-overlay]');
     const multipleActions = modal?.querySelector('[data-cms-media-picker-actions]');
     const confirmMultiple = modal?.querySelector('[data-cms-media-picker-confirm]');
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     let activePicker = null;
     let selectedItems = new Map();
 
-    if (modal && pickers.length && close && search && file && grid && status && multipleActions && confirmMultiple) {
+    if (modal && pickers.length && close && search && file && grid && status && dialog && dropOverlay && multipleActions && confirmMultiple) {
+        let dragDepth = 0;
+
         const setStatus = (message, isError = false) => {
             status.textContent = message;
             status.classList.toggle('text-danger', isError);
@@ -540,12 +544,12 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
             }
         };
 
-        const uploadFiles = async () => {
-            if (! activePicker?.dataset.uploadUrl || ! file.files.length) {
+        const uploadFiles = async (files) => {
+            const selectedFiles = Array.from(files || []);
+
+            if (! activePicker?.dataset.uploadUrl || selectedFiles.length === 0) {
                 return;
             }
-
-            const selectedFiles = Array.from(file.files);
 
             if (selectedFiles.length > 20) {
                 setStatus('Selecione até 20 imagens de cada vez.', true);
@@ -721,6 +725,52 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
             search.dataset.cmsMediaPickerTimeout = window.setTimeout(loadItems, 250);
         });
 
-        file.addEventListener('change', uploadFiles);
+        file.addEventListener('change', () => uploadFiles(file.files));
+
+        const containsFiles = (event) => Array.from(event.dataTransfer?.types || []).includes('Files');
+
+        modal.addEventListener('dragenter', (event) => {
+            if (! containsFiles(event)) {
+                return;
+            }
+
+            event.preventDefault();
+            dragDepth += 1;
+            dropOverlay.hidden = false;
+        });
+
+        modal.addEventListener('dragover', (event) => {
+            if (! containsFiles(event)) {
+                return;
+            }
+
+            event.preventDefault();
+            if (event.dataTransfer) {
+                event.dataTransfer.dropEffect = 'copy';
+            }
+            dropOverlay.hidden = false;
+        });
+
+        modal.addEventListener('dragleave', (event) => {
+            if (! containsFiles(event)) {
+                return;
+            }
+
+            dragDepth = Math.max(0, dragDepth - 1);
+            if (dragDepth === 0) {
+                dropOverlay.hidden = true;
+            }
+        });
+
+        modal.addEventListener('drop', (event) => {
+            if (! containsFiles(event)) {
+                return;
+            }
+
+            event.preventDefault();
+            dragDepth = 0;
+            dropOverlay.hidden = true;
+            uploadFiles(event.dataTransfer?.files);
+        });
     }
 }

@@ -1,9 +1,12 @@
 <div class="cms-media-picker" hidden data-cms-media-picker-modal>
     <div class="cms-media-picker__dialog" role="dialog" aria-modal="true" aria-labelledby="cms-media-picker-title">
+        <div class="cms-media-picker__drop-overlay" data-cms-media-picker-drop-overlay hidden role="status" aria-live="polite">
+            Largue aqui até 20 imagens para carregar.
+        </div>
         <div class="cms-media-picker__header">
             <div>
                 <h2 class="h5 mb-1" id="cms-media-picker-title">Biblioteca de media</h2>
-                <p class="text-secondary small mb-0">Selecione uma imagem existente ou carregue até 20 imagens de uma vez.</p>
+                <p class="text-secondary small mb-0">Selecione uma imagem existente, carregue ficheiros ou arraste até 20 imagens para aqui.</p>
             </div>
             <button class="btn btn-sm btn-outline-secondary" type="button" data-cms-media-picker-close>Fechar</button>
         </div>

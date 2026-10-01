@@ -565,7 +565,29 @@ form.bg-white.border,
     max-height: min(46rem, calc(100vh - 2rem));
     max-width: 58rem;
     overflow: hidden;
+    position: relative;
     width: 100%;
+}
+
+.cms-media-picker__drop-overlay {
+    align-items: center;
+    background: rgba(255, 255, 255, .94);
+    border: 2px dashed var(--bs-primary, #f66b3a);
+    border-radius: .5rem;
+    color: var(--bs-primary, #f66b3a);
+    display: flex;
+    font-size: 1.125rem;
+    font-weight: 600;
+    inset: .75rem;
+    justify-content: center;
+    pointer-events: none;
+    position: absolute;
+    text-align: center;
+    z-index: 2;
+}
+
+.cms-media-picker__drop-overlay[hidden] {
+    display: none;
 }
 
 .cms-media-picker__header,
