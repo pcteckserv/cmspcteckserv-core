@@ -54,7 +54,8 @@ class MaintenanceModeManager
             'show_countdown' => $this->truthy($options['maintenance_show_countdown'] ?? true),
             'show_footer' => $this->truthy($options['maintenance_show_footer'] ?? true),
             'hero_media_id' => ($options['maintenance_hero_media_id'] ?? null) ?: null,
-            'hero_url' => $this->mediaUrl($options['maintenance_hero_media_id'] ?? null),
+            'hero_url' => $this->mediaUrl($options['maintenance_hero_media_id'] ?? null)
+                ?? asset(config('cms-core.assets.placeholder_image', 'vendor/cms-core/images/placeholder.webp')),
             'background_color' => $this->color($options['maintenance_background_color'] ?? null, '#111827'),
             'text_color' => $this->color($options['maintenance_text_color'] ?? null, '#F8FAFC'),
             'accent_color' => $this->color($options['maintenance_accent_color'] ?? null, '#D6A85F'),

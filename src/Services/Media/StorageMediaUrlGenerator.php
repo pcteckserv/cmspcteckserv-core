@@ -17,10 +17,18 @@ class StorageMediaUrlGenerator implements MediaUrlGenerator
             default => $media->variants[$variant] ?? $media->path,
         };
 
-        if (! $path || ! $disk->exists($path)) {
-            $path = $media->path;
+        if ($path && $disk->exists($path)) {
+            return $disk->url($path);
         }
 
-        return $disk->url($path);
+        if ($media->path && $disk->exists($media->path)) {
+            return $disk->url($media->path);
+        }
+
+        if ($media->media_type === 'image') {
+            return asset(config('cms-core.assets.placeholder_image', 'vendor/cms-core/images/placeholder.webp'));
+        }
+
+        return $disk->url($media->path);
     }
 }

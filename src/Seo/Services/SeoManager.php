@@ -46,11 +46,11 @@ class SeoManager
             robotsFollow: $this->truthy($data['robots_follow']),
             ogTitle: $data['og_title'] ?: $title,
             ogDescription: $data['og_description'] ?: $description,
-            ogImage: $data['og_image'] ?: $this->siteOptions->get('seo_default_og_image'),
+            ogImage: $data['og_image'] ?: ($this->siteOptions->get('seo_default_og_image') ?: $this->placeholderImageUrl()),
             ogType: $data['og_type'] ?: 'website',
             twitterTitle: $data['twitter_title'] ?: ($data['og_title'] ?: $title),
             twitterDescription: $data['twitter_description'] ?: ($data['og_description'] ?: $description),
-            twitterImage: $data['twitter_image'] ?: ($data['og_image'] ?: $this->siteOptions->get('seo_default_og_image')),
+            twitterImage: $data['twitter_image'] ?: ($data['og_image'] ?: ($this->siteOptions->get('seo_default_og_image') ?: $this->placeholderImageUrl())),
             twitterCard: $data['twitter_card'] ?: $this->siteOptions->get('seo_twitter_card', 'summary_large_image'),
             schema: $schema,
             excludeFromSitemap: $this->truthy($data['exclude_from_sitemap'] ?? false),
@@ -135,6 +135,11 @@ class SeoManager
     private function currentUrl(): ?string
     {
         return app()->bound('request') ? Request::fullUrl() : $this->siteOptions->get('seo_base_url');
+    }
+
+    private function placeholderImageUrl(): string
+    {
+        return asset(config('cms-core.assets.placeholder_image', 'vendor/cms-core/images/placeholder.webp'));
     }
 
     private function truthy(mixed $value): bool

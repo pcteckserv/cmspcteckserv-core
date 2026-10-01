@@ -44,3 +44,13 @@ Para um campo que aceite várias imagens, defina `multiple`. O formulário receb
 ```
 
 Na modal, selecione as imagens pretendidas e confirme em **Adicionar imagens**. O selector envia os IDs como `media_ids[]`; valide sempre a lista no servidor.
+
+## Imagem de fallback partilhada
+
+O Core disponibiliza uma imagem comum em `vendor/cms-core/images/placeholder.webp`. A configuração `cms-core.assets.placeholder_image` contém o respetivo caminho público; funcionalidades e plugins podem gerar a URL com:
+
+```blade
+{{ asset(config('cms-core.assets.placeholder_image', 'vendor/cms-core/images/placeholder.webp')) }}
+```
+
+O Core também devolve esta imagem quando um ficheiro de imagem da biblioteca não está disponível. Documentos e outros ficheiros mantêm o seu tratamento próprio.

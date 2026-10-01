@@ -7,6 +7,10 @@ return [
     'users_per_page' => env('CMS_CORE_USERS_PER_PAGE', 15),
     'admin_timezone' => env('CMS_CORE_ADMIN_TIMEZONE', 'Europe/Lisbon'),
 
+    'assets' => [
+        'placeholder_image' => 'vendor/cms-core/images/placeholder.webp',
+    ],
+
     'auth' => [
         'logout_redirect' => env('CMS_CORE_LOGOUT_REDIRECT', '/'),
     ],

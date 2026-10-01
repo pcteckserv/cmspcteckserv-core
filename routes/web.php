@@ -47,14 +47,21 @@ Route::middleware('web')->group(function (): void {
         abort_unless(in_array($file, [
             'favicon.png',
             'logotipos-pcteckserv-texto.svg',
+            'placeholder.webp',
         ], true), 404);
 
         $path = __DIR__.'/../resources/images/'.$file;
 
         abort_unless(is_file($path), 404);
 
+        $contentType = match ($file) {
+            'favicon.png' => 'image/png',
+            'logotipos-pcteckserv-texto.svg' => 'image/svg+xml',
+            'placeholder.webp' => 'image/webp',
+        };
+
         return response()
-            ->file($path)
+            ->file($path, ['Content-Type' => $contentType])
             ->setMaxAge(604800)
             ->setPublic();
     })->where('file', '[A-Za-z0-9._-]+')->name('cms-core.images.show');
