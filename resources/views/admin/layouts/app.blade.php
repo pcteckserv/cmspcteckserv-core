@@ -46,8 +46,8 @@
                 @foreach (app(\Pcteckserv\CmsCore\Support\Navigation\AdminMenuRegistry::class)->visible() as $menuItem)
                     <a @class(['nav-link', 'active' => request()->routeIs($menuItem['active'])]) href="{{ route($menuItem['route']) }}">{{ $menuItem['label'] }}</a>
                 @endforeach
-                @canany(['core.site-options.view', 'footer.view-settings', 'seo.view', 'maintenance.view', 'core.smtp.view'])
-                    @php($configMenuOpen = request()->routeIs('admin.site-options.*') || request()->routeIs('admin.footer.*') || request()->routeIs('admin.seo.*') || request()->routeIs('admin.maintenance.*') || request()->routeIs('admin.smtp-settings.*'))
+                @canany(['core.site-options.view', 'footer.view-settings', 'seo.view', 'maintenance.view', 'core.smtp.view', 'consent.view'])
+                    @php($configMenuOpen = request()->routeIs('admin.site-options.*') || request()->routeIs('admin.footer.*') || request()->routeIs('admin.seo.*') || request()->routeIs('admin.maintenance.*') || request()->routeIs('admin.smtp-settings.*') || request()->routeIs('admin.consent.*'))
                     <button
                         @class(['nav-link cms-sidebar-menu-toggle text-start', 'active' => $configMenuOpen])
                         type="button"
@@ -68,6 +68,9 @@
                         @can('seo.view')
                             <a @class(['nav-link', 'active' => request()->routeIs('admin.seo.*')]) href="{{ route('admin.seo.dashboard') }}">SEO</a>
                         @endcan
+                        @can('consent.view')
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.consent.*')]) href="{{ route('admin.consent.dashboard') }}">Consentimentos</a>
+                        @endcan
                         @can('maintenance.view')
                             @php($cmsMaintenanceActive = app(\Pcteckserv\CmsCore\Services\Maintenance\MaintenanceModeManager::class)->isActive())
                             <a @class(['nav-link d-flex align-items-center justify-content-between gap-2', 'active' => request()->routeIs('admin.maintenance.*')]) href="{{ route('admin.maintenance.edit') }}">
@@ -82,8 +85,8 @@
                         @endcan
                     </div>
                 @endcanany
-                @canany(['core.activity-logs.view', 'consent.view', 'backups.view', 'queues.view', 'core.laravel-commands.view', 'updates.view', 'plugins.view'])
-                    @php($systemMenuOpen = request()->routeIs('admin.activity-logs.*') || request()->routeIs('admin.consent.*') || request()->routeIs('admin.backups.*') || request()->routeIs('admin.queues.*') || request()->routeIs('admin.laravel-commands.*') || request()->routeIs('admin.updates.*') || request()->routeIs('admin.plugins.*'))
+                @canany(['core.activity-logs.view', 'backups.view', 'queues.view', 'core.laravel-commands.view', 'updates.view', 'plugins.view'])
+                    @php($systemMenuOpen = request()->routeIs('admin.activity-logs.*') || request()->routeIs('admin.backups.*') || request()->routeIs('admin.queues.*') || request()->routeIs('admin.laravel-commands.*') || request()->routeIs('admin.updates.*') || request()->routeIs('admin.plugins.*'))
                     <button
                         @class(['nav-link cms-sidebar-menu-toggle text-start', 'active' => $systemMenuOpen])
                         type="button"
@@ -97,9 +100,6 @@
                     <div @class(['collapse cms-sidebar-submenu', 'show' => $systemMenuOpen]) id="cms-system-submenu">
                         @can('core.activity-logs.view')
                             <a @class(['nav-link', 'active' => request()->routeIs('admin.activity-logs.*')]) href="{{ route('admin.activity-logs.index') }}">Logs de Atividade</a>
-                        @endcan
-                        @can('consent.view')
-                            <a @class(['nav-link', 'active' => request()->routeIs('admin.consent.*')]) href="{{ route('admin.consent.dashboard') }}">Consentimentos</a>
                         @endcan
                         @can('backups.view')
                             <a @class(['nav-link', 'active' => request()->routeIs('admin.backups.*')]) href="{{ route('admin.backups.index') }}">Backups</a>
