@@ -92,7 +92,7 @@ class PackageUpdater
             $composer = $this->run($this->composerCommand->build([
                 'update',
                 $package,
-                '--with-all-dependencies',
+                ...$this->dependencyUpdateOption($package),
                 '--no-interaction',
             ]));
 

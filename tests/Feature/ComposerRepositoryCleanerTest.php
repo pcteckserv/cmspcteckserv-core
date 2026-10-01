@@ -45,7 +45,7 @@ class ComposerRepositoryCleanerTest extends TestCase
         }
     }
 
-    public function test_recupera_temporariamente_packages_path_instaladas_no_vendor(): void
+    public function test_recupera_temporariamente_packages_path_preservando_a_versao_do_lock(): void
     {
         $originalBasePath = $this->app->basePath();
         $directory = sys_get_temp_dir().'/cms-composer-recovery-'.bin2hex(random_bytes(8));
@@ -57,6 +57,7 @@ class ComposerRepositoryCleanerTest extends TestCase
         File::put($directory.'/composer.lock', json_encode([
             'packages' => [[
                 'name' => 'pcteckserv/cms-contact-forms',
+                'version' => '1.3.0',
                 'dist' => ['type' => 'path', 'url' => 'C:\\development\\plugin'],
             ]],
         ], JSON_THROW_ON_ERROR));
@@ -68,10 +69,49 @@ class ComposerRepositoryCleanerTest extends TestCase
 
             $manifest = json_decode(File::get($directory.'/composer.json'), true, 512, JSON_THROW_ON_ERROR);
             $this->assertSame('packages/pcteckserv/cms-contact-forms', $manifest['repositories'][0]['url']);
+            $this->assertSame([
+                'symlink' => false,
+                'versions' => ['pcteckserv/cms-contact-forms' => '1.3.0'],
+            ], $manifest['repositories'][0]['options']);
+
+            $cleaner->removeInvalidPathRepositories(true);
+            $this->assertSame($manifest, json_decode(File::get($directory.'/composer.json'), true, 512, JSON_THROW_ON_ERROR));
 
             $cleaner->removeInvalidPathRepositories();
             $manifest = json_decode(File::get($directory.'/composer.json'), true, 512, JSON_THROW_ON_ERROR);
             $this->assertSame([], $manifest['repositories']);
+        } finally {
+            $this->app->setBasePath($originalBasePath);
+            File::deleteDirectory($directory);
+        }
+    }
+
+    public function test_preserva_origem_atualizada_e_nao_recupera_packages_ausentes(): void
+    {
+        $originalBasePath = $this->app->basePath();
+        $directory = sys_get_temp_dir().'/cms-composer-recovery-'.bin2hex(random_bytes(8));
+        File::makeDirectory($directory.'/packages/tests/plugin', 0755, true);
+        $repository = [
+            'type' => 'path',
+            'url' => 'packages/tests/plugin',
+            'options' => ['versions' => ['tests/plugin' => '1.1.0']],
+        ];
+        File::put($directory.'/composer.json', json_encode([
+            'repositories' => ['cms-plugin-test' => $repository],
+        ], JSON_THROW_ON_ERROR));
+        File::put($directory.'/composer.lock', json_encode([
+            'packages' => [
+                ['name' => 'tests/plugin', 'version' => '1.0.0', 'dist' => ['type' => 'path']],
+                ['name' => 'tests/missing', 'version' => '1.0.0', 'dist' => ['type' => 'path']],
+            ],
+        ], JSON_THROW_ON_ERROR));
+
+        try {
+            $this->app->setBasePath($directory);
+            (new ComposerRepositoryCleaner())->removeInvalidPathRepositories(true);
+
+            $manifest = json_decode(File::get($directory.'/composer.json'), true, 512, JSON_THROW_ON_ERROR);
+            $this->assertSame(['cms-plugin-test' => $repository], $manifest['repositories']);
         } finally {
             $this->app->setBasePath($originalBasePath);
             File::deleteDirectory($directory);

@@ -21,8 +21,7 @@ class ComposerCommand
      */
     public function build(array $arguments): array
     {
-        $recoverInstalledPackages = ($arguments[0] ?? null) === 'update'
-            && ($arguments[1] ?? null) === 'pcteckserv/cms-core';
+        $recoverInstalledPackages = ($arguments[0] ?? null) === 'update';
         ($this->repositoryCleaner ?? new ComposerRepositoryCleaner())
             ->removeInvalidPathRepositories($recoverInstalledPackages);
 

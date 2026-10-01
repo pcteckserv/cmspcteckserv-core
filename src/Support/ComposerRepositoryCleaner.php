@@ -84,11 +84,19 @@ class ComposerRepositoryCleaner
                 continue;
             }
 
+            $options = ['symlink' => false];
+            $version = $package['version'] ?? null;
+
+            // A cópia de deploy pode não declarar a versão que ficou registada no lock.
+            if (is_string($version) && $version !== '') {
+                $options['versions'] = [$name => $version];
+            }
+
             $repositories['cms-recovered-'.sha1($name)] = [
                 'name' => 'cms-recovered-'.sha1($name),
                 'type' => 'path',
                 'url' => $relativePath,
-                'options' => ['symlink' => false],
+                'options' => $options,
             ];
         }
 

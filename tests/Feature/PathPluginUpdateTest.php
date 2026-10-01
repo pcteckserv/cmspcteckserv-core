@@ -301,7 +301,7 @@ class PathPluginUpdateTest extends TestCase
                         'composer',
                         'update',
                         'tests/plugin',
-                        '--with-all-dependencies',
+                        '--with-dependencies',
                         '--no-interaction',
                     ], $command);
                 }

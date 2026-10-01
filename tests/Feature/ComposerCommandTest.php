@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Pcteckserv\CmsCore\Support\ComposerCommand;
+use Pcteckserv\CmsCore\Support\ComposerRepositoryCleaner;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -41,6 +42,34 @@ class ComposerCommandTest extends TestCase
         $this->expectExceptionMessage('não existe ou não pode ser lido');
 
         (new ComposerCommand())->build(['show']);
+    }
+
+    public function test_recupera_repositorios_nas_atualizacoes_do_core_e_dos_plugins(): void
+    {
+        $composerPhar = sys_get_temp_dir().'/cms-composer-'.bin2hex(random_bytes(8)).'.phar';
+        file_put_contents($composerPhar, 'test');
+
+        try {
+            config(['cms-core.updates.composer_binary' => $composerPhar]);
+
+            foreach ([
+                ['update', 'pcteckserv/cms-core'],
+                ['update', 'pcteckserv/cms-portfolio'],
+                ['show', 'pcteckserv/cms-portfolio'],
+                ['config'],
+            ] as $arguments) {
+                $cleaner = \Mockery::mock(ComposerRepositoryCleaner::class);
+                $cleaner->shouldReceive('removeInvalidPathRepositories')->once()
+                    ->with($arguments[0] === 'update');
+
+                $this->assertSame(
+                    [PHP_BINARY, $composerPhar, ...$arguments],
+                    (new ComposerCommand($cleaner))->build($arguments),
+                );
+            }
+        } finally {
+            @unlink($composerPhar);
+        }
     }
 
     public function test_usa_php_cli_para_composer_e_comandos_artisan(): void
