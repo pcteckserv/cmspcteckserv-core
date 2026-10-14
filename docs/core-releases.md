@@ -1,5 +1,13 @@
 # Publicação de versões do Core
 
+## v2.6.10
+
+Atualização mínima de documentação para verificar a deteção e instalação de
+novas versões através do painel de atualizações. Sem alterações funcionais ou
+migrations.
+
+## Processo de publicação
+
 A versão Composer do Core é obtida pela tag Git (`vMAJOR.MINOR.PATCH`).
 Não adicionar o campo `version` ao `composer.json`: uma versão diferente da
 tag faz com que o Composer ignore essa release, embora o painel de atualizações
