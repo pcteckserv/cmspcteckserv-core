@@ -164,7 +164,7 @@ class CmsCoreServiceProvider extends ServiceProvider
             'core.users.view' => ['label' => 'Ver utilizadores', 'group' => 'Utilizadores'],
             'core.users.create' => ['label' => 'Criar utilizadores', 'group' => 'Utilizadores'],
             'core.users.update' => ['label' => 'Editar utilizadores', 'group' => 'Utilizadores'],
-            'core.users.delete' => ['label' => 'Eliminar utilizadores', 'group' => 'Utilizadores'],
+            'core.users.delete' => ['label' => 'Desativar utilizadores', 'group' => 'Utilizadores'],
             'core.users.manage_roles' => ['label' => 'Gerir roles de utilizadores', 'group' => 'Utilizadores'],
             'core.roles.view' => ['label' => 'Ver roles', 'group' => 'Roles'],
             'core.roles.create' => ['label' => 'Criar roles', 'group' => 'Roles'],
@@ -244,6 +244,10 @@ class CmsCoreServiceProvider extends ServiceProvider
         Gate::before(function ($user, string $ability): ?bool {
             if ($user instanceof CmsAccessUser && $user->isCmsSuperAdmin()) {
                 return true;
+            }
+
+            if ($ability === 'core.users.force-delete') {
+                return false;
             }
 
             if ($user instanceof CmsAccessUser && $this->app->make(PermissionRegistry::class)->has($ability)) {

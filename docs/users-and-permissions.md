@@ -91,6 +91,14 @@ Blade:
 
 A role protegida `core.super_admin` é tratada centralmente por `Gate::before()`. Um Super Admin tem acesso total à área administrativa sem associação manual de todas as permissões.
 
+### Eliminação de utilizadores
+
+A eliminação definitiva é exclusiva do Super Admin, através de `DELETE /admin/users/{user}/permanent` (`admin.users.force-delete`). A capacidade reservada `core.users.force-delete` é recusada para todas as outras roles, mesmo que exista uma permissão direta ou herdada com essa chave. Não é apresentada como permissão atribuível.
+
+O botão «Eliminar» aparece na listagem e na edição. A operação exige autenticação, autorização e confirmação, remove o utilizador (incluindo models com Soft Deletes), as associações a roles e permissões e o estado CMS numa transação, e regista `user.permanently_deleted` na auditoria. Super Admins continuam protegidos contra eliminação. Relações de módulos ou sites devem definir o tratamento adequado da eliminação através de foreign keys ou eventos Eloquent; restrições que impeçam a operação provocam rollback.
+
+A rota existente `DELETE /admin/users/{user}` mantém a desativação, controlada por `core.users.delete`, preservando compatibilidade. Também continua disponível a alteração de estado no formulário de edição.
+
 ## Dados adicionais de utilizador
 
 Plugins não devem alterar a migration original de utilizadores do Core. Preferir tabelas próprias com relação ao model autenticável configurado, metadata estruturada quando fizer sentido, eventos e futuras extensões de UI.

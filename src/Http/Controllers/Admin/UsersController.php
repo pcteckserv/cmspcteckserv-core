@@ -2,18 +2,21 @@
 
 namespace Pcteckserv\CmsCore\Http\Controllers\Admin;
 
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Pcteckserv\CmsCore\ActivityLog\Contracts\ActivityLoggerContract;
 use Pcteckserv\CmsCore\Http\Requests\Admin\StoreUserRequest;
 use Pcteckserv\CmsCore\Http\Requests\Admin\UpdateUserRequest;
 use Pcteckserv\CmsCore\Models\Role;
 use Pcteckserv\CmsCore\Services\DefaultRoleSynchronizer;
+use Pcteckserv\CmsCore\Services\DeleteUser;
 use Pcteckserv\CmsCore\Services\PermissionSynchronizer;
 use Pcteckserv\CmsCore\Services\UserModelResolver;
 
@@ -186,6 +189,27 @@ class UsersController extends Controller
         );
 
         return redirect()->route('admin.users.index')->with('status', 'Utilizador desativado com sucesso.');
+    }
+
+    public function forceDelete(mixed $user, DeleteUser $deleteUser): RedirectResponse
+    {
+        Gate::authorize('core.users.force-delete');
+        $this->abortIfSuperAdminUser($user);
+
+        try {
+            $deleteUser->handle($user);
+        } catch (QueryException $exception) {
+            Log::warning('Falha ao eliminar um utilizador do CMS.', [
+                'user_id' => $user->getKey(),
+                'sql_state' => $exception->getCode(),
+            ]);
+
+            return redirect()->route('admin.users.index')->withErrors([
+                'user' => 'Não foi possível eliminar o utilizador. Verifique se existem dados associados e tente novamente.',
+            ]);
+        }
+
+        return redirect()->route('admin.users.index')->with('status', 'Utilizador eliminado com sucesso.');
     }
 
     private function formData(): array

@@ -166,6 +166,7 @@ Route::middleware('web')->group(function (): void {
             Route::put('/plugins/{plugin}/enable', [PluginsController::class, 'enable'])->name('plugins.enable');
             Route::put('/plugins/{plugin}/disable', [PluginsController::class, 'disable'])->name('plugins.disable');
             Route::delete('/plugins/{plugin}', [PluginsController::class, 'destroy'])->name('plugins.destroy');
+            Route::delete('/users/{user}/permanent', [UsersController::class, 'forceDelete'])->name('users.force-delete');
             Route::resource('users', UsersController::class)->except(['show']);
             Route::resource('roles', RolesController::class)->except(['show']);
         });

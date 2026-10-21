@@ -1,5 +1,18 @@
 # Publicação de versões do Core
 
+## v2.7.0
+
+Adiciona a eliminação definitiva de utilizadores, exclusiva do Super Admin, na
+listagem e na edição. Mantém a desativação existente e a proteção das contas
+Super Admin. A operação utiliza confirmação, autorização no backend, transação
+e auditoria, com rollback em caso de falha ou de relações que impeçam a eliminação.
+
+Validação: os 11 testes novos passaram, com 58 verificações. A suite completa
+executou 128 testes: 118 passaram, com 4 falhas, 6 erros e 1 aviso de teste
+arriscado. As mesmas falhas e erros foram reproduzidos na versão anterior,
+nas áreas de acesso administrativo, SEO, consentimentos e atualizações de plugins.
+O manifesto Composer foi validado com `composer validate --strict --no-check-publish`.
+
 ## v2.6.10
 
 Atualização mínima de documentação para verificar a deteção e instalação de

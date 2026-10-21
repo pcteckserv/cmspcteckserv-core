@@ -12,6 +12,10 @@
         <div class="alert alert-success">{{ session('status') }}</div>
     @endif
 
+    @if ($errors->has('user'))
+        <div class="alert alert-danger" role="alert">{{ $errors->first('user') }}</div>
+    @endif
+
     <form class="row g-2 mb-3" method="GET">
         <div class="col-md-5"><input class="form-control" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Pesquisar por nome ou email"></div>
         <div class="col-md-3">
@@ -48,6 +52,7 @@
                             @can('core.users.update')
                                 <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.users.edit', $user) }}">Editar</a>
                             @endcan
+                            @include('cms-core::admin.users.partials.delete')
                         </td>
                     </tr>
                 @endforeach
