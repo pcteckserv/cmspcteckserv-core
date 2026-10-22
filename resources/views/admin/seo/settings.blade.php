@@ -20,7 +20,16 @@
                         <div class="col-md-6"><label class="form-label">Título SEO padrão</label><input class="form-control" name="seo_default_title" value="{{ old('seo_default_title', $options['seo_default_title']) }}" required></div>
                         <div class="col-md-6"><label class="form-label">Template do título</label><input class="form-control" name="seo_title_template" value="{{ old('seo_title_template', $options['seo_title_template']) }}" required></div>
                         <div class="col-12"><label class="form-label">Meta description padrão</label><textarea class="form-control" name="seo_default_description" rows="3">{{ old('seo_default_description', $options['seo_default_description']) }}</textarea></div>
-                        <div class="col-md-6"><label class="form-label">Imagem Open Graph padrão</label><input class="form-control" name="seo_default_og_image" value="{{ old('seo_default_og_image', $options['seo_default_og_image']) }}"></div>
+                        <div class="col-md-6">
+                            <x-cms-media-picker
+                                name="seo_default_og_image_media_id"
+                                label="Imagem Open Graph padrão"
+                                data-cms-media-picker-target-url="#seo_default_og_image"
+                                clearable
+                            />
+                            <input id="seo_default_og_image" class="form-control mt-2 @error('seo_default_og_image') is-invalid @enderror" name="seo_default_og_image" value="{{ old('seo_default_og_image', $options['seo_default_og_image']) }}" aria-label="URL da imagem Open Graph padrão" placeholder="https://">
+                            @error('seo_default_og_image')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
                         <div class="col-md-6"><label class="form-label">Twitter Card padrão</label><select class="form-select" name="seo_twitter_card"><option @selected($options['seo_twitter_card'] === 'summary_large_image') value="summary_large_image">summary_large_image</option><option @selected($options['seo_twitter_card'] === 'summary') value="summary">summary</option></select></div>
                     </div>
                     <div class="row g-3 mt-2">
@@ -33,7 +42,16 @@
                     <div class="row g-3">
                         <div class="col-md-6"><label class="form-label">Nome da organização</label><input class="form-control" name="seo_organization_name" value="{{ old('seo_organization_name', $options['seo_organization_name']) }}"></div>
                         <div class="col-md-6"><label class="form-label">Tipo de organização</label><input class="form-control" name="seo_organization_type" value="{{ old('seo_organization_type', $options['seo_organization_type']) }}"></div>
-                        <div class="col-md-6"><label class="form-label">Logo</label><input class="form-control" name="seo_organization_logo" value="{{ old('seo_organization_logo', $options['seo_organization_logo']) }}"></div>
+                        <div class="col-md-6">
+                            <x-cms-media-picker
+                                name="seo_organization_logo_media_id"
+                                label="Logótipo da organização"
+                                data-cms-media-picker-target-url="#seo_organization_logo"
+                                clearable
+                            />
+                            <input id="seo_organization_logo" class="form-control mt-2 @error('seo_organization_logo') is-invalid @enderror" name="seo_organization_logo" value="{{ old('seo_organization_logo', $options['seo_organization_logo']) }}" aria-label="URL do logótipo da organização" placeholder="https://">
+                            @error('seo_organization_logo')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
                         <div class="col-md-3"><label class="form-label">Telefone</label><input class="form-control" name="seo_organization_phone" value="{{ old('seo_organization_phone', $options['seo_organization_phone']) }}"></div>
                         <div class="col-md-3"><label class="form-label">Email</label><input class="form-control" name="seo_organization_email" value="{{ old('seo_organization_email', $options['seo_organization_email']) }}"></div>
                         <div class="col-12"><label class="form-label">Morada</label><textarea class="form-control" name="seo_organization_address" rows="2">{{ old('seo_organization_address', $options['seo_organization_address']) }}</textarea></div>
