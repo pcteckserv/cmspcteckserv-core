@@ -25,7 +25,7 @@ class ConsentManagerTest extends TestCase
 
     public function test_banner_aparece_em_rotas_publicas(): void
     {
-        Route::get('/consent-public-test', fn () => response('<html><body><h1>Página pública</h1></body></html>'));
+        Route::middleware('web')->get('/consent-public-test', fn () => response('<html><body><h1>Página pública</h1></body></html>'));
 
         $this->get('/consent-public-test')
             ->assertOk()
@@ -74,7 +74,9 @@ class ConsentManagerTest extends TestCase
         $scan = ConsentScan::query()->create(['status' => 'pending']);
         app(ConsentScanner::class)->scan($scan, ['/unknown-tracker']);
 
-        $service = ConsentService::query()->where('key', 'unknown-tracker-exemplo-test')->firstOrFail();
+        $service = ConsentService::query()
+            ->whereHas('technologies', fn ($query) => $query->where('domain', 'tracker.exemplo.test'))
+            ->firstOrFail();
 
         $this->assertTrue($service->requires_consent);
         $this->assertSame('requires_review', $service->review_status);

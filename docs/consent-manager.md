@@ -27,6 +27,12 @@ Fluxo recomendado:
 
 Quando é publicado com novo consentimento, a versão aumenta e browsers com versão antiga voltam a ver o banner.
 
+As migrations do Core criam as quatro categorias iniciais quando a tabela de categorias está vazia, sem necessidade de executar seeders. Instalações com categorias existentes mantêm a sua configuração.
+
+Para corrigir uma instalação anterior sem categorias, instalar a versão atualizada do Core e executar `Sistema > Comandos Laravel > Executar migrations`. Depois, confirmar as categorias em `Configurações > Consentimentos > Categorias` e clicar em `Publicar` no painel de consentimentos. Esta operação pode ser feita pelo backoffice, sem SSH.
+
+A migration não publica rascunhos, não altera versões de consentimento e não ativa um banner desativado. O rollback preserva as categorias, pois podem já estar associadas a serviços.
+
 ## Categorias
 
 As categorias iniciais são:

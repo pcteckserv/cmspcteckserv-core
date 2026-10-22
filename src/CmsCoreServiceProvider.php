@@ -2,6 +2,7 @@
 
 namespace Pcteckserv\CmsCore;
 
+use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
@@ -92,11 +93,13 @@ class CmsCoreServiceProvider extends ServiceProvider
         Blade::component(CmsIconPicker::class, 'cms-icon-picker');
         Blade::component(CmsSeo::class, 'cms-seo');
         Blade::component(CmsSeoEditor::class, 'cms-seo-editor');
-        $this->app['router']->pushMiddlewareToGroup('web', HandleCmsMaintenanceMode::class);
-        $this->app['router']->pushMiddlewareToGroup('web', InjectConsentManager::class);
-        $this->app['router']->pushMiddlewareToGroup('web', InjectAdminShortcut::class);
-        $this->app['router']->pushMiddlewareToGroup('web', HandleSeoRedirects::class);
-        $this->app['router']->pushMiddlewareToGroup('web', TrackSeoNotFound::class);
+        $this->callAfterResolving(Kernel::class, function (Kernel $kernel): void {
+            $kernel->appendMiddlewareToGroup('web', HandleCmsMaintenanceMode::class);
+            $kernel->appendMiddlewareToGroup('web', InjectConsentManager::class);
+            $kernel->appendMiddlewareToGroup('web', InjectAdminShortcut::class);
+            $kernel->appendMiddlewareToGroup('web', HandleSeoRedirects::class);
+            $kernel->appendMiddlewareToGroup('web', TrackSeoNotFound::class);
+        });
 
         $this->publishes([
             __DIR__.'/../config/cms-core.php' => config_path('cms-core.php'),
