@@ -35,6 +35,14 @@ Em formulários administrativos:
 
 O formulário deve persistir o array `seo` validado pelo módulo que usa o componente.
 
+## Sitemap automático
+
+O sitemap descobre automaticamente as rotas GET estáticas do grupo `web`, usando o domínio definido em `seo_base_url`. Não executa pedidos às páginas. As rotas com parâmetros (incluindo opcionais), fallback, redirecionamentos, outros domínios, assets e endpoints técnicos são excluídas. Rotas com middleware de autenticação, autorização ou outro middleware não reconhecido como público também são excluídas.
+
+Pode excluir uma página com `->defaults('sitemap', false)`. A configuração `cms-core.sitemap` permite desativar a descoberta, definir caminhos excluídos e reconhecer middleware adicional como público. Adicione apenas middleware que não limite o acesso à página.
+
+As URLs de conteúdos dinâmicos continuam a ser fornecidas por `SitemapProviderInterface`. As integrações existentes são preservadas e têm prioridade sobre as URLs descobertas, sem duplicação de URLs iguais. A cache dura uma hora; alterações nas rotas descobertas ou no domínio regeneram-na automaticamente, incluindo a substituição da antiga cache vazia. Para alterações nos conteúdos dinâmicos, utilize `SitemapGenerator::clearCache()`.
+
 ## Extensibilidade
 
 Plugins podem registar integrações no seu service provider:

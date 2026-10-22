@@ -129,6 +129,17 @@ return [
         'seo_robots_advanced' => env('CMS_SEO_ROBOTS_ADVANCED', ''),
     ],
 
+    'sitemap' => [
+        'discover_routes' => true,
+        'public_middleware' => ['web', 'throttle', 'cache.headers'],
+        'excluded_paths' => [
+            'admin', 'admin/*', 'api', 'api/*',
+            'login', 'logout', 'register', 'forgot-password', 'reset-password',
+            'up', 'health', 'health/*', 'sanctum/*',
+            '_*', '_*/*', 'vendor/*', 'storage/*', 'build/*',
+        ],
+    ],
+
     'updates' => [
         'enabled' => env('CMS_UPDATER_ENABLED', true),
         'channel' => env('CMS_UPDATE_CHANNEL', 'stable'),

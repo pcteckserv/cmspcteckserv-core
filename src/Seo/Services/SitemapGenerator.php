@@ -11,13 +11,22 @@ class SitemapGenerator
 {
     public const CACHE_KEY = 'cms-core.seo.sitemap';
 
-    public function __construct(private readonly SeoRegistry $registry)
-    {
-    }
+    public function __construct(private readonly SeoRegistry $registry) {}
 
     public function xml(): string
     {
-        return Cache::remember(self::CACHE_KEY, now()->addHour(), fn (): string => $this->buildXml());
+        $routeUrls = iterator_to_array(app(PublicRoutesSitemapProvider::class)->urls());
+        $signature = hash('sha256', serialize($routeUrls));
+        $cached = Cache::get(self::CACHE_KEY);
+
+        if (is_array($cached) && ($cached['routes'] ?? null) === $signature && isset($cached['xml'])) {
+            return $cached['xml'];
+        }
+
+        $xml = $this->buildXml($routeUrls);
+        Cache::put(self::CACHE_KEY, ['routes' => $signature, 'xml' => $xml], now()->addHour());
+
+        return $xml;
     }
 
     public function clearCache(): void
@@ -25,7 +34,7 @@ class SitemapGenerator
         Cache::forget(self::CACHE_KEY);
     }
 
-    private function buildXml(): string
+    private function buildXml(array $routeUrls): string
     {
         $items = [];
 
@@ -34,9 +43,13 @@ class SitemapGenerator
 
             foreach ($provider->urls() as $url) {
                 if ($url instanceof SitemapUrl) {
-                    $items[] = $url;
+                    $items[$url->url] = $url;
                 }
             }
+        }
+
+        foreach ($routeUrls as $url) {
+            $items[$url->url] ??= $url;
         }
 
         $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n";
