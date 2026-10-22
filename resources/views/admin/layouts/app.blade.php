@@ -44,7 +44,15 @@
                     <a @class(['nav-link', 'active' => request()->routeIs('admin.media.*')]) href="{{ route('admin.media.index') }}">Media</a>
                 @endcan
                 @foreach (app(\Pcteckserv\CmsCore\Support\Navigation\AdminMenuRegistry::class)->visible() as $menuItem)
+                    @if(!empty($menuItem['children']))
+                    @php($pluginMenuOpen = request()->routeIs($menuItem['active']) || collect($menuItem['children'])->contains(fn($child) => request()->routeIs($child['active'])))
+                    <button class="nav-link cms-sidebar-menu-toggle text-start {{ $pluginMenuOpen ? 'active' : '' }}" type="button" data-bs-toggle="collapse" data-bs-target="#plugin-menu-{{ $menuItem['key'] }}" aria-controls="plugin-menu-{{ $menuItem['key'] }}" aria-expanded="{{ $pluginMenuOpen ? 'true' : 'false' }}">{{ $menuItem['label'] }}</button>
+                    <div id="plugin-menu-{{ $menuItem['key'] }}" class="collapse cms-sidebar-submenu {{ $pluginMenuOpen ? 'show' : '' }}">
+                        @foreach($menuItem['children'] as $child)<a @class(['nav-link','active'=>request()->routeIs($child['active'])]) href="{{ route($child['route']) }}">{{ $child['label'] }}</a>@endforeach
+                    </div>
+                    @else
                     <a @class(['nav-link', 'active' => request()->routeIs($menuItem['active'])]) href="{{ route($menuItem['route']) }}">{{ $menuItem['label'] }}</a>
+                    @endif
                 @endforeach
                 @canany(['core.site-options.view', 'footer.view-settings', 'seo.view', 'maintenance.view', 'core.smtp.view', 'consent.view'])
                     @php($configMenuOpen = request()->routeIs('admin.site-options.*') || request()->routeIs('admin.footer.*') || request()->routeIs('admin.seo.*') || request()->routeIs('admin.maintenance.*') || request()->routeIs('admin.smtp-settings.*') || request()->routeIs('admin.consent.*'))

@@ -9,7 +9,7 @@ use Pcteckserv\CmsCore\Plugins\PluginManager;
 
 class AdminMenuRegistry
 {
-    /** @var array<string, array{label: string, route: string, permission: string, plugin: string, active: string, order: int}> */
+    /** @var array<string, array{label: string, route: string, permission: string, plugin: string, active: string, order: int, parent: ?string}> */
     private array $items = [];
 
     public function register(
@@ -20,8 +20,9 @@ class AdminMenuRegistry
         string $plugin,
         string $active,
         int $order = 100,
+        ?string $parent = null,
     ): void {
-        $this->items[$key] = compact('label', 'route', 'permission', 'plugin', 'active', 'order');
+        $this->items[$key] = compact('label', 'route', 'permission', 'plugin', 'active', 'order', 'parent');
     }
 
     public function visible(): Collection
@@ -29,14 +30,28 @@ class AdminMenuRegistry
         $states = [];
         $plugins = app(PluginManager::class);
 
-        return collect($this->items)->filter(function (array $item) use ($plugins, &$states): bool {
-            if (! Route::has($item['route']) || ! Gate::allows($item['permission'])) {
+        $enabled = collect($this->items)->filter(function (array $item) use ($plugins, &$states): bool {
+            if (! Route::has($item['route'])) {
                 return false;
             }
 
             $states[$item['plugin']] ??= $plugins->isEnabled($item['plugin']);
 
             return $states[$item['plugin']];
-        })->sortBy('order')->values();
+        })->sortBy('order');
+        $result = collect();
+        foreach ($enabled as $key => $item) {
+            if ($item['parent'] !== null) {
+                continue;
+            }
+            $children = $enabled->filter(fn ($child) => $child['parent'] === $key && Gate::allows($child['permission']))->values();
+            if (Gate::allows($item['permission']) || $children->isNotEmpty()) {
+                $item['children'] = $children->all();
+                $item['key'] = $key;
+                $result->push($item);
+            }
+        }
+
+        return $result;
     }
 }
