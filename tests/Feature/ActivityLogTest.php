@@ -3,11 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Pcteckserv\CmsCore\ActivityLog\Contracts\ActivityLoggerContract;
@@ -26,7 +24,7 @@ class ActivityLogTest extends TestCase
 
     public function test_login_com_sucesso_cria_log(): void
     {
-        $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\PreventRequestForgery::class);
+        $this->withoutMiddleware(PreventRequestForgery::class);
 
         $user = User::factory()->create(['password' => Hash::make('palavra-passe-segura')]);
 
@@ -45,7 +43,7 @@ class ActivityLogTest extends TestCase
 
     public function test_login_falhado_cria_log_sem_password(): void
     {
-        $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\PreventRequestForgery::class);
+        $this->withoutMiddleware(PreventRequestForgery::class);
 
         $user = User::factory()->create(['password' => Hash::make('palavra-passe-segura')]);
 
@@ -228,11 +226,13 @@ class ActivityLogTest extends TestCase
             user: $superAdmin,
         );
 
-        $this->actingAs($superAdmin)
+        $usersResponse = $this->actingAs($superAdmin)
             ->get(route('admin.users.index'))
             ->assertOk()
-            ->assertDontSee($superAdmin->email)
             ->assertDontSee('Super Admin');
+        preg_match('~<main\b[^>]*>(.*?)</main>~s', $usersResponse->getContent(), $usersContent);
+        $this->assertArrayHasKey(1, $usersContent);
+        $this->assertStringNotContainsString($superAdmin->email, $usersContent[1]);
 
         $this->actingAs($superAdmin)
             ->get(route('admin.roles.index'))
@@ -240,11 +240,13 @@ class ActivityLogTest extends TestCase
             ->assertDontSee('core.super_admin')
             ->assertDontSee('Super Admin');
 
-        $this->actingAs($superAdmin)
+        $logsResponse = $this->actingAs($superAdmin)
             ->get(route('admin.activity-logs.index'))
             ->assertOk()
-            ->assertDontSee('<code>auth.login</code>', false)
-            ->assertDontSee($superAdmin->email);
+            ->assertDontSee('<code>auth.login</code>', false);
+        preg_match('~<main\b[^>]*>(.*?)</main>~s', $logsResponse->getContent(), $logsContent);
+        $this->assertArrayHasKey(1, $logsContent);
+        $this->assertStringNotContainsString($superAdmin->email, $logsContent[1]);
     }
 
     public function test_logger_funciona_sem_request_http(): void

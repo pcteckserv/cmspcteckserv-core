@@ -36,7 +36,7 @@ class CustomerModules
             if ($admin && ! auth('web')->user()?->can($module['permission'])) {
                 continue;
             }
-            $result[] = ['label' => $module['label'], 'records' => ($module['records'])($customer, $admin)];
+            $result[] = ['key' => $plugin, 'label' => $module['label'], 'records' => ($module['records'])($customer, $admin)];
         }
 
         return $result;

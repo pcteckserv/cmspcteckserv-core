@@ -126,8 +126,8 @@
             <header class="bg-white border-bottom">
                 <div class="container-fluid py-3 d-flex justify-content-between align-items-center gap-3">
                     <div>
-                        <span class="text-secondary small">Utilizador</span>
-                        <div class="fw-semibold">{{ auth()->user()->name }}</div>
+                        <span class="text-secondary small">Administração</span>
+                        <div class="fw-semibold">{{ config('app.name') }}</div>
                     </div>
 
                     <div class="d-flex align-items-center gap-2">
@@ -145,10 +145,18 @@
                             </a>
                         @endif
 
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button class="btn btn-outline-secondary btn-sm" type="submit">Terminar sessão</button>
-                        </form>
+                        <details class="cms-profile-menu">
+                            <summary class="btn btn-outline-secondary d-flex align-items-center gap-2" aria-label="Menu da conta de {{ auth('web')->user()->name }}">
+                                @include('cms-core::components.icons.profile')
+                                <span class="d-none d-sm-inline">{{ auth('web')->user()->name }}</span>
+                            </summary>
+                            <div class="cms-profile-dropdown">
+                                <div class="px-3 py-2 border-bottom"><strong class="d-block text-break">{{ auth('web')->user()->name }}</strong><small class="text-secondary text-break">{{ auth('web')->user()->email }}</small></div>
+                                <a href="{{ route('admin.profile.edit') }}">O meu perfil</a>
+                                <a href="{{ route('security.edit','web') }}">Segurança da conta</a>
+                                <form method="POST" action="{{ route('logout') }}" class="border-top">@csrf<button type="submit">Terminar sessão</button></form>
+                            </div>
+                        </details>
                     </div>
                 </div>
             </header>

@@ -97,6 +97,11 @@ class CustomerController
         return back()->with('status', 'Perfil atualizado.');
     }
 
+    public function profile()
+    {
+        return response()->view('cms-core::customers.profile', ['customer' => auth('shop_customer')->user()])->header('Cache-Control', 'private, no-store');
+    }
+
     public function sendReset(Request $r)
     {
         $d = $r->validate(['email' => 'required|email|max:254']);

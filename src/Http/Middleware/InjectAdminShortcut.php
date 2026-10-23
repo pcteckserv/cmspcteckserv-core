@@ -44,7 +44,7 @@ class InjectAdminShortcut
             return false;
         }
 
-        if ($request->is('admin', 'admin/*', 'login', 'api', 'api/*') || ! Route::has('admin.dashboard')) {
+        if ($request->is('admin', 'admin/*', 'login', 'api', 'api/*') || $request->routeIs('security.*') || ! Route::has('admin.dashboard')) {
             return false;
         }
 

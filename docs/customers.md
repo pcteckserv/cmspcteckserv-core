@@ -64,8 +64,9 @@ As antigas permissões de gestão de clientes da Loja são migradas para o Core.
 ## Autenticação em dois passos
 
 Segurança da conta permite ativar TOTP (aplicação autenticadora), confirmar o
-primeiro código e receber oito códigos de recuperação de uso único. A configuração
-é manual pela chave da aplicação; não envia segredos para serviços de QR externos.
+primeiro código e receber oito códigos de recuperação de uso único. Desde a versão 2.11, a configuração apresenta um QR code gerado localmente e
+verificado por leitura automática nos testes de browser. A chave manual continua
+disponível como alternativa; não se enviam segredos para serviços de QR externos.
 Exige palavra-passe para configurar e palavra-passe+código para desativar.
 
 O segredo é cifrado com `APP_KEY`; os códigos de recuperação são guardados como
@@ -97,3 +98,26 @@ A suite habitual do Core continua a usar o `Tests\TestCase` do site anfitrião.
 Os testes da Loja incluem instalação após o Core; os da Agenda cobrem identidade
 partilhada, isolamento, associação assinada e proteção do histórico com plugin
 inativo. Não são efetuados pagamentos reais nem enviados emails reais nos testes.
+
+## Perfil e navegação da conta (2.11)
+
+O cabeçalho administrativo apresenta um ícone de perfil com O meu perfil,
+Segurança da conta e Terminar sessão. `/admin/perfil` permite alterar apenas o
+próprio nome, email e palavra-passe, exigindo a palavra-passe atual e sem permitir
+alterar roles, permissões ou outros utilizadores. Sessões com palavras-passe
+revogadas deixam de aceder ao perfil.
+
+A área do cliente tem menu próprio para perfil, moradas, segurança e saída,
+com atalhos para encomendas e agendamentos dos plugins ativos. O perfil é
+consultado em `/cliente/perfil`. Os dois tipos de sessão continuam separados.
+
+Atualizações para 2.11 devem instalar as dependências Composer e reconstruir os
+assets administrativos. Não são necessárias novas migrations.
+
+Os testes de browser do Core estão em `tests/Browser`: executar `npm ci` nesse
+diretório e gerar primeiro as fixtures com `tests/Standalone/RenderAccountFixturesTest.php`
+(filtro `test_export_account_browser_fixtures`) no ambiente Testbench. O caminho
+do manifesto pode ser indicado por `CMS_BROWSER_MANIFEST` e os assets por
+`CMS_BROWSER_ASSETS`. A geração usa contas fictícias e exclui os resultados do Git.
+Os testes descodificam o QR para verificar o URI TOTP, a chave, o emissor e os
+parâmetros, e verificam os menus e a disposição em telemóvel.

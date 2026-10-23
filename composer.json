@@ -26,6 +26,8 @@
         "illuminate/http": "^13.0",
         "illuminate/mail": "^13.0",
         "illuminate/queue": "^13.0",
-        "illuminate/support": "^13.0"
+        "illuminate/support": "^13.0",
+        "bacon/bacon-qr-code": "^3.0",
+        "ext-xmlwriter": "*"
     }
 }

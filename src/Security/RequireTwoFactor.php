@@ -17,6 +17,15 @@ class RequireTwoFactor
             if (! $user) {
                 continue;
             }
+            if ($guard === 'web') {
+                $previous = $request->session()->get('cms_account.identity.web');
+                if ((method_exists($user, 'isCmsActive') && ! $user->isCmsActive()) || ($previous && $previous['id'] === $user->getAuthIdentifier() && ! hash_equals($user->getAuthPassword(), $previous['hash']))) {
+                    auth($guard)->logout();
+
+                    return redirect()->route('login');
+                }
+                $request->session()->put('cms_account.identity.web', ['id' => $user->getAuthIdentifier(), 'hash' => $user->getAuthPassword()]);
+            }
             if ($guard === 'shop_customer') {
                 $previous = $request->session()->get('shop_customer.identity');
                 if (! $user->active || ($previous && $previous['id'] === $user->getAuthIdentifier() && ! hash_equals($user->getAuthPassword(), $previous['hash']))) {

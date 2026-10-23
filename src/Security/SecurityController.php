@@ -23,8 +23,9 @@ class SecurityController
     {
         $user = $this->identity($guard);
         $factor = AccountFactor::where('guard', $guard)->where('account_id', $user->getAuthIdentifier())->first();
+        $qr = $factor && ! $factor->confirmed_at ? app(AuthenticatorQr::class)->image($factor, $user->email) : null;
 
-        return response()->view('cms-core::customers.security', compact('guard', 'user', 'factor'))->header('Cache-Control', 'no-store');
+        return response()->view('cms-core::customers.security', compact('guard', 'user', 'factor', 'qr'))->header('Cache-Control', 'private, no-store')->header('Referrer-Policy', 'no-referrer');
     }
 
     public function setup(Request $r, string $guard, TwoFactor $twoFactor)

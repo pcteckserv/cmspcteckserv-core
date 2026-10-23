@@ -4,9 +4,14 @@ use Illuminate\Support\Facades\Route;
 use Pcteckserv\CmsCore\Customers\AdminCustomersController as Admin;
 use Pcteckserv\CmsCore\Customers\CustomerController as Customer;
 use Pcteckserv\CmsCore\Customers\CustomerSession;
+use Pcteckserv\CmsCore\Http\Controllers\Admin\ProfileController;
 use Pcteckserv\CmsCore\Security\SecurityController as Security;
 
 Route::middleware('web')->group(function () {
+    Route::middleware('auth:web')->group(function () {
+        Route::get('/admin/perfil', [ProfileController::class, 'edit'])->name('admin.profile.edit');
+        Route::put('/admin/perfil', [ProfileController::class, 'update'])->middleware('throttle:10,1')->name('admin.profile.update');
+    });
     Route::prefix('cliente')->name('customers.')->group(function () {
         Route::get('entrar', [Customer::class, 'login'])->name('login');
         Route::post('entrar', [Customer::class, 'authenticate'])->middleware('throttle:5,1')->name('login.submit');
@@ -18,6 +23,7 @@ Route::middleware('web')->group(function () {
         Route::post('nova-palavra-passe', [Customer::class, 'resetPassword'])->middleware('throttle:5,1')->name('password.update');
         Route::middleware(CustomerSession::class)->group(function () {
             Route::get('/', [Customer::class, 'account'])->name('account');
+            Route::get('perfil', [Customer::class, 'profile'])->name('profile');
             Route::put('perfil', [Customer::class, 'update'])->name('profile.update');
             Route::get('moradas', [Customer::class, 'addresses'])->name('addresses');
             Route::post('moradas', [Customer::class, 'saveAddress'])->name('addresses.store');

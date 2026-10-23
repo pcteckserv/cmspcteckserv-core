@@ -5,6 +5,7 @@ namespace Pcteckserv\CmsCore\Tests;
 use Carbon\Carbon;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Orchestra\Testbench\TestCase;
 use Pcteckserv\CmsCore\CmsCoreServiceProvider;
 use Pcteckserv\CmsCore\Contracts\CmsAccessUser;
@@ -15,6 +16,7 @@ use Pcteckserv\CmsCore\Customers\Group;
 use Pcteckserv\CmsCore\Models\Concerns\HasCmsAccess;
 use Pcteckserv\CmsCore\Models\Role;
 use Pcteckserv\CmsCore\Security\AccountFactor;
+use Pcteckserv\CmsCore\Security\AuthenticatorQr;
 use Pcteckserv\CmsCore\Security\TwoFactor;
 
 class CustomerTestUser extends User implements CmsAccessUser
@@ -51,12 +53,12 @@ class SharedCustomersTest extends TestCase
         $this->artisan('migrate', ['--force' => true])->run();
     }
 
-    private function customer(): Customer
+    protected function customer(): Customer
     {
         return Customer::create(['name' => 'Maria', 'email' => 'maria@example.test', 'password' => 'password-test-123']);
     }
 
-    private function manager(): CustomerTestUser
+    protected function manager(): CustomerTestUser
     {
         $user = CustomerTestUser::create(['name' => 'Gestor', 'email' => 'gestor@example.test', 'password' => bcrypt('password-test-123')]);
         $user->cmsRoles()->attach(Role::where('key', 'ecommerce.manager')->firstOrFail());
@@ -204,5 +206,62 @@ class SharedCustomersTest extends TestCase
         $this->put('/cliente/moradas/'.$a->id, array_merge($data, ['country' => 'ZZ']))->assertSessionHasErrors('country');
         $other = Customer::create(['name' => 'Outro', 'email' => 'other@example.test', 'password' => 'password-test-123']);
         $this->actingAs($other, 'shop_customer')->delete('/cliente/moradas/'.$a->id)->assertNotFound();
+    }
+
+    public function test_authenticator_qr_is_local_private_and_disappears_after_confirmation(): void
+    {
+        $customer = $this->customer();
+        $two = app(TwoFactor::class);
+        $factor = AccountFactor::create(['guard' => 'shop_customer', 'account_id' => $customer->id, 'secret' => $two->secret()]);
+        config(['app.name' => 'Empresa & Filhos: Agenda']);
+        $qr = app(AuthenticatorQr::class);
+        $uri = $qr->uri($factor, $customer->email);
+        parse_str(parse_url($uri, PHP_URL_QUERY), $params);
+        $this->assertSame($factor->secret, $params['secret']);
+        $this->assertSame('Empresa & Filhos  Agenda', $params['issuer']);
+        $this->assertSame('6', $params['digits']);
+        $this->assertSame('30', $params['period']);
+        $this->actingAs($customer, 'shop_customer')->get('/seguranca/shop_customer')->assertOk()->assertHeader('Referrer-Policy', 'no-referrer')->assertSee('data:image/svg+xml;base64,', false)->assertSee('Não consegue ler o QR code?');
+        $factor->update(['confirmed_at' => now()]);
+        $this->get('/seguranca/shop_customer')->assertOk()->assertDontSee('data-authenticator-qr')->assertDontSee($factor->secret);
+    }
+
+    public function test_staff_can_update_only_their_own_profile_with_current_password(): void
+    {
+        $staff = $this->manager();
+        $other = CustomerTestUser::create(['name' => 'Outro', 'email' => 'other@example.test', 'password' => bcrypt('password-test-123')]);
+        $this->actingAs($staff, 'web')->get('/admin/perfil')->assertOk()->assertSee('O meu perfil')->assertSee('cms-profile-menu');
+        $data = ['name' => 'Nome atualizado', 'email' => 'UPDATE@example.test', 'current_password' => 'wrong', 'role_id' => Role::where('key', 'core.super_admin')->value('id'), 'id' => $other->id];
+        $this->put('/admin/perfil', $data)->assertSessionHasErrors('current_password');
+        $this->assertSame('Gestor', $staff->fresh()->name);
+        $data['current_password'] = 'password-test-123';
+        $data['password'] = 'new-password-test-123';
+        $data['password_confirmation'] = $data['password'];
+        $this->put('/admin/perfil', $data)->assertSessionHasNoErrors();
+        $this->assertSame('update@example.test', $staff->fresh()->email);
+        $this->assertTrue(Hash::check($data['password'], $staff->fresh()->password));
+        $this->assertFalse($staff->fresh()->isCmsSuperAdmin());
+        $this->assertSame('Outro', $other->fresh()->name);
+        $this->get('/admin/perfil')->assertOk();
+    }
+
+    public function test_profile_routes_keep_staff_and_customer_sessions_separate(): void
+    {
+        $customer = $this->customer();
+        $this->actingAs($customer, 'shop_customer')->get('/admin/perfil')->assertRedirect('/login');
+        $this->get('/cliente/perfil')->assertOk()->assertSee('maria@example.test');
+        $this->get('/cliente')->assertOk()->assertSee('customer-account-menu')->assertSee(route('customers.profile'));
+        $this->assertGuest('web');
+    }
+
+    public function test_staff_profile_rejects_duplicate_email_and_revoked_sessions(): void
+    {
+        $staff = $this->manager();
+        CustomerTestUser::create(['name' => 'Outro', 'email' => 'other@example.test', 'password' => bcrypt('password-test-123')]);
+        $this->actingAs($staff, 'web')->put('/admin/perfil', ['name' => 'Gestor', 'email' => 'other@example.test', 'current_password' => 'password-test-123'])->assertSessionHasErrors('email');
+        $previous = ['id' => $staff->id, 'hash' => $staff->password];
+        $staff->forceFill(['password' => bcrypt('new-password-test-123')])->save();
+        $this->withSession(['cms_account.identity.web' => $previous])->get('/admin/perfil')->assertRedirect('/login');
+        $this->assertGuest('web');
     }
 }

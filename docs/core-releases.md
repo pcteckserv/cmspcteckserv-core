@@ -1,5 +1,26 @@
 # Publicação de versões do Core
 
+## v2.11.0
+
+Adiciona QR code local à configuração TOTP, mantendo a chave manual como
+alternativa. O QR só é apresentado enquanto a ativação está pendente e a página
+usa cache privada desativada. Adiciona o menu pessoal no canto superior direito,
+com perfil, segurança e saída, e edição do próprio perfil protegida pela
+palavra-passe atual. A área de cliente ganha navegação própria e atalhos para o
+histórico dos plugins ativos. Requer instalação das dependências Composer e
+reconstrução dos assets; sem novas migrations.
+
+Testes de browser descodificam os QR codes de utilizador/cliente e verificam a
+disposição em telemóvel, a navegação dos menus e o formulário de perfil. A suite
+isolada cobre ainda palavra-passe atual, email duplicado, rejeição de alteração
+de outros utilizadores/roles e sessões revogadas.
+
+Validação final: 203 testes/1466 verificações na regressão funcional, 39 testes
+de browser (incluindo leitura dos QR codes) e 42 testes/146 verificações da
+aplicação passaram. A suite habitual do Core mantém 143/150 testes a passar,
+com os mesmos quatro testes em falha e três erros já documentados em 2.10.0.
+Build Vite e manifesto Composer validados.
+
 ## v2.10.0
 
 Centraliza clientes, grupos e moradas no Core, com área privada independente dos

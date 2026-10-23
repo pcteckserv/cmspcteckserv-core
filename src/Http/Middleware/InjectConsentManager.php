@@ -9,9 +9,7 @@ use Pcteckserv\CmsCore\Consent\Contracts\ConsentManagerContract;
 
 class InjectConsentManager
 {
-    public function __construct(private readonly ConsentManagerContract $consentManager)
-    {
-    }
+    public function __construct(private readonly ConsentManagerContract $consentManager) {}
 
     public function handle(Request $request, Closure $next): mixed
     {
@@ -43,7 +41,7 @@ class InjectConsentManager
             return false;
         }
 
-        if ($request->is('admin*') || $request->is('login') || $request->is('api*')) {
+        if ($request->is('admin*') || $request->is('login') || $request->is('api*') || $request->routeIs('security.*')) {
             return false;
         }
 

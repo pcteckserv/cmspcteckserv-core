@@ -1,0 +1,6 @@
+{
+  "name": "cms-core-account-browser-tests",
+  "private": true,
+  "scripts": {"test": "playwright test"},
+  "devDependencies": {"@playwright/test": "^1.56.0", "jsqr": "^1.4.0", "pngjs": "^7.0.0"}
+}
