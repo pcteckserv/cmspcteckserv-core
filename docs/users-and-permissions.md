@@ -1,5 +1,9 @@
 # Gestão de utilizadores e permissões
 
+Desde o Core 2.10, o menu Utilizadores também reúne Cliente e Segurança da conta.
+Os perfis Cliente e Gestor de loja, a área privada partilhada pelos plugins, os
+grupos comerciais e o 2FA estão descritos em [Clientes centrais](customers.md).
+
 O `cms-core` fornece uma base reutilizável para utilizadores, roles e permissões administrativas. O Core não depende de `App\Models\User`; o model é resolvido por `config('cms-core.user_model')` ou, em fallback, por `config('auth.providers.users.model')`.
 
 ## Convenção de permissões

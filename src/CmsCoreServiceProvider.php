@@ -2,17 +2,19 @@
 
 namespace Pcteckserv\CmsCore;
 
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Cache\RateLimiting\Limit;
-use Illuminate\Http\Request;
 use Pcteckserv\CmsCore\ActivityLog\ActivityLogger;
 use Pcteckserv\CmsCore\ActivityLog\Contracts\ActivityLoggerContract;
+use Pcteckserv\CmsCore\Consent\ConsentManager;
+use Pcteckserv\CmsCore\Consent\Contracts\ConsentManagerContract;
 use Pcteckserv\CmsCore\Console\BackupStatusCommand;
 use Pcteckserv\CmsCore\Console\CheckUpdatesCommand;
 use Pcteckserv\CmsCore\Console\CleanupBackupsCommand;
@@ -28,16 +30,19 @@ use Pcteckserv\CmsCore\Console\MaintenanceStatusCommand;
 use Pcteckserv\CmsCore\Console\OptimizeMediaCommand;
 use Pcteckserv\CmsCore\Console\PruneActivityLogsCommand;
 use Pcteckserv\CmsCore\Console\RunDueBackupsCommand;
-use Pcteckserv\CmsCore\Console\SyncPluginsCommand;
 use Pcteckserv\CmsCore\Console\SyncPermissionsCommand;
+use Pcteckserv\CmsCore\Console\SyncPluginsCommand;
 use Pcteckserv\CmsCore\Console\SyncVersionsCommand;
-use Pcteckserv\CmsCore\Consent\ConsentManager;
-use Pcteckserv\CmsCore\Consent\Contracts\ConsentManagerContract;
 use Pcteckserv\CmsCore\Contracts\CmsAccessUser;
 use Pcteckserv\CmsCore\Contracts\MediaUrlGenerator;
+use Pcteckserv\CmsCore\Customers\Customer;
+use Pcteckserv\CmsCore\Customers\CustomerModules;
 use Pcteckserv\CmsCore\Http\Middleware\HandleCmsMaintenanceMode;
 use Pcteckserv\CmsCore\Http\Middleware\InjectAdminShortcut;
 use Pcteckserv\CmsCore\Http\Middleware\InjectConsentManager;
+use Pcteckserv\CmsCore\Plugins\PluginCatalog;
+use Pcteckserv\CmsCore\Plugins\PluginManager;
+use Pcteckserv\CmsCore\Security\RequireTwoFactor;
 use Pcteckserv\CmsCore\Seo\Http\Middleware\HandleSeoRedirects;
 use Pcteckserv\CmsCore\Seo\Http\Middleware\TrackSeoNotFound;
 use Pcteckserv\CmsCore\Seo\Rules\MissingAltRule;
@@ -49,17 +54,16 @@ use Pcteckserv\CmsCore\Seo\Schema\OrganizationSchemaProvider;
 use Pcteckserv\CmsCore\Seo\Schema\WebPageSchemaProvider;
 use Pcteckserv\CmsCore\Seo\Schema\WebSiteSchemaProvider;
 use Pcteckserv\CmsCore\Seo\Support\SeoRegistry;
-use Pcteckserv\CmsCore\Plugins\PluginCatalog;
-use Pcteckserv\CmsCore\Plugins\PluginManager;
 use Pcteckserv\CmsCore\Services\Maintenance\MaintenanceModeManager;
 use Pcteckserv\CmsCore\Services\Maintenance\MaintenanceTemplateRegistry;
 use Pcteckserv\CmsCore\Services\Media\StorageMediaUrlGenerator;
-use Pcteckserv\CmsCore\Support\Permissions\PermissionRegistry;
 use Pcteckserv\CmsCore\Services\UserModelResolver;
+use Pcteckserv\CmsCore\Support\Navigation\AdminMenuRegistry;
+use Pcteckserv\CmsCore\Support\Permissions\PermissionRegistry;
 use Pcteckserv\CmsCore\Support\SiteOptions;
 use Pcteckserv\CmsCore\View\Components\CmsFooter;
-use Pcteckserv\CmsCore\View\Components\CmsMediaPicker;
 use Pcteckserv\CmsCore\View\Components\CmsIconPicker;
+use Pcteckserv\CmsCore\View\Components\CmsMediaPicker;
 use Pcteckserv\CmsCore\View\Components\CmsSeo;
 use Pcteckserv\CmsCore\View\Components\CmsSeoEditor;
 
@@ -71,7 +75,11 @@ class CmsCoreServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/cms-backups.php', 'cms-backups');
         $this->mergeConfigFrom(__DIR__.'/../config/cms-plugins.php', 'cms-plugins');
         $this->app->singleton(PermissionRegistry::class);
-        $this->app->singleton(\Pcteckserv\CmsCore\Support\Navigation\AdminMenuRegistry::class);
+        $this->app->singleton(CustomerModules::class);
+        config()->set('auth.providers.shop_customers', ['driver' => 'eloquent', 'model' => Customer::class]);
+        config()->set('auth.guards.shop_customer', ['driver' => 'session', 'provider' => 'shop_customers']);
+        config()->set('auth.passwords.shop_customers', ['provider' => 'shop_customers', 'table' => 'cms_shop_password_resets', 'expire' => 60, 'throttle' => 60]);
+        $this->app->singleton(AdminMenuRegistry::class);
         $this->app->singleton(SeoRegistry::class);
         $this->app->singleton(PluginCatalog::class);
         $this->app->singleton(PluginManager::class);
@@ -85,6 +93,7 @@ class CmsCoreServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
+        $this->loadRoutesFrom(__DIR__.'/../routes/customers.php');
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'cms-core');
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         Blade::anonymousComponentPath(__DIR__.'/../resources/views/components', 'cms');
@@ -95,6 +104,7 @@ class CmsCoreServiceProvider extends ServiceProvider
         Blade::component(CmsSeoEditor::class, 'cms-seo-editor');
         $this->callAfterResolving(Kernel::class, function (Kernel $kernel): void {
             $kernel->appendMiddlewareToGroup('web', HandleCmsMaintenanceMode::class);
+            $kernel->appendMiddlewareToGroup('web', RequireTwoFactor::class);
             $kernel->appendMiddlewareToGroup('web', InjectConsentManager::class);
             $kernel->appendMiddlewareToGroup('web', InjectAdminShortcut::class);
             $kernel->appendMiddlewareToGroup('web', HandleSeoRedirects::class);
@@ -164,6 +174,9 @@ class CmsCoreServiceProvider extends ServiceProvider
     private function registerCorePermissions(): void
     {
         $this->app->make(PermissionRegistry::class)->register([
+            'core.client.access' => ['label' => 'Aceder à própria área de cliente', 'group' => 'Clientes'],
+            'core.customers.view' => ['label' => 'Consultar clientes', 'group' => 'Clientes'],
+            'core.customers.manage' => ['label' => 'Gerir clientes, moradas e grupos', 'group' => 'Clientes'],
             'core.users.view' => ['label' => 'Ver utilizadores', 'group' => 'Utilizadores'],
             'core.users.create' => ['label' => 'Criar utilizadores', 'group' => 'Utilizadores'],
             'core.users.update' => ['label' => 'Editar utilizadores', 'group' => 'Utilizadores'],

@@ -89,7 +89,9 @@ class BackgroundTasksTest extends TestCase
             ->get(route('admin.dashboard'))
             ->assertOk()
             ->assertSee('Utilizadores')
-            ->assertSee('Lista')
+            ->assertSee('Utilizador')
+            ->assertSee('Cliente')
+            ->assertSee('Segurança da conta')
             ->assertSee('Regras de acesso');
     }
 

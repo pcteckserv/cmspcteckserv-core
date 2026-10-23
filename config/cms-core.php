@@ -6,6 +6,11 @@ return [
     'user_states' => ['active', 'inactive'],
     'users_per_page' => env('CMS_CORE_USERS_PER_PAGE', 15),
     'admin_timezone' => env('CMS_CORE_ADMIN_TIMEZONE', 'Europe/Lisbon'),
+    'customers' => [
+        'registration' => true,
+        'terms_url' => '/termos-e-condicoes',
+        'privacy_url' => '/politica-de-privacidade',
+    ],
 
     'assets' => [
         'placeholder_image' => 'vendor/cms-core/images/placeholder.webp',

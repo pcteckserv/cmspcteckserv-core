@@ -5,6 +5,7 @@
     <testsuites>
         <testsuite name="CMS Core">
             <directory>tests</directory>
+            <exclude>tests/Standalone</exclude>
         </testsuite>
     </testsuites>
     <php>

@@ -1,0 +1,2 @@
+@extends('cms-core::customers.layout')
+@section('content')<section><h1>Verificação em dois passos</h1><p>Introduza o código da aplicação autenticadora ou um código de recuperação.</p><form method="post" action="{{ route('security.verify') }}">@csrf<label>Código<input name="code" autocomplete="one-time-code" required maxlength="30" autofocus></label><button>Verificar</button></form></section>@endsection

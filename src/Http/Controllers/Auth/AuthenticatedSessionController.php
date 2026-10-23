@@ -8,12 +8,11 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Pcteckserv\CmsCore\ActivityLog\Contracts\ActivityLoggerContract;
+use Pcteckserv\CmsCore\Security\TwoFactor;
 
 class AuthenticatedSessionController extends Controller
 {
-    public function __construct(private readonly ActivityLoggerContract $activityLogger)
-    {
-    }
+    public function __construct(private readonly ActivityLoggerContract $activityLogger) {}
 
     public function create(): RedirectResponse|View
     {
@@ -62,6 +61,10 @@ class AuthenticatedSessionController extends Controller
         }
 
         $request->session()->regenerate();
+
+        if ($challenge = app(TwoFactor::class)->challengeIfNeeded($request, 'web')) {
+            return $challenge;
+        }
 
         $this->activityLogger->log(
             action: 'auth.login',

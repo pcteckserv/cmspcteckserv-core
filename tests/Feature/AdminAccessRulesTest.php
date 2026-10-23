@@ -18,7 +18,8 @@ class AdminAccessRulesTest extends TestCase
     {
         $admin = $this->superAdmin();
 
-        $this->assertSame(0, Permission::query()->count());
+        $this->assertDatabaseHas('cms_permissions', ['key' => 'core.client.access']);
+        $this->assertDatabaseHas('cms_roles', ['key' => 'ecommerce.manager']);
 
         $this->actingAs($admin)
             ->get(route('admin.roles.create'))
