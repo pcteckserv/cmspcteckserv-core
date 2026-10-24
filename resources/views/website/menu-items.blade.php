@@ -1,0 +1,1 @@
+<ul class="cms-menu-list">@foreach($items as $item)<li><a href="{{ $item['url'] }}" @if($item['new_tab']??false) target="_blank" rel="noopener noreferrer" @endif>{{ $item['label'] }}</a>@if($item['children']) @include('cms-core::website.menu-items',['items'=>$item['children']]) @endif</li>@endforeach</ul>

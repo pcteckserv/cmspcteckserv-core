@@ -98,6 +98,7 @@ class CmsCoreServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         Blade::anonymousComponentPath(__DIR__.'/../resources/views/components', 'cms');
         Blade::component(CmsFooter::class, 'cms-footer');
+        Blade::component(\Pcteckserv\CmsCore\View\Components\CmsMenu::class, 'cms-menu');
         Blade::component(CmsMediaPicker::class, 'cms-media-picker');
         Blade::component(CmsIconPicker::class, 'cms-icon-picker');
         Blade::component(CmsSeo::class, 'cms-seo');
@@ -106,6 +107,7 @@ class CmsCoreServiceProvider extends ServiceProvider
             $kernel->appendMiddlewareToGroup('web', HandleCmsMaintenanceMode::class);
             $kernel->appendMiddlewareToGroup('web', RequireTwoFactor::class);
             $kernel->appendMiddlewareToGroup('web', InjectConsentManager::class);
+            $kernel->appendMiddlewareToGroup('web', \Pcteckserv\CmsCore\Http\Middleware\InjectWebsiteStyle::class);
             $kernel->appendMiddlewareToGroup('web', InjectAdminShortcut::class);
             $kernel->appendMiddlewareToGroup('web', HandleSeoRedirects::class);
             $kernel->appendMiddlewareToGroup('web', TrackSeoNotFound::class);

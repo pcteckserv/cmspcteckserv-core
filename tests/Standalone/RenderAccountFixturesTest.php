@@ -5,8 +5,10 @@ namespace Pcteckserv\CmsCore\Tests;
 use Illuminate\Support\Facades\URL;
 use Pcteckserv\CmsCore\Http\Middleware\InjectAdminShortcut;
 use Pcteckserv\CmsCore\Http\Middleware\InjectConsentManager;
+use Pcteckserv\CmsCore\Models\Role;
 use Pcteckserv\CmsCore\Security\AccountFactor;
 use Pcteckserv\CmsCore\Security\TwoFactor;
+use Pcteckserv\CmsCore\Support\Website;
 
 require_once __DIR__.'/SharedCustomersTest.php';
 
@@ -35,6 +37,13 @@ class RenderAccountFixturesTest extends SharedCustomersTest
         AccountFactor::create(['guard' => 'shop_customer', 'account_id' => $customer->id, 'secret' => app(TwoFactor::class)->secret()]);
         foreach (['customer-profile' => '/cliente/perfil', 'customer-account' => '/cliente', 'customer-security' => '/seguranca/shop_customer', 'customer-addresses' => '/cliente/moradas'] as $file => $url) {
             file_put_contents($dir.'/'.$file.'.html', $this->get($url)->assertOk()->getContent());
+        }
+        $staff->cmsRoles()->sync([Role::firstOrCreate(['key' => 'core.super_admin'], ['name' => 'Administrador', 'is_protected' => true])->id]);
+        $this->actingAs($staff, 'web');
+        $website = app(Website::class);
+        $website->save('policy.privacy', "A sua privacidade\n\nTexto de exemplo para testar a apresentação.");
+        foreach (['website-accounts' => '/admin/website/accounts', 'website-policies' => '/admin/website/policies', 'website-menus' => '/admin/website/menus', 'website-style' => '/admin/website/style', 'website-policy' => '/politica-de-privacidade'] as $file => $url) {
+            file_put_contents($dir.'/'.$file.'.html', str_replace('</head>', $assets.'</head>', $this->get($url)->assertOk()->getContent()));
         }
     }
 }

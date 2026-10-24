@@ -1,6 +1,12 @@
 @extends('cms-core::admin.layouts.app', ['title' => 'Painel de Administração'])
 
 @section('content')
+    @can('core.site-options.view')
+    @php($missingPolicies=app(\Pcteckserv\CmsCore\Support\Website::class)->missingPolicies())
+    @if($missingPolicies)
+    <div class="alert alert-warning" role="alert"><strong>Políticas por preencher</strong><p class="mb-2">{{ implode(', ',array_values($missingPolicies)) }}.</p><a href="{{ route('admin.website.edit','policies') }}">Preencher nas Opções gerais</a></div>
+    @endif
+    @endcan
     @if ($maintenanceIsActive ?? false)
         <div class="alert alert-warning d-flex flex-column flex-lg-row align-items-lg-center gap-3 mb-4">
             <div>

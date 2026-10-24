@@ -28,7 +28,6 @@
                     @can('core.customers.view')
                         <a @class(['nav-link', 'active' => request()->routeIs('admin.customers.*')]) href="{{ route('admin.customers.index') }}">Cliente</a>
                     @endcan
-                    <a class="nav-link" href="{{ route('security.edit', 'web') }}">Segurança da conta</a>
                     @can('core.roles.view')
                         <a @class(['nav-link', 'active' => request()->routeIs('admin.roles.*')]) href="{{ route('admin.roles.index') }}">Regras de acesso</a>
                     @endcan
@@ -48,7 +47,7 @@
                     @endif
                 @endforeach
                 @canany(['core.site-options.view', 'footer.view-settings', 'seo.view', 'maintenance.view', 'core.smtp.view', 'consent.view'])
-                    @php($configMenuOpen = request()->routeIs('admin.site-options.*') || request()->routeIs('admin.footer.*') || request()->routeIs('admin.seo.*') || request()->routeIs('admin.maintenance.*') || request()->routeIs('admin.smtp-settings.*') || request()->routeIs('admin.consent.*'))
+                    @php($configMenuOpen = request()->routeIs('admin.site-options.*') || request()->routeIs('admin.website.*') || request()->routeIs('admin.footer.*') || request()->routeIs('admin.seo.*') || request()->routeIs('admin.maintenance.*') || request()->routeIs('admin.smtp-settings.*') || request()->routeIs('admin.consent.*'))
                     <button
                         @class(['nav-link cms-sidebar-menu-toggle text-start', 'active' => $configMenuOpen])
                         type="button"
@@ -61,7 +60,11 @@
                     </button>
                     <div @class(['collapse cms-sidebar-submenu', 'show' => $configMenuOpen]) id="cms-config-submenu">
                         @can('core.site-options.view')
-                            <a @class(['nav-link', 'active' => request()->routeIs('admin.site-options.*')]) href="{{ route('admin.site-options.edit') }}">Opções gerais</a>
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.site-options.*') || request()->is('admin/website/accounts','admin/website/policies')]) href="{{ route('admin.site-options.edit') }}">Opções gerais</a>
+                        @endcan
+                        @can('core.site-options.view')
+                            <a class="nav-link {{ request()->is('admin/website/menus')?'active':'' }}" href="{{ route('admin.website.edit','menus') }}">Menus</a>
+                            <a class="nav-link {{ request()->is('admin/website/style')?'active':'' }}" href="{{ route('admin.website.edit','style') }}">Estilo</a>
                         @endcan
                         @can('footer.view-settings')
                             <a @class(['nav-link', 'active' => request()->routeIs('admin.footer.*')]) href="{{ route('admin.footer.edit') }}">Footer</a>

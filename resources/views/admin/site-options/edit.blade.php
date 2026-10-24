@@ -12,6 +12,7 @@
         <div class="alert alert-success">{{ session('cms_site_options_success') }}</div>
     @endif
 
+    @include('cms-core::admin.site-options.tabs')
     <form class="bg-white border rounded-2 p-4 cms-settings-form" method="POST" action="{{ route('admin.site-options.update') }}" enctype="multipart/form-data">
         @csrf
         @method('PUT')

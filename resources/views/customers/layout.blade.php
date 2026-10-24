@@ -5,7 +5,7 @@
 @if(app(\Pcteckserv\CmsCore\Plugins\PluginManager::class)->isEnabled('ecommerce'))<a href="{{ route('customers.account') }}#customer-history-ecommerce">Encomendas</a>@endif
 @if(app(\Pcteckserv\CmsCore\Plugins\PluginManager::class)->isEnabled('agenda'))<a href="{{ route('customers.account') }}#customer-history-agenda">Agendamentos</a>@endif
 </nav><details class="customer-account-menu"><summary aria-label="Menu da conta de {{ auth('shop_customer')->user()->name }}">@include('cms-core::components.icons.profile')<span>{{ auth('shop_customer')->user()->name }}</span></summary><div class="customer-account-dropdown"><strong>{{ auth('shop_customer')->user()->name }}</strong><a href="{{ route('customers.profile') }}">O meu perfil</a><a href="{{ route('customers.addresses') }}">Moradas</a><a href="{{ route('security.edit','shop_customer') }}">Segurança da conta</a><form method="post" action="{{ route('customers.logout') }}">@csrf<button>Terminar sessão</button></form></div></details>
-@else<a href="{{ route('customers.login') }}">Entrar</a><a href="{{ route('customers.register') }}">Criar conta</a></nav>@endif</header>
+@else<a href="{{ route('customers.login') }}">Entrar</a>@if(app(\Pcteckserv\CmsCore\Support\Website::class)->registration())<a href="{{ route('customers.register') }}">Criar conta</a>@endif</nav>@endif</header>
 @if(session('status'))<p class="alert" role="status">{{ session('status') }}</p>@endif
 @if($errors->any())<div class="error" role="alert">@foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>@endif
 @yield('content')</main></body></html>

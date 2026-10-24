@@ -7,6 +7,6 @@
 <label>Email<input type="email" name="email" value="{{ old('email', $email ?? '') }}" autocomplete="email" required></label>
 @if($mode!=='forgot')<label>Palavra-passe<input type="password" name="password" autocomplete="{{ $mode==='login'?'current-password':'new-password' }}" required @if($mode!=='login') minlength="12" @endif></label>@endif
 @if(in_array($mode,['register','reset']))<label>Confirmar palavra-passe<input type="password" name="password_confirmation" autocomplete="new-password" required></label>@endif
-@if($mode==='register')<label><input type="checkbox" name="terms" value="1" required> Aceito os <a href="{{ config('cms-core.customers.terms_url', '/termos-e-condicoes') }}">termos e condições</a> e a <a href="{{ config('cms-core.customers.privacy_url', '/politica-de-privacidade') }}">política de privacidade</a>.</label>@endif
+@if($mode==='register')<label><input type="checkbox" name="terms" value="1" required> Tomei conhecimento da <a href="{{ route('website.policy','politica-de-privacidade') }}">política de privacidade</a>@if(app(\Pcteckserv\CmsCore\Support\Website::class)->commerce()) e aceito os <a href="{{ route('website.policy','termos-e-condicoes') }}">termos e condições</a>@endif.</label>@endif
 <button>Continuar</button></form><a href="{{ route('customers.password.forgot') }}">Recuperar palavra-passe</a></section>
 @endsection

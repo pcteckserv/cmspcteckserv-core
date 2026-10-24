@@ -32,6 +32,9 @@ use Pcteckserv\CmsCore\Seo\Http\Controllers\SeoSettingsController;
 use Pcteckserv\CmsCore\Seo\Http\Controllers\SitemapController;
 
 Route::middleware('web')->group(function (): void {
+    Route::get('/{slug}', [\Pcteckserv\CmsCore\Http\Controllers\WebsitePublicController::class, 'policy'])->whereIn('slug', array_values(\Pcteckserv\CmsCore\Support\Website::SLUGS))->name('website.policy');
+    Route::get('/menus/{slug}', [\Pcteckserv\CmsCore\Http\Controllers\WebsitePublicController::class, 'menu'])->name('website.menu');
+    Route::get('/site-custom.css', [\Pcteckserv\CmsCore\Http\Controllers\WebsitePublicController::class, 'css'])->name('website.css');
     Route::get('/favicon.ico', function () {
         $path = __DIR__.'/../resources/images/favicon.png';
 
@@ -93,6 +96,10 @@ Route::middleware('web')->group(function (): void {
         ->group(function (): void {
             Route::get('/', DashboardController::class)->name('dashboard');
             Route::get('/site-options', [SiteOptionsController::class, 'edit'])->name('site-options.edit');
+            Route::get('/website/{section}', [\Pcteckserv\CmsCore\Http\Controllers\Admin\WebsiteController::class, 'edit'])->name('website.edit');
+            Route::get('/website-admin.js', fn () => response()->file(__DIR__.'/../resources/js/website-admin.js', ['Content-Type' => 'application/javascript; charset=UTF-8']))->name('website.admin-script');
+            Route::put('/website/{section}', [\Pcteckserv\CmsCore\Http\Controllers\Admin\WebsiteController::class, 'update'])->name('website.update');
+            Route::delete('/website-menus/{slug}', [\Pcteckserv\CmsCore\Http\Controllers\Admin\WebsiteController::class, 'destroy'])->name('website.menus.destroy');
             Route::put('/site-options', [SiteOptionsController::class, 'update'])->name('site-options.update');
             Route::get('/footer', [FooterSettingsController::class, 'edit'])->name('footer.edit');
             Route::put('/footer', [FooterSettingsController::class, 'update'])->name('footer.update');
