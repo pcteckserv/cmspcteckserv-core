@@ -17,13 +17,13 @@ class InstalledPluginUpdatesTest extends TestCase
     {
         require_once dirname(__DIR__, 2).'/src/Plugins/PluginCatalog.php';
         require_once dirname(__DIR__, 2).'/src/Updates/PackageVersionRegistry.php';
-        config(['cms-plugins.plugins' => [], 'cms-core.updates.packages' => []]);
+        config(['cms-plugins.plugins' => [], 'cms-core.updates.packages' => [], 'cms-core.updates.starter.repository' => null]);
         $plugin = InstalledPlugin::query()->create([
-            'slug' => 'contact-forms', 'name' => 'pcteckserv/cms-contact-forms',
-            'package' => 'pcteckserv/cms-contact-forms', 'label' => 'Contacto',
+            'slug' => 'updates-fixture', 'name' => 'tests/updates-fixture',
+            'package' => 'tests/updates-fixture', 'label' => 'Plugin de teste',
             'status' => 'disabled', 'installed_version' => 'dev-main',
         ]);
-        $catalog = new PluginCatalog();
+        $catalog = new PluginCatalog;
         $this->assertContains($plugin->package, $catalog->packages());
         $checker = $this->mock(GitTagUpdateChecker::class);
         $checker->shouldReceive('latestVersion')->once()->with($plugin->package)->andReturn('v1.0.1');

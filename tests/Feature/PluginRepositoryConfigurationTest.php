@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use Illuminate\Support\Facades\File;
+use Pcteckserv\CmsCore\Console\SyncPermissionsCommand;
 use Pcteckserv\CmsCore\Plugins\PluginInstaller;
 use Pcteckserv\CmsCore\Plugins\PluginRepository;
+use Pcteckserv\CmsCore\Services\PermissionSynchronizer;
 use ReflectionMethod;
 use Tests\TestCase;
 
@@ -14,10 +16,10 @@ class PluginRepositoryConfigurationTest extends TestCase
     {
         require_once dirname(__DIR__, 2).'/src/Console/SyncPermissionsCommand.php';
 
-        $this->mock(\Pcteckserv\CmsCore\Services\PermissionSynchronizer::class)
+        $this->mock(PermissionSynchronizer::class)
             ->shouldReceive('sync')->once()->andReturn(0);
 
-        $this->artisan(\Pcteckserv\CmsCore\Console\SyncPermissionsCommand::NAME)
+        $this->artisan(SyncPermissionsCommand::NAME)
             ->assertExitCode(0);
     }
 
@@ -28,15 +30,16 @@ class PluginRepositoryConfigurationTest extends TestCase
         require_once dirname(__DIR__, 2).'/src/Plugins/PluginInstaller.php';
 
         $originalBasePath = $this->app->basePath();
+        $composerPhar = base_path('composer.phar');
         $directory = sys_get_temp_dir().'/cms-plugin-repository-'.bin2hex(random_bytes(8));
         File::makeDirectory($directory, 0755, true);
         File::put($directory.'/composer.json', json_encode(['name' => 'tests/site'], JSON_THROW_ON_ERROR));
-        config(['cms-core.updates.github_token' => null]);
+        config(['cms-core.updates.github_token' => null, 'cms-core.updates.composer_binary' => $composerPhar]);
 
         try {
             $this->app->setBasePath($directory);
             $method = new ReflectionMethod(PluginInstaller::class, 'configureRepository');
-            $process = $method->invoke(new PluginInstaller(), 'contact-forms', 'vcs', 'https://github.com/pcteckserv/plugin.git');
+            $process = $method->invoke(new PluginInstaller, 'contact-forms', 'vcs', 'https://github.com/pcteckserv/plugin.git');
 
             $this->assertTrue($process->isSuccessful(), $process->getErrorOutput());
             $configuration = json_decode(File::get($directory.'/composer.json'), true, 512, JSON_THROW_ON_ERROR);
@@ -45,7 +48,7 @@ class PluginRepositoryConfigurationTest extends TestCase
             $this->assertSame('https://github.com/pcteckserv/plugin.git', $repository['url']);
 
             $pathProcess = $method->invoke(
-                new PluginInstaller(),
+                new PluginInstaller,
                 'contact-forms',
                 'path',
                 $directory.'/plugin',
@@ -79,13 +82,13 @@ class PluginRepositoryConfigurationTest extends TestCase
             File::put($directory.'/.git/shallow', "commit\n");
             $this->assertSame(
                 ['git', '-C', $directory, 'fetch', '--unshallow', 'origin'],
-                $method->invoke(new PluginRepository(), $directory),
+                $method->invoke(new PluginRepository, $directory),
             );
 
             File::delete($directory.'/.git/shallow');
             $this->assertSame(
                 ['git', '-C', $directory, 'fetch', 'origin'],
-                $method->invoke(new PluginRepository(), $directory),
+                $method->invoke(new PluginRepository, $directory),
             );
         } finally {
             File::deleteDirectory($directory);

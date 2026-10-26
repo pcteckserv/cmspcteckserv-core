@@ -6,6 +6,34 @@ use RuntimeException;
 
 class ComposerRepositoryCleaner
 {
+    public function preferRemotePackage(string $package, string $url): void
+    {
+        $path = base_path('composer.json');
+        $manifest = json_decode((string) file_get_contents($path), true, flags: JSON_THROW_ON_ERROR);
+        $repositories = $manifest['repositories'] ?? [];
+
+        foreach ($repositories as &$repository) {
+            if (is_array($repository) && ($repository['type'] ?? null) === 'path') {
+                $repository['exclude'] = array_values(array_unique([
+                    ...(array) ($repository['exclude'] ?? []), $package,
+                ]));
+            }
+        }
+        unset($repository);
+
+        $remote = ['type' => 'vcs', 'url' => $url, 'only' => [$package]];
+        $manifest['repositories'] = array_is_list($repositories)
+            ? [$remote, ...$repositories]
+            : ['cms-core-updates' => $remote, ...array_diff_key($repositories, ['cms-core-updates' => true])];
+        $temporaryPath = $path.'.tmp-'.bin2hex(random_bytes(6));
+        $encoded = json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR).PHP_EOL;
+
+        if (file_put_contents($temporaryPath, $encoded, LOCK_EX) === false || ! rename($temporaryPath, $path)) {
+            @unlink($temporaryPath);
+            throw new RuntimeException('Não foi possível configurar o repositório remoto do Core no composer.json. Verifique as permissões de escrita.');
+        }
+    }
+
     public function removeInvalidPathRepositories(bool $recoverInstalledPackages = false): void
     {
         $manifestPath = base_path('composer.json');
@@ -59,7 +87,7 @@ class ComposerRepositoryCleaner
     }
 
     /**
-     * @param array<int|string, mixed> $repositories
+     * @param  array<int|string, mixed>  $repositories
      * @return array<int|string, mixed>
      */
     private function recoverInstalledPathPackages(array $repositories): array
@@ -80,7 +108,8 @@ class ComposerRepositoryCleaner
 
             $relativePath = 'packages/'.$name;
 
-            if (! is_dir(base_path($relativePath)) || $this->hasRepositoryFor($repositories, $relativePath)) {
+            if (! is_dir(base_path($relativePath)) || $this->hasRepositoryFor($repositories, $relativePath)
+                || $this->hasExplicitRemoteRepository($repositories, $name)) {
                 continue;
             }
 
@@ -101,6 +130,18 @@ class ComposerRepositoryCleaner
         }
 
         return $repositories;
+    }
+
+    private function hasExplicitRemoteRepository(array $repositories, string $package): bool
+    {
+        foreach ($repositories as $repository) {
+            if (is_array($repository) && in_array($repository['type'] ?? null, ['vcs', 'git', 'github'], true)
+                && in_array($package, (array) ($repository['only'] ?? []), true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** @param array<int|string, mixed> $repositories */

@@ -24,7 +24,8 @@ class AdminAccessRulesTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.roles.create'))
             ->assertOk()
-            ->assertSee('Logs de atividade')
+            ->assertSee('Auditoria')
+            ->assertSee('Ver logs de atividade')
             ->assertSee('Consentimentos')
             ->assertSee('SEO')
             ->assertSee('SMTP')
@@ -105,11 +106,14 @@ class AdminAccessRulesTest extends TestCase
     {
         $admin = $this->superAdmin();
 
-        $this->actingAs($admin)
+        $response = $this->actingAs($admin)
             ->get(route('admin.users.create'))
             ->assertOk()
-            ->assertSee('Ativar permissões diretas')
-            ->assertSee('data-cms-direct-permissions-panel hidden', false);
+            ->assertSee('Ativar permissões diretas');
+
+        $document = new \DOMDocument;
+        @$document->loadHTML($response->getContent());
+        $this->assertSame(1, (new \DOMXPath($document))->query('//*[@data-cms-direct-permissions-panel and @hidden]')->length);
     }
 
     public function test_formulario_de_utilizador_disponibiliza_roles_predefinidas(): void
@@ -129,11 +133,18 @@ class AdminAccessRulesTest extends TestCase
     {
         $admin = $this->superAdmin();
 
-        $this->actingAs($admin)
+        $response = $this->actingAs($admin)
             ->get(route('admin.users.create'))
             ->assertOk()
-            ->assertSee('type="radio" name="role_id"', false)
             ->assertDontSee('name="roles[]"', false);
+
+        $document = new \DOMDocument;
+        @$document->loadHTML($response->getContent());
+        $roles = (new \DOMXPath($document))->query('//input[@name="role_id"]');
+        $this->assertGreaterThan(0, $roles->length);
+        foreach ($roles as $role) {
+            $this->assertSame('radio', $role->getAttribute('type'));
+        }
     }
 
     public function test_formulario_de_utilizador_expoe_permissoes_da_role_para_permissoes_diretas(): void

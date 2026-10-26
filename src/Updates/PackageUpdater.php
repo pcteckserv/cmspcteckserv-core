@@ -2,13 +2,14 @@
 
 namespace Pcteckserv\CmsCore\Updates;
 
-use Symfony\Component\Process\Process;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Pcteckserv\CmsCore\Models\InstalledPlugin;
-use Pcteckserv\CmsCore\Plugins\PluginRepository;
 use Pcteckserv\CmsCore\Plugins\InstalledPluginVersionReader;
+use Pcteckserv\CmsCore\Plugins\PluginRepository;
 use Pcteckserv\CmsCore\Support\ComposerCommand;
+use Pcteckserv\CmsCore\Support\ComposerRepositoryCleaner;
+use Symfony\Component\Process\Process;
 use Throwable;
 
 class PackageUpdater
@@ -22,7 +23,7 @@ class PackageUpdater
         private readonly ?ComposerInstalledPackageReader $installedPackageReader = null,
         private readonly ?InstalledPluginVersionReader $installedPluginVersionReader = null,
     ) {
-        $this->composerCommand = $composerCommand ?? new ComposerCommand();
+        $this->composerCommand = $composerCommand ?? new ComposerCommand;
     }
 
     public function update(string $package): UpdateResult
@@ -38,6 +39,17 @@ class PackageUpdater
         }
 
         $availableVersion = $this->availableVersion($package);
+        $remoteCore = $package === 'pcteckserv/cms-core'
+            && ($installedPackage['dist']['type'] ?? null) === 'path'
+            && is_dir(base_path('packages/'.$package));
+
+        if ($remoteCore) {
+            $repository = config('cms-core.updates.repositories.'.$package);
+            if (! is_string($repository) || trim($repository) === '') {
+                return new UpdateResult(false, 'Configure CMS_CORE_REPOSITORY_URL para descarregar a atualização do Core.');
+            }
+            (new ComposerRepositoryCleaner)->preferRemotePackage($package, $repository);
+        }
         $plugin = InstalledPlugin::query()->where('package', $package)->whereNotNull('installed_version')->first();
         $isPathPlugin = $plugin !== null && ($plugin->metadata['repository_type'] ?? null) === 'path';
 
@@ -64,7 +76,7 @@ class PackageUpdater
             $availableVersion = $source->version;
         }
 
-        if (! $isPathPlugin
+        if (! $isPathPlugin && ! $remoteCore
             && $previousVersion !== null
             && ($installedPackage['dist']['type'] ?? null) === 'path'
             && is_string($availableVersion)
@@ -100,7 +112,7 @@ class PackageUpdater
                 return new UpdateResult(false, 'Composer falhou ao atualizar o plugin a partir da origem atualizada: '.$this->processOutput($composer));
             }
 
-            $versionReader = $this->installedPluginVersionReader ?? new InstalledPluginVersionReader();
+            $versionReader = $this->installedPluginVersionReader ?? new InstalledPluginVersionReader;
             $installedManifestVersion = $versionReader->read($package);
 
             if ($installedManifestVersion !== $availableVersion) {
@@ -139,7 +151,7 @@ class PackageUpdater
         }
 
         if (! $isPathPlugin && $previousVersion !== null && $updatedVersion === $previousVersion
-            && ($installedPackage['dist']['type'] ?? null) !== 'path'
+            && ($remoteCore || ($installedPackage['dist']['type'] ?? null) !== 'path')
             && is_string($availableVersion)
             && version_compare($this->normalizeVersion($availableVersion), $this->normalizeVersion($previousVersion), '>')) {
             $composer = $this->run($this->composerCommand->build([
@@ -208,7 +220,7 @@ class PackageUpdater
     }
 
     /**
-     * @param array<int, string> $command
+     * @param  array<int, string>  $command
      */
     protected function run(array $command): Process
     {

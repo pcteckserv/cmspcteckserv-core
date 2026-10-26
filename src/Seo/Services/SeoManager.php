@@ -16,17 +16,17 @@ class SeoManager
         private readonly SiteOptions $siteOptions,
         private readonly SeoRegistry $registry,
         private readonly TemplateVariableResolver $variables,
-    ) {
-    }
+    ) {}
 
     public function for(mixed $subject = null, array $overrides = []): ResolvedSeo
     {
         $global = $this->globalDefaults();
         $module = $this->resolveFromRegisteredResolvers($subject);
         $model = $this->resolveFromModel($subject);
-        $data = array_replace($global, $module, $model, array_filter($overrides, static fn ($value) => $value !== null && $value !== ''));
+        $page = array_replace($module, $model, array_filter($overrides, static fn ($value) => $value !== null && $value !== ''));
+        $data = array_replace($global, $page);
 
-        $pageTitle = $data['title'] ?: data_get($subject, 'title', data_get($subject, 'name', $global['title']));
+        $pageTitle = ($page['title'] ?? null) ?: (data_get($subject, 'title') ?: data_get($subject, 'name', $global['title']));
         $template = $this->siteOptions->get('seo_title_template', '{page_title} | {site_name}');
         $title = $this->variables->resolve($template, $subject, ['page_title' => $pageTitle]);
         $description = $data['description'] ?: $global['description'];
@@ -86,7 +86,7 @@ class SeoManager
 
         $seo = $subject->relationLoaded('seo') ? $subject->getRelation('seo') : $subject->seo()->first();
 
-        return $seo instanceof SeoMeta ? array_filter($seo->only((new SeoMeta())->getFillable()), static fn ($value) => $value !== null && $value !== '') : [];
+        return $seo instanceof SeoMeta ? array_filter($seo->only((new SeoMeta)->getFillable()), static fn ($value) => $value !== null && $value !== '') : [];
     }
 
     private function resolveFromRegisteredResolvers(mixed $subject): array

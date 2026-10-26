@@ -1,5 +1,34 @@
 # Publicação de versões do Core
 
+## v2.14.3
+
+Corrige a atualização do Core em instalações publicadas a partir de um pacote
+com repositories Composer `path`. A cópia em `packages/pcteckserv/cms-core`
+serve para a instalação inicial; a atualização passa a dar prioridade ao
+repositório VCS definido em `CMS_CORE_REPOSITORY_URL`, limitado ao Core.
+As origens locais deixam de fornecer esse package e a recuperação automática
+não volta a introduzir a versão antiga do lock. Os plugins locais mantêm as
+suas origens e versões. A versão e os ficheiros instalados são confirmados.
+
+Corrige também o fallback SEO: o título da página prevalece sobre o título
+global quando não existe título SEO explícito. Mantém a prioridade de overrides
+e metadados SEO. Atualiza os testes de permissões para verificar o DOM e os
+rótulos atuais, e isola os testes de plugins/Composer da configuração do site.
+
+O teste de instalação publicada usa Composer e um repositório Git local real,
+com duas tags e conteúdos diferentes, confirmando a atualização do código e
+a preservação de um plugin local. Não executa migrations numa base real.
+
+Para desbloquear instalações com o atualizador anterior, substituir primeiro
+`vendor/pcteckserv/cms-core/src/Updates/PackageUpdater.php` e
+`vendor/pcteckserv/cms-core/src/Support/ComposerRepositoryCleaner.php` pelas
+versões desta release. Depois executar a atualização normal em `/admin/updates`.
+Esta reparação não altera o número de versão instalado: a confirmação da nova
+versão só acontece depois do Composer instalar os ficheiros do repositório.
+
+Validação final: suite completa do Core com 156 testes e 664 asserções,
+sem falhas ou erros; site anfitrião com 45 testes e 186 asserções aprovados.
+
 ## v2.14.2
 
 A página `/admin/updates` identifica o projeto pelo `APP_NAME` (`app.name`)
