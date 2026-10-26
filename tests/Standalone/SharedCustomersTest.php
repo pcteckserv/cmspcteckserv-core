@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Orchestra\Testbench\TestCase;
 use Pcteckserv\CmsCore\CmsCoreServiceProvider;
 use Pcteckserv\CmsCore\Contracts\CmsAccessUser;
@@ -76,6 +77,42 @@ class SharedCustomersTest extends TestCase
         $this->actingAs($this->manager(), 'web')->get('/admin/clientes')->assertOk()->assertSee('Maria');
         $this->get('/admin/users')->assertForbidden();
         $this->get('/admin/clientes/'.$c->id)->assertOk()->assertSee('Moradas guardadas');
+    }
+
+    public function test_customer_role_upgrade_uses_batches_and_preserves_existing_accounts(): void
+    {
+        $hash = Hash::make('password-test-123');
+        $rows = [];
+        for ($i = 0; $i < 600; $i++) {
+            $rows[] = ['name' => 'Cliente '.$i, 'email' => 'legacy'.$i.'@example.test', 'password' => $hash, 'active' => true];
+        }
+        DB::table('cms_shop_customers')->insert($rows);
+        DB::enableQueryLog();
+        $migration = require __DIR__.'/../../database/migrations/2026_10_23_231000_add_customer_access_roles.php';
+        $migration->up();
+        $inserts = collect(DB::getQueryLog())->filter(fn ($query) => str_starts_with(strtolower($query['query']), 'insert') && str_contains($query['query'], 'cms_role_user'));
+        DB::disableQueryLog();
+        $this->assertCount(2, $inserts);
+        $this->assertSame(600, DB::table('cms_role_user')->where('user_type', Customer::class)->count());
+        $this->assertSame(600, Customer::where('password', $hash)->count());
+        $migration->up();
+        $this->assertSame(600, DB::table('cms_role_user')->where('user_type', Customer::class)->count());
+    }
+
+    public function test_upgrade_from_legacy_customer_tables_preserves_credentials_addresses_and_login(): void
+    {
+        $customer = $this->customer();
+        $hash = $customer->password;
+        $address = Address::create(['customer_id' => $customer->id, 'label' => 'Casa', 'details' => ['city' => 'Porto']]);
+        $migration = require __DIR__.'/../../database/migrations/2026_10_23_230000_centralize_customers.php';
+        $migration->down();
+        Schema::table('cms_shop_customers', fn ($table) => $table->dropColumn('company'));
+        $migration->up();
+        $this->assertSame($hash, $customer->fresh()->password);
+        $this->assertSame($customer->id, $address->fresh()->customer_id);
+        $this->post('/cliente/entrar', ['email' => $customer->email, 'password' => 'password-test-123'])->assertSessionHasNoErrors();
+        $this->assertAuthenticatedAs($customer, 'shop_customer');
+        $this->get('/cliente/moradas')->assertOk()->assertSee('Porto');
     }
 
     public function test_contact_resolution_does_not_login_or_overwrite_existing_customer(): void

@@ -62,10 +62,6 @@
                         @can('core.site-options.view')
                             <a @class(['nav-link', 'active' => request()->routeIs('admin.site-options.*') || request()->is('admin/website/accounts','admin/website/policies')]) href="{{ route('admin.site-options.edit') }}">Opções gerais</a>
                         @endcan
-                        @can('core.site-options.view')
-                            <a class="nav-link {{ request()->is('admin/website/menus')?'active':'' }}" href="{{ route('admin.website.edit','menus') }}">Menus</a>
-                            <a class="nav-link {{ request()->is('admin/website/style')?'active':'' }}" href="{{ route('admin.website.edit','style') }}">Estilo</a>
-                        @endcan
                         @can('footer.view-settings')
                             <a @class(['nav-link', 'active' => request()->routeIs('admin.footer.*')]) href="{{ route('admin.footer.edit') }}">Footer</a>
                         @endcan

@@ -42,7 +42,7 @@ class RenderAccountFixturesTest extends SharedCustomersTest
         $this->actingAs($staff, 'web');
         $website = app(Website::class);
         $website->save('policy.privacy', "A sua privacidade\n\nTexto de exemplo para testar a apresentação.");
-        foreach (['website-accounts' => '/admin/website/accounts', 'website-policies' => '/admin/website/policies', 'website-menus' => '/admin/website/menus', 'website-style' => '/admin/website/style', 'website-policy' => '/politica-de-privacidade'] as $file => $url) {
+        foreach (['website-accounts' => '/admin/website/accounts', 'website-policies' => '/admin/website/policies', 'website-policy' => '/politica-de-privacidade'] as $file => $url) {
             file_put_contents($dir.'/'.$file.'.html', str_replace('</head>', $assets.'</head>', $this->get($url)->assertOk()->getContent()));
         }
     }

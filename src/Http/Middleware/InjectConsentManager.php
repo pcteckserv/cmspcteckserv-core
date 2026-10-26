@@ -30,7 +30,9 @@ class InjectConsentManager
             $content .= $markup;
         }
 
+        $original = $response->original;
         $response->setContent($content);
+        $response->original = $original;
 
         return $response;
     }

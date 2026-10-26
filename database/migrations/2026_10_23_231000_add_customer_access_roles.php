@@ -20,10 +20,10 @@ return new class extends Migration
         }
         $client = Role::firstOrCreate(['key' => 'core.client'], ['name' => 'Cliente', 'is_protected' => true]);
         $client->permissions()->syncWithoutDetaching(Permission::where('key', 'core.client.access')->pluck('id')->all());
-        DB::table('cms_shop_customers')->orderBy('id')->chunkById(500, function ($customers) use ($client) {
-            foreach ($customers as $customer) {
-                DB::table('cms_role_user')->insertOrIgnore(['role_id' => $client->id, 'user_id' => $customer->id, 'user_type' => Customer::class]);
-            }
+        DB::table('cms_shop_customers')->select('id')->orderBy('id')->chunkById(500, function ($customers) use ($client) {
+            DB::table('cms_role_user')->insertOrIgnore($customers->map(fn ($customer) => [
+                'role_id' => $client->id, 'user_id' => $customer->id, 'user_type' => Customer::class,
+            ])->all());
         });
         $manager = Role::firstOrCreate(['key' => 'ecommerce.manager'], ['name' => 'Gestor de loja', 'is_protected' => false]);
         $keys = ['core.customers.view', 'core.customers.manage', 'ecommerce.catalog.view', 'ecommerce.catalog.manage', 'ecommerce.orders.view', 'ecommerce.orders.manage', 'ecommerce.shipments.manage', 'ecommerce.shipping.manage', 'ecommerce.coupons.manage', 'ecommerce.reports.view', 'ecommerce.google.view'];

@@ -13,32 +13,11 @@ O painel disponibiliza um iframe HTML para incorporar cada documento numa págin
 O início da administração assinala as políticas por preencher. Os termos e
 reembolsos apenas entram nesta lista quando o Ecommerce está ativo.
 
-Configurações → Menus permite criar, editar e eliminar menus, com ligações,
-ordenação por arrasto ou botões, submenus e abertura num novo separador.
-O catálogo permite pesquisar e adicionar várias ligações de uma vez. Os plugins
-registam fontes de ligações em `MenuLinkRegistry`; o Ecommerce disponibiliza
-loja, carrinho, promoções, produtos, categorias, etiquetas e marcas.
-Pode duplicar ramos, remover seleções, anular operações e pré-visualizar a
-estrutura antes de guardar. Email (`mailto:`), telefone (`tel:`), título,
-descrição, classes CSS e relação da ligação são opcionais. Cada localização
-Cabeçalho/Rodapé recebe um menu; atribuir outro mantém o anterior como personalizado. As localizações
-Cabeçalho e Rodapé são usadas por temas que renderizem o componente Blade:
-
-```blade
-<x-cms-menu slug="principal" />
-<x-cms-menu location="header" />
-<x-cms-menu location="footer" />
-```
-
-O endereço `/menus/{identificador}` e o iframe fornecido no painel permitem
-usar um menu numa página HTML. As localizações não substituem automaticamente
-os menus próprios de temas existentes. URLs javascript/data e ciclos na
-hierarquia são rejeitados no servidor.
-
-Configurações → Estilo guarda CSS adicional em `/site-custom.css`, carregado
-depois do CSS do tema nas respostas HTML públicas que contenham `</head>` e
-usem o middleware web. Não altera os ficheiros de origem do tema nem o painel.
-Limpar e guardar o campo remove as personalizações.
+Os menus e o CSS pertencem ao tema de cada site, em `resources/views`,
+`resources/css` e `resources/js`. Os editores globais de menus e estilos
+foram removidos em 2.16. A migração elimina apenas as opções `website.menus`
+e `website.css`; a tabela partilhada `cms_site_options` e as restantes
+configurações são preservadas. Não há tabelas exclusivas destes editores.
 
 Os novos valores são guardados em `cms_site_options`, com prefixo `website.`.
 Na ausência de uma escolha global, as opções antigas da loja de registo,

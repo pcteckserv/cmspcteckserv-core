@@ -41,9 +41,7 @@ Route::get('/storage/'.trim((string) config('cms-core.media.directory', 'cms/med
     ->where('path', '.+')->name('cms-core.media.public');
 
 Route::middleware('web')->group(function (): void {
-    Route::get('/{slug}', [WebsitePublicController::class, 'policy'])->whereIn('slug', array_values(Website::SLUGS))->name('website.policy');
-    Route::get('/menus/{slug}', [WebsitePublicController::class, 'menu'])->name('website.menu');
-    Route::get('/site-custom.css', [WebsitePublicController::class, 'css'])->name('website.css');
+    Route::get('/{slug}', [WebsitePublicController::class, 'policy'])->whereIn('slug', array_values(Website::SLUGS))->fallback()->name('website.policy');
     Route::get('/favicon.ico', function () {
         $path = __DIR__.'/../resources/images/favicon.png';
 
@@ -106,10 +104,7 @@ Route::middleware('web')->group(function (): void {
             Route::get('/', DashboardController::class)->name('dashboard');
             Route::get('/site-options', [SiteOptionsController::class, 'edit'])->name('site-options.edit');
             Route::get('/website/{section}', [WebsiteController::class, 'edit'])->name('website.edit');
-            Route::get('/website-admin.js', fn () => response()->file(__DIR__.'/../resources/js/website-admin.js', ['Content-Type' => 'application/javascript; charset=UTF-8']))->name('website.admin-script');
-            Route::get('/website-admin.css', fn () => response()->file(__DIR__.'/../resources/css/website-admin.css', ['Content-Type' => 'text/css; charset=UTF-8']))->name('website.admin-style');
             Route::put('/website/{section}', [WebsiteController::class, 'update'])->name('website.update');
-            Route::delete('/website-menus/{slug}', [WebsiteController::class, 'destroy'])->name('website.menus.destroy');
             Route::put('/site-options', [SiteOptionsController::class, 'update'])->name('site-options.update');
             Route::get('/footer', [FooterSettingsController::class, 'edit'])->name('footer.edit');
             Route::put('/footer', [FooterSettingsController::class, 'update'])->name('footer.update');

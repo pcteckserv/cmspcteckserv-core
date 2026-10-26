@@ -1,5 +1,22 @@
 # Publicação de versões do Core
 
+## v2.16.0
+
+Remove a gestão global de menus e estilos, incluindo editores, componentes,
+rotas públicas e injeção de CSS. A migração elimina apenas website.menus e
+website.css da tabela partilhada cms_site_options; preserva políticas, registo,
+rodapé e clientes. Os temas de cada site continuam responsáveis por navegação
+e apresentação. Não usar esta versão com temas que chamem o antigo x-cms-menu.
+
+Mantém os clientes independentes do Ecommerce e os nomes físicos históricos
+para preservar contas e referências. A atribuição inicial de papéis de cliente
+usa lotes de 500 registos, sem alterar palavras-passe ou moradas.
+
+As páginas legais do Core passam a rotas de recurso: páginas do tema têm
+prioridade, também com route cache. Os middlewares de consentimento e atalho
+administrativo preservam a vista original ao modificar o HTML da resposta.
+Consulte [Compatibilidade das atualizações](site-upgrades.md).
+
 ## v2.15.0
 
 Reorganiza o editor de menus com catálogo de ligações extensível pelos plugins,

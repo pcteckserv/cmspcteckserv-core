@@ -10,7 +10,6 @@
         style="--cms-footer-background: {{ $footer['background_color'] }}; --cms-footer-text: {{ $footer['text_color'] }}; --cms-footer-secondary-text: {{ $footer['secondary_text_color'] }}; --cms-footer-padding-y: {{ $footer['padding_y'] }}; --cms-footer-padding-x: {{ $footer['padding_x'] }}; --cms-footer-max-width: {{ $footer['max_width'] }}; --cms-footer-logo-height: {{ $footer['pcteckserv_logo_height'] }}; --cms-footer-logo-max-width: {{ $footer['pcteckserv_logo_max_width'] }};"
         {!! $attributes !!}
     >
-        <div style="max-width:var(--cms-footer-max-width);margin:0 auto 16px"><x-cms-menu location="footer" /></div>
         <div class="cms-public-footer__inner">
             <p class="cms-public-footer__copyright">
                 &copy; {{ $footer['year'] }}. {{ $footer['site_title'] }} - {{ $footer['copyright_text'] }}

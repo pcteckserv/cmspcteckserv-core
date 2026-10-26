@@ -65,23 +65,4 @@ class Website
 
         return array_filter(self::POLICIES, fn ($label, $key) => in_array($key, $keys, true) && trim($this->policy($key)) === '', ARRAY_FILTER_USE_BOTH);
     }
-
-    public function menus(): array
-    {
-        return $this->get('menus', []);
-    }
-
-    public function menu(string $slug): ?array
-    {
-        return collect($this->menus())->firstWhere('slug', $slug);
-    }
-
-    public function menuTree(array $menu, string $parent = ''): array
-    {
-        return collect($menu['items'])->filter(fn ($item) => (string) ($item['parent'] ?? '') === $parent)->sortBy('position')->map(function ($item) use ($menu) {
-            $item['children'] = $this->menuTree($menu, $item['id']);
-
-            return $item;
-        })->values()->all();
-    }
 }

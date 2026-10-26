@@ -80,7 +80,6 @@ class CmsCoreServiceProvider extends ServiceProvider
         config()->set('auth.guards.shop_customer', ['driver' => 'session', 'provider' => 'shop_customers']);
         config()->set('auth.passwords.shop_customers', ['provider' => 'shop_customers', 'table' => 'cms_shop_password_resets', 'expire' => 60, 'throttle' => 60]);
         $this->app->singleton(AdminMenuRegistry::class);
-        $this->app->singleton(\Pcteckserv\CmsCore\Support\Navigation\MenuLinkRegistry::class);
         $this->app->singleton(SeoRegistry::class);
         $this->app->singleton(PluginCatalog::class);
         $this->app->singleton(PluginManager::class);
@@ -99,7 +98,6 @@ class CmsCoreServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         Blade::anonymousComponentPath(__DIR__.'/../resources/views/components', 'cms');
         Blade::component(CmsFooter::class, 'cms-footer');
-        Blade::component(\Pcteckserv\CmsCore\View\Components\CmsMenu::class, 'cms-menu');
         Blade::component(CmsMediaPicker::class, 'cms-media-picker');
         Blade::component(CmsIconPicker::class, 'cms-icon-picker');
         Blade::component(CmsSeo::class, 'cms-seo');
@@ -108,7 +106,6 @@ class CmsCoreServiceProvider extends ServiceProvider
             $kernel->appendMiddlewareToGroup('web', HandleCmsMaintenanceMode::class);
             $kernel->appendMiddlewareToGroup('web', RequireTwoFactor::class);
             $kernel->appendMiddlewareToGroup('web', InjectConsentManager::class);
-            $kernel->appendMiddlewareToGroup('web', \Pcteckserv\CmsCore\Http\Middleware\InjectWebsiteStyle::class);
             $kernel->appendMiddlewareToGroup('web', InjectAdminShortcut::class);
             $kernel->appendMiddlewareToGroup('web', HandleSeoRedirects::class);
             $kernel->appendMiddlewareToGroup('web', TrackSeoNotFound::class);
