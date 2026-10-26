@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\URL;
 use Pcteckserv\CmsCore\Http\Middleware\InjectAdminShortcut;
 use Pcteckserv\CmsCore\Http\Middleware\InjectConsentManager;
 use Pcteckserv\CmsCore\Models\Role;
+use Pcteckserv\CmsCore\Models\UserProfile;
 use Pcteckserv\CmsCore\Security\AccountFactor;
 use Pcteckserv\CmsCore\Security\TwoFactor;
 use Pcteckserv\CmsCore\Support\Website;
@@ -27,6 +28,7 @@ class RenderAccountFixturesTest extends SharedCustomersTest
         $manifest = json_decode(file_get_contents($manifestPath), true, 512, JSON_THROW_ON_ERROR);
         $assets = '<link rel="stylesheet" href="/build/'.$manifest['vendor/pcteckserv/cms-core/resources/css/admin.scss']['file'].'"><script type="module" src="/build/'.$manifest['vendor/pcteckserv/cms-core/resources/js/admin.js']['file'].'"></script>';
         $staff = $this->manager();
+        UserProfile::create(['user_id' => $staff->id, 'avatar_path' => 'staff-avatars/browser.jpg', 'biography' => 'Apresentação de teste']);
         $this->actingAs($staff, 'web');
         AccountFactor::create(['guard' => 'web', 'account_id' => $staff->id, 'secret' => app(TwoFactor::class)->secret()]);
         foreach (['profile' => '/admin/perfil', 'security' => '/seguranca/web'] as $file => $url) {

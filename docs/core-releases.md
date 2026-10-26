@@ -1,5 +1,18 @@
 # Publicação de versões do Core
 
+## v2.17.0
+
+Entrega avatares existentes em /storage/staff-avatars sem depender de storage:link,
+incluindo instalações em subdiretórios. Só serve imagens locais públicas cujo
+caminho esteja associado a um perfil. Valida nome, MIME e raiz real do ficheiro;
+inclui cache condicional, nosniff e CSP restritiva.
+
+O perfil apresenta a fotografia centrada, com ligação para abrir o original.
+A edição administrativa de utilizadores inclui fotografia e apresentação,
+reutilizando as validações do perfil. Editores sem permissão para gerir papéis
+preservam as atribuições existentes. Não altera a proteção dos superadministradores.
+Não requer novas migrações nem voltar a carregar as fotografias.
+
 ## v2.16.0
 
 Remove a gestão global de menus e estilos, incluindo editores, componentes,

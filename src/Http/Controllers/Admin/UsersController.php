@@ -15,9 +15,11 @@ use Pcteckserv\CmsCore\ActivityLog\Contracts\ActivityLoggerContract;
 use Pcteckserv\CmsCore\Http\Requests\Admin\StoreUserRequest;
 use Pcteckserv\CmsCore\Http\Requests\Admin\UpdateUserRequest;
 use Pcteckserv\CmsCore\Models\Role;
+use Pcteckserv\CmsCore\Models\UserProfile;
 use Pcteckserv\CmsCore\Services\DefaultRoleSynchronizer;
 use Pcteckserv\CmsCore\Services\DeleteUser;
 use Pcteckserv\CmsCore\Services\PermissionSynchronizer;
+use Pcteckserv\CmsCore\Services\StaffProfileUpdater;
 use Pcteckserv\CmsCore\Services\UserModelResolver;
 
 class UsersController extends Controller
@@ -110,6 +112,7 @@ class UsersController extends Controller
 
         return view('cms-core::admin.users.edit', array_merge($this->formData(), [
             'user' => $user->load(['cmsRoles', 'cmsPermissions', 'cmsState']),
+            'profile' => UserProfile::where('user_id', $user->getKey())->first(),
         ]));
     }
 
@@ -138,14 +141,17 @@ class UsersController extends Controller
 
             $user->update($payload);
             $user->cmsState()->updateOrCreate([], ['state' => $data['state']]);
-            $user->cmsRoles()->sync($request->roleIds());
-            $permissionIds = $this->permissions->preservingUnregistered(
-                $request->permissionIds(),
-                $oldValues['permissions'],
-            );
-            $user->cmsPermissions()->sync($permissionIds);
+            if ($request->user()->can('core.users.manage_roles')) {
+                $user->cmsRoles()->sync($request->roleIds());
+                $permissionIds = $this->permissions->preservingUnregistered(
+                    $request->permissionIds(),
+                    $oldValues['permissions'],
+                );
+                $user->cmsPermissions()->sync($permissionIds);
+            }
         });
 
+        app(StaffProfileUpdater::class)->update($request, $user->getKey());
         $user->refresh()->load(['cmsRoles', 'cmsPermissions', 'cmsState']);
 
         $this->activityLogger->log(

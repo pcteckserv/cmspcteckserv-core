@@ -4,12 +4,12 @@ namespace Pcteckserv\CmsCore\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Pcteckserv\CmsCore\ActivityLog\Contracts\ActivityLoggerContract;
 use Pcteckserv\CmsCore\Models\UserProfile;
 use Pcteckserv\CmsCore\Security\AccountFactor;
 use Pcteckserv\CmsCore\Security\TwoFactor;
+use Pcteckserv\CmsCore\Services\StaffProfileUpdater;
 
 class ProfileController
 {
@@ -25,9 +25,7 @@ class ProfileController
         $data = $request->validate([
             'name' => 'required|string|max:190', 'email' => ['required', 'email', 'max:254', Rule::unique($user::class, 'email')->ignore($user->getKey(), $user->getKeyName())],
             'current_password' => 'required|string|max:500', 'password' => 'nullable|string|min:12|max:200|confirmed',
-            'avatar' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048|dimensions:max_width=6000,max_height=6000',
-            'remove_avatar' => 'nullable|boolean', 'biography' => 'nullable|string|max:2000',
-        ]);
+        ] + StaffProfileUpdater::rules());
         if (! Hash::check($data['current_password'], $user->getAuthPassword())) {
             return back()->withErrors(['current_password' => 'A palavra-passe atual não está correta.']);
         }
@@ -37,26 +35,7 @@ class ProfileController
             $changes['remember_token'] = null;
         }
         $user->forceFill($changes)->save();
-        $profile = UserProfile::firstOrNew(['user_id' => $user->getKey()]);
-        $oldAvatar = $profile->avatar_path;
-        $newAvatar = $request->file('avatar')?->store('staff-avatars', 'public');
-        if ($newAvatar || $request->boolean('remove_avatar')) {
-            $profile->avatar_path = $newAvatar ?: null;
-        }
-        if ($request->has('biography')) {
-            $profile->biography = $data['biography'] ?? null;
-        }
-        try {
-            $profile->save();
-        } catch (\Throwable $e) {
-            if ($newAvatar) {
-                Storage::disk('public')->delete($newAvatar);
-            }
-            throw $e;
-        }
-        if ($oldAvatar && $oldAvatar !== $profile->avatar_path && str_starts_with($oldAvatar, 'staff-avatars/')) {
-            Storage::disk('public')->delete($oldAvatar);
-        }
+        app(StaffProfileUpdater::class)->update($request, $user->getKey());
         $request->session()->regenerate();
         $request->session()->put('cms_account.identity.web', ['id' => $user->getAuthIdentifier(), 'hash' => $user->getAuthPassword()]);
         $factor = AccountFactor::where('guard', 'web')->where('account_id', $user->getAuthIdentifier())->whereNotNull('confirmed_at')->first();

@@ -2,12 +2,13 @@
     <div class="alert alert-danger">Corrija os campos assinalados.</div>
 @endif
 
-<form method="POST" action="{{ $action }}" class="bg-white border rounded p-4">
+<form enctype="multipart/form-data" method="POST" action="{{ $action }}" class="bg-white border rounded p-4">
     @csrf
     @if ($method !== 'POST')
         @method($method)
     @endif
 
+    @if($method === 'PUT')<div class="mb-4">@include('cms-core::admin.partials.staff-profile',['profile'=>$profile??null])</div>@endif
     <div class="row g-3">
         <div class="col-md-6">
             <label class="form-label" for="name">Nome</label>

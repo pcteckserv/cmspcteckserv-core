@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Pcteckserv\CmsCore\Models\Role;
+use Pcteckserv\CmsCore\Services\StaffProfileUpdater;
 use Pcteckserv\CmsCore\Services\UserModelResolver;
 
 class UpdateUserRequest extends FormRequest
@@ -38,7 +39,7 @@ class UpdateUserRequest extends FormRequest
             'direct_permissions_enabled' => ['boolean'],
             'permissions' => ['array'],
             'permissions.*' => ['integer', Rule::exists('cms_permissions', 'id')],
-        ];
+        ] + StaffProfileUpdater::rules();
     }
 
     public function roleIds(): array

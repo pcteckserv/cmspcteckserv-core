@@ -4,9 +4,11 @@ namespace Pcteckserv\CmsCore\Tests;
 
 use Carbon\Carbon;
 use Illuminate\Foundation\Auth\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Orchestra\Testbench\TestCase;
 use Pcteckserv\CmsCore\CmsCoreServiceProvider;
 use Pcteckserv\CmsCore\Contracts\CmsAccessUser;
@@ -15,7 +17,9 @@ use Pcteckserv\CmsCore\Customers\Customer;
 use Pcteckserv\CmsCore\Customers\CustomerDirectory;
 use Pcteckserv\CmsCore\Customers\Group;
 use Pcteckserv\CmsCore\Models\Concerns\HasCmsAccess;
+use Pcteckserv\CmsCore\Models\Permission;
 use Pcteckserv\CmsCore\Models\Role;
+use Pcteckserv\CmsCore\Models\UserProfile;
 use Pcteckserv\CmsCore\Security\AccountFactor;
 use Pcteckserv\CmsCore\Security\AuthenticatorQr;
 use Pcteckserv\CmsCore\Security\TwoFactor;
@@ -261,6 +265,31 @@ class SharedCustomersTest extends TestCase
         $this->actingAs($customer, 'shop_customer')->get('/seguranca/shop_customer')->assertOk()->assertHeader('Referrer-Policy', 'no-referrer')->assertSee('data:image/svg+xml;base64,', false)->assertSee('Não consegue ler o QR code?');
         $factor->update(['confirmed_at' => now()]);
         $this->get('/seguranca/shop_customer')->assertOk()->assertDontSee('data-authenticator-qr')->assertDontSee($factor->secret);
+    }
+
+    public function test_authorized_staff_can_edit_another_profile_without_changing_roles(): void
+    {
+        Storage::fake('public');
+        $actor = $this->manager();
+        $permission = Permission::firstOrCreate(['key' => 'core.users.update'], ['label' => 'Editar utilizadores', 'group' => 'Utilizadores']);
+        $actor->cmsPermissions()->attach($permission);
+        $target = CustomerTestUser::create(['name' => 'Profissional', 'email' => 'staff@example.test', 'password' => bcrypt('password-test-123')]);
+        $target->cmsRoles()->attach(Role::where('key', 'ecommerce.manager')->firstOrFail());
+        $roles = $target->cmsRoles()->pluck('cms_roles.id')->all();
+        $this->actingAs($actor)->get('/admin/users/'.$target->id.'/edit')->assertOk()->assertSee('name="avatar"', false);
+        $this->put('/admin/users/'.$target->id, ['name' => 'Novo nome', 'email' => $target->email, 'state' => 'active', 'biography' => 'Especialista', 'avatar' => UploadedFile::fake()->image('foto.jpg', 200, 400)])->assertSessionHasNoErrors();
+        $profile = UserProfile::where('user_id', $target->id)->sole();
+        $this->assertSame('Especialista', $profile->biography);
+        $this->assertSame($roles, $target->fresh()->cmsRoles()->pluck('cms_roles.id')->all());
+        $this->assertSame('Novo nome', $target->fresh()->name);
+        $this->get('/storage/'.$profile->avatar_path)->assertOk()->assertHeader('Content-Type', 'image/jpeg');
+        $oldPath = $profile->avatar_path;
+        $this->put('/admin/users/'.$target->id, ['name' => 'Novo nome', 'email' => $target->email, 'state' => 'active', 'remove_avatar' => 1])->assertSessionHasNoErrors();
+        Storage::disk('public')->assertMissing($oldPath);
+        $this->assertNull($profile->fresh()->avatar_path);
+        $this->get('/storage/'.$oldPath)->assertNotFound();
+        $this->actingAs($target)->put('/admin/users/'.$actor->id, ['name' => 'Intruso', 'email' => $actor->email, 'state' => 'active', 'biography' => 'Intruso'])->assertForbidden();
+        $this->assertDatabaseMissing('cms_user_profiles', ['user_id' => $actor->id]);
     }
 
     public function test_staff_can_update_only_their_own_profile_with_current_password(): void

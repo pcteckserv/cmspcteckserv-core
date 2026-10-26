@@ -36,6 +36,8 @@ use Pcteckserv\CmsCore\Seo\Http\Controllers\SitemapController;
 use Pcteckserv\CmsCore\Support\Website;
 
 // Compatibilidade com alojamentos sem ligação simbólica para o disco público.
+Route::get('/storage/staff-avatars/{filename}', \Pcteckserv\CmsCore\Http\Controllers\PublicStaffAvatarController::class)->name('cms-core.staff-avatar.public');
+
 Route::get('/storage/'.trim((string) config('cms-core.media.directory', 'cms/media'), '/').'/{path}',
     PublicMediaController::class)
     ->where('path', '.+')->name('cms-core.media.public');
