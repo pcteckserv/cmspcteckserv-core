@@ -159,6 +159,7 @@ return [
         'github_token' => env('CMS_GITHUB_TOKEN'),
         'starter' => [
             'repository' => env('STARTER_GITHUB_REPOSITORY'),
+            'installed_version' => env('CMS_SITE_VERSION'),
             'github_token' => env('STARTER_GITHUB_TOKEN', env('CMS_GITHUB_TOKEN')),
         ],
         'composer_binary' => env('CMS_COMPOSER_BINARY'),

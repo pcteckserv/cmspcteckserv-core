@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -100,12 +101,28 @@ class UpdatesManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_site_version_can_be_supplied_by_configuration_when_version_file_is_absent(): void
+    {
+        $base = $this->app->basePath();
+        config(['cms-core.updates.starter.installed_version' => '1.4.2']);
+        $registry = app(PackageVersionRegistry::class);
+        try {
+            $this->app->setBasePath(sys_get_temp_dir().'/cms-version-'.bin2hex(random_bytes(8)));
+            $method = new \ReflectionMethod($registry, 'installedVersion');
+            $this->assertSame('1.4.2', $method->invoke($registry, StarterPackage::NAME));
+            config(['cms-core.updates.starter.installed_version' => 'invalid']);
+            $this->assertNull($method->invoke($registry, StarterPackage::NAME));
+        } finally {
+            $this->app->setBasePath($base);
+        }
+    }
+
     public function test_http_update_reads_real_metadata_and_updates_path_manifest(): void
     {
         $admin = $this->superAdmin();
         $originalBase = base_path();
         $directory = sys_get_temp_dir().'/cms-http-update-'.bin2hex(random_bytes(8));
-        $files = new \Illuminate\Filesystem\Filesystem();
+        $files = new Filesystem;
         $files->makeDirectory($directory.'/vendor/composer', 0755, true);
         $package = ['name' => 'pcteckserv/cms-core', 'version' => '2.3.10', 'dist' => ['type' => 'path']];
         $files->put($directory.'/vendor/composer/installed.json', json_encode(['packages' => [$package]]));
@@ -117,7 +134,8 @@ class UpdatesManagementTest extends TestCase
             'name' => 'pcteckserv/cms-core', 'installed_version' => '2.3.10',
             'available_version' => 'v2.3.11', 'channel' => 'stable',
         ]);
-        $updater = new class(Mockery::mock(GitTagUpdateChecker::class), null, new TestComposerCommand()) extends PackageUpdater {
+        $updater = new class(Mockery::mock(GitTagUpdateChecker::class), null, new TestComposerCommand) extends PackageUpdater
+        {
             public array $commands = [];
 
             protected function run(array $command): Process
@@ -137,7 +155,7 @@ class UpdatesManagementTest extends TestCase
             }
         };
         $this->app->instance(PackageUpdater::class, $updater);
-        $registry = new PackageVersionRegistry(Mockery::mock(GitTagUpdateChecker::class), new PluginCatalog());
+        $registry = new PackageVersionRegistry(Mockery::mock(GitTagUpdateChecker::class), new PluginCatalog);
         $this->mock(PackageVersionRegistry::class)->shouldReceive('checkRemoteUpdates')->once()
             ->andReturnUsing(fn () => $registry->sync());
 
@@ -151,7 +169,7 @@ class UpdatesManagementTest extends TestCase
             $this->assertDatabaseHas('cms_installed_packages', [
                 'name' => 'pcteckserv/cms-core', 'installed_version' => '2.3.11',
             ]);
-            $this->assertSame('2.3.11', (new ComposerInstalledPackageReader())->read('pcteckserv/cms-core')['version']);
+            $this->assertSame('2.3.11', (new ComposerInstalledPackageReader)->read('pcteckserv/cms-core')['version']);
         } finally {
             $this->app->setBasePath($originalBase);
             $files->deleteDirectory($directory);
@@ -163,7 +181,7 @@ class UpdatesManagementTest extends TestCase
         $reader = Mockery::mock(ComposerInstalledPackageReader::class);
         $reader->shouldReceive('read')->once()->andReturn([]);
         $updater = new TestablePackageUpdater(
-            Mockery::mock(GitTagUpdateChecker::class), null, new TestComposerCommand(), $reader,
+            Mockery::mock(GitTagUpdateChecker::class), null, new TestComposerCommand, $reader,
         );
         $this->app->instance(PackageUpdater::class, $updater);
         $this->mock(PackageVersionRegistry::class)->shouldReceive('checkRemoteUpdates')->once();
@@ -185,7 +203,7 @@ class UpdatesManagementTest extends TestCase
         );
         $checker = Mockery::mock(GitTagUpdateChecker::class);
         $checker->shouldReceive('latestVersion')->andReturn('v2.3.11');
-        $updater = new TestablePackageUpdater($checker, null, new TestComposerCommand(), $reader);
+        $updater = new TestablePackageUpdater($checker, null, new TestComposerCommand, $reader);
 
         $this->assertFalse($updater->update('pcteckserv/cms-core')->successful);
         $this->assertCount(1, $updater->commands);
@@ -198,7 +216,7 @@ class UpdatesManagementTest extends TestCase
             'cms-core.updates.github_token' => 'token-de-teste',
         ]);
 
-        $checker = new TestGitTagUpdateChecker();
+        $checker = new TestGitTagUpdateChecker;
 
         $this->assertSame('v2.3.9', $checker->latestVersion('pcteckserv/cms-core'));
         $this->assertSame(['git'], $checker->sources);
@@ -206,7 +224,7 @@ class UpdatesManagementTest extends TestCase
 
     public function test_verificacao_de_tags_nao_abre_pedidos_interativos_de_credenciais(): void
     {
-        $environment = (new TestGitTagUpdateChecker())->processEnvironment();
+        $environment = (new TestGitTagUpdateChecker)->processEnvironment();
 
         $this->assertSame('0', $environment['GIT_TERMINAL_PROMPT'] ?? null);
         $this->assertSame('Never', $environment['GCM_INTERACTIVE'] ?? null);
@@ -215,6 +233,8 @@ class UpdatesManagementTest extends TestCase
     public function test_sync_usa_versao_instalada_lida_do_composer_em_disco(): void
     {
         config(['cms-core.updates.packages' => ['pcteckserv/cms-core']]);
+        $catalog = Mockery::mock(PluginCatalog::class);
+        $catalog->shouldReceive('packages')->once()->andReturn([]);
 
         $reader = Mockery::mock(ComposerInstalledPackageReader::class);
         $reader->shouldReceive('read')
@@ -224,7 +244,7 @@ class UpdatesManagementTest extends TestCase
 
         $registry = new PackageVersionRegistry(
             Mockery::mock(GitTagUpdateChecker::class),
-            new PluginCatalog(),
+            $catalog,
             $reader,
         );
 
@@ -259,7 +279,7 @@ class UpdatesManagementTest extends TestCase
             ['version' => '2.3.3', 'dist' => ['type' => 'zip', 'reference' => 'same']],
         );
 
-        $composerCommand = new TestComposerCommand();
+        $composerCommand = new TestComposerCommand;
 
         $updater = new TestablePackageUpdater(
             Mockery::mock(GitTagUpdateChecker::class),
@@ -295,7 +315,7 @@ class UpdatesManagementTest extends TestCase
         $updater = new TestablePackageUpdater(
             Mockery::mock(GitTagUpdateChecker::class),
             null,
-            new TestComposerCommand(),
+            new TestComposerCommand,
             $reader,
         );
 
@@ -417,7 +437,7 @@ class UpdatesManagementTest extends TestCase
             'cms-core.updates.starter.github_token' => 'meu-token-secreto',
         ]);
 
-        $updater = new StarterUpdater();
+        $updater = new StarterUpdater;
         $command = $updater->cloneCommand('https://github.com/pcteckserv/studioranco.git', 'v0.1.0', '/tmp/destination');
 
         $expectedAuth = base64_encode('x-access-token:meu-token-secreto');
@@ -435,7 +455,7 @@ class UpdatesManagementTest extends TestCase
             'cms-core.updates.github_token' => null,
         ]);
 
-        $updater = new StarterUpdater();
+        $updater = new StarterUpdater;
         $command = $updater->cloneCommand('https://github.com/pcteckserv/studioranco.git', 'v0.1.0', '/tmp/destination');
 
         $this->assertNotContains('-c', $command);
@@ -448,7 +468,7 @@ class UpdatesManagementTest extends TestCase
             'cms-core.updates.starter.github_token' => 'meu-token-secreto',
         ]);
 
-        $updater = new StarterUpdater();
+        $updater = new StarterUpdater;
         $env = $updater->environment();
 
         $this->assertArrayNotHasKey('GIT_CONFIG_COUNT', $env);
@@ -478,7 +498,7 @@ class UpdatesManagementTest extends TestCase
         try {
             $this->app->usePublicPath($customPublicPath);
 
-            (new TestableStarterUpdater())->copyFiles($source, $destination);
+            (new TestableStarterUpdater)->copyFiles($source, $destination);
 
             $this->assertFileExists($destination.'/public/build/manifest.json');
             $this->assertFileExists($customPublicPath.'/build/manifest.json');

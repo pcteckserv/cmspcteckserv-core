@@ -6,6 +6,28 @@ O footer público global do CMS Core é renderizado através do componente Blade
 <x-cms-footer />
 ```
 
+O rodapé inclui também o menu atribuído à localização `footer`. Para o
+cabeçalho público comum, com título do site e menu da localização `header`, usar:
+
+```blade
+<x-cms::public-header />
+```
+
+Os componentes respeitam os menus definidos no Core. O rodapé respeita ainda
+o estado ativo/inativo e todas as definições do configurador existente.
+As páginas de políticas e a área pública de clientes já usam estes componentes.
+
+Os plugins Agenda e Ecommerce possuem opções independentes **Incluir cabeçalho
+do site e menus** e **Incluir rodapé do site e menus** nas suas definições.
+Na Loja, pesquisa, conta e carrinho continuam disponíveis independentemente do
+cabeçalho global. A incorporação da Agenda omite sempre a estrutura global.
+
+O atualizador do site continua a usar `STARTER_GITHUB_REPOSITORY`. Quando não
+existe `storage/app/cms-starter-version`, a versão instalada pode ser indicada
+em `cms-core.updates.starter.installed_version` ou `CMS_SITE_VERSION`.
+O projeto de demonstração fornece esse valor a partir de `demonstration.version`.
+O ficheiro de versão gravado após uma atualização continua a ter precedência.
+
 O componente lê automaticamente as opções globais do CMS, incluindo o título do site, texto de copyright, cores, espaçamento, estado ativo/inativo e crédito PCTECKSERV.
 
 O configurador administrativo está disponível em:

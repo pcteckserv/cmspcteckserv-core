@@ -5,9 +5,9 @@ namespace Pcteckserv\CmsCore\Updates;
 use Composer\InstalledVersions;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Pcteckserv\CmsCore\Plugins\PluginCatalog;
-use Pcteckserv\CmsCore\Plugins\InstalledPluginVersionReader;
 use Pcteckserv\CmsCore\Models\InstalledPlugin;
+use Pcteckserv\CmsCore\Plugins\InstalledPluginVersionReader;
+use Pcteckserv\CmsCore\Plugins\PluginCatalog;
 
 class PackageVersionRegistry
 {
@@ -16,8 +16,7 @@ class PackageVersionRegistry
         private readonly PluginCatalog $plugins,
         private readonly ?ComposerInstalledPackageReader $installedPackageReader = null,
         private readonly ?InstalledPluginVersionReader $installedPluginVersionReader = null,
-    ) {
-    }
+    ) {}
 
     /**
      * @return Collection<int, InstalledPackage>
@@ -128,13 +127,13 @@ class PackageVersionRegistry
         if (StarterPackage::is($package)) {
             return is_file(StarterPackage::versionFile())
                 ? trim((string) file_get_contents(StarterPackage::versionFile()))
-                : null;
+                : $this->configuredSiteVersion();
         }
 
         $plugin = InstalledPlugin::query()->where('package', $package)->whereNotNull('installed_version')->first();
 
         if (($plugin?->metadata['repository_type'] ?? null) === 'path') {
-            $manifestVersion = ($this->installedPluginVersionReader ?? new InstalledPluginVersionReader())->read($package);
+            $manifestVersion = ($this->installedPluginVersionReader ?? new InstalledPluginVersionReader)->read($package);
 
             if ($manifestVersion !== null) {
                 return $manifestVersion;
@@ -160,9 +159,16 @@ class PackageVersionRegistry
         return InstalledVersions::getPrettyVersion($package) ?: InstalledVersions::getVersion($package);
     }
 
+    private function configuredSiteVersion(): ?string
+    {
+        $version = config('cms-core.updates.starter.installed_version');
+
+        return is_string($version) && preg_match('/^v?\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/', trim($version)) ? trim($version) : null;
+    }
+
     private function installedComposerVersion(string $package): ?string
     {
-        $packageData = ($this->installedPackageReader ?? new ComposerInstalledPackageReader())->read($package);
+        $packageData = ($this->installedPackageReader ?? new ComposerInstalledPackageReader)->read($package);
         $version = $packageData['version'] ?? null;
 
         return is_string($version) && $version !== '' ? $version : null;

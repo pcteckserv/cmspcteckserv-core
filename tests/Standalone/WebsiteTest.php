@@ -4,12 +4,26 @@ namespace Pcteckserv\CmsCore\Tests;
 
 use Illuminate\Support\Facades\Blade;
 use Pcteckserv\CmsCore\Models\Role;
+use Pcteckserv\CmsCore\Support\SiteOptions;
 use Pcteckserv\CmsCore\Support\Website;
 
 require_once __DIR__.'/SharedCustomersTest.php';
 
 class WebsiteTest extends SharedCustomersTest
 {
+    public function test_global_public_components_use_menu_locations_and_respect_disabled_footer(): void
+    {
+        $website = app(Website::class);
+        $website->save('menus', [
+            ['slug' => 'topo', 'name' => 'Topo', 'location' => 'header', 'items' => [['id' => 'h', 'parent' => '', 'position' => 0, 'label' => 'Menu no cabeçalho', 'url' => '/sobre', 'new_tab' => false]]],
+            ['slug' => 'fundo', 'name' => 'Fundo', 'location' => 'footer', 'items' => [['id' => 'f', 'parent' => '', 'position' => 0, 'label' => 'Menu no rodapé', 'url' => '/contactos', 'new_tab' => false]]],
+        ]);
+        $this->assertStringContainsString('Menu no cabeçalho', Blade::render('<x-cms::public-header />'));
+        $this->assertStringContainsString('Menu no rodapé', Blade::render('<x-cms-footer />'));
+        app(SiteOptions::class)->setMany(['footer_enabled' => false]);
+        $this->assertStringNotContainsString('Menu no rodapé', Blade::render('<x-cms-footer />'));
+    }
+
     protected function admin(): CustomerTestUser
     {
         $user = $this->manager();

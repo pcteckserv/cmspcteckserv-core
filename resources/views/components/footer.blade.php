@@ -53,6 +53,7 @@
                     flex-direction: column;
                 }
             }
+        .cms-public-footer .cms-menu-list{display:flex;flex-wrap:wrap;gap:12px 24px;list-style:none;padding:0;margin:0}.cms-public-footer .cms-menu a{color:inherit;display:inline-block;padding:8px 0}.cms-public-footer .cms-menu-list .cms-menu-list{display:block;padding-left:16px}
     </style>
 @endonce
 
