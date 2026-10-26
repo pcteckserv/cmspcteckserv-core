@@ -1,5 +1,18 @@
 # Publicação de versões do Core
 
+## v2.14.5
+
+Republica o Core para permitir uma nova atualização das instalações que
+indicaram 2.14.4 sem disponibilizar todos os ficheiros. Inclui
+`src/Http/Controllers/PublicMediaController.php` e a respetiva rota em
+`routes/web.php`, já presentes no código de 2.14.4. A nova tag permite
+ao Composer voltar a instalar uma release posterior, sem alterar a tag anterior.
+
+Após atualizar no painel, confirmar a versão instalada e a presença do
+controlador em `vendor/pcteckserv/cms-core/src/Http/Controllers/`.
+Os URLs existentes de media mantêm-se; não alterar o disco público nem
+mover os ficheiros para repetir esta atualização.
+
 ## v2.14.4
 
 Adiciona entrega pública controlada dos ficheiros da biblioteca no endereço
