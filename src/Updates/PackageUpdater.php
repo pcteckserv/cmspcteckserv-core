@@ -104,8 +104,8 @@ class PackageUpdater
             }
 
             $composer = $this->run($this->composerCommand->build([
-                'update',
-                $package,
+                'require',
+                $package.':'.($source->versionConstraint ?: '*@dev'),
                 ...$this->dependencyUpdateOption($package),
                 '--no-interaction',
             ]));
@@ -204,6 +204,7 @@ class PackageUpdater
         if ($isPathPlugin) {
             $metadata = $plugin->metadata ?? [];
             $metadata['repository_type'] = 'path';
+            $metadata['version_constraint'] = $source->versionConstraint ?: '*@dev';
             $metadata['last_applied_release'] = $availableVersion;
             $metadata['version'] = $availableVersion;
             $metadata['repository_url'] = $source->repositoryPath;

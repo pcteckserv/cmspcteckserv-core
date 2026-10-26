@@ -1,5 +1,14 @@
 # Publicação de versões do Core
 
+## v2.18.1
+
+A atualização dos plugins do catálogo alinha também a restrição no composer.json
+do projeto com version_constraint, em vez de manter restrições antigas como
+^0.13.0 ou ^0.25.0. O Composer require resolve a versão e repõe os ficheiros de
+manifesto e lock se a resolução falhar. Os metadados só avançam após confirmar
+os ficheiros instalados, migrações e limpeza de cache. Teste com Composer real
+para os sete plugins e repositórios locais antigos de prioridade inferior.
+
 ## v2.18.0
 
 Permissões diretas passam a ter um modo explícito: quando ativo, ignoram as
