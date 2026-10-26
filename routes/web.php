@@ -107,6 +107,7 @@ Route::middleware('web')->group(function (): void {
             Route::get('/site-options', [SiteOptionsController::class, 'edit'])->name('site-options.edit');
             Route::get('/website/{section}', [WebsiteController::class, 'edit'])->name('website.edit');
             Route::get('/website-admin.js', fn () => response()->file(__DIR__.'/../resources/js/website-admin.js', ['Content-Type' => 'application/javascript; charset=UTF-8']))->name('website.admin-script');
+            Route::get('/website-admin.css', fn () => response()->file(__DIR__.'/../resources/css/website-admin.css', ['Content-Type' => 'text/css; charset=UTF-8']))->name('website.admin-style');
             Route::put('/website/{section}', [WebsiteController::class, 'update'])->name('website.update');
             Route::delete('/website-menus/{slug}', [WebsiteController::class, 'destroy'])->name('website.menus.destroy');
             Route::put('/site-options', [SiteOptionsController::class, 'update'])->name('site-options.update');

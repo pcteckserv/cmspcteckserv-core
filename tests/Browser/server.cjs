@@ -8,6 +8,7 @@ http.createServer((req,res)=>{
  let file,type='text/html';
  if(url.pathname.startsWith('/admin/website/'))file=path.join(fixtures,'website-'+url.pathname.split('/').pop()+'.html');
  else if(url.pathname==='/politica-de-privacidade')file=path.join(fixtures,'website-policy.html');
+ else if(url.pathname==='/admin/website-admin.css'){file=path.resolve(__dirname,'../../resources/css/website-admin.css');type='text/css';}
  else if(url.pathname==='/admin/website-admin.js'){file=path.resolve(__dirname,'../../resources/js/website-admin.js');type='application/javascript';}
  else if(routes[url.pathname])file=path.join(fixtures,routes[url.pathname]+'.html');
  else if(url.pathname.startsWith('/build/assets/')){const name=path.basename(url.pathname);if(!/^[\w.-]+$/.test(name)){res.writeHead(400);res.end();return;}file=path.join(assets,'assets',name);type=name.endsWith('.css')?'text/css':name.endsWith('.js')?'application/javascript':'font/woff2';}

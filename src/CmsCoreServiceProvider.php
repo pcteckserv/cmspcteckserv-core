@@ -80,6 +80,7 @@ class CmsCoreServiceProvider extends ServiceProvider
         config()->set('auth.guards.shop_customer', ['driver' => 'session', 'provider' => 'shop_customers']);
         config()->set('auth.passwords.shop_customers', ['provider' => 'shop_customers', 'table' => 'cms_shop_password_resets', 'expire' => 60, 'throttle' => 60]);
         $this->app->singleton(AdminMenuRegistry::class);
+        $this->app->singleton(\Pcteckserv\CmsCore\Support\Navigation\MenuLinkRegistry::class);
         $this->app->singleton(SeoRegistry::class);
         $this->app->singleton(PluginCatalog::class);
         $this->app->singleton(PluginManager::class);

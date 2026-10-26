@@ -11,6 +11,30 @@ require_once __DIR__.'/SharedCustomersTest.php';
 
 class WebsiteTest extends SharedCustomersTest
 {
+    public function test_menu_details_contact_links_and_location_reassignment_preserve_existing_menus(): void
+    {
+        $this->actingAs($this->admin());
+        app(Website::class)->save('menus', [['slug' => 'antigo', 'name' => 'Antigo', 'location' => 'header', 'items' => []]]);
+        $data = ['name' => 'Contactos', 'slug' => 'contactos', 'location' => 'header', 'items' => [
+            ['id' => 'a', 'label' => 'Email', 'url' => 'mailto:geral@example.test', 'position' => 0, 'title' => 'Enviar email', 'description' => '<b>Contacto</b>', 'css_class' => 'contact-link', 'rel' => 'nofollow'],
+            ['id' => 'b', 'label' => 'Telefone', 'url' => 'tel:+351924015505', 'position' => 1],
+        ]];
+        $this->put('/admin/website/menus', $data)->assertSessionHasNoErrors();
+        $menus = collect(app(Website::class)->menus())->keyBy('slug');
+        $this->assertSame('custom', $menus['antigo']['location']);
+        $this->get('/menus/contactos')->assertOk()->assertSee('mailto:geral@example.test', false)->assertSee('title="Enviar email"', false)->assertSee('class="contact-link"', false)->assertSee('&lt;b&gt;Contacto&lt;/b&gt;', false)->assertSee('rel="nofollow"', false);
+        $data['original_slug'] = 'contactos';
+        $data['items'][0]['css_class'] = '" onclick=alert(1)';
+        $this->put('/admin/website/menus', $data)->assertSessionHasErrors('items.0.css_class');
+        $data['items'][0]['css_class'] = '';
+        $data['items'][0]['url'] = 'mailto:bad%0a@example.test';
+        $this->put('/admin/website/menus', $data)->assertSessionHasErrors('items.0.url');
+        $this->put('/admin/website/menus', ['original_slug' => 'antigo', 'slug' => 'antigo', 'name' => 'Editado', 'location' => 'custom'])->assertSessionHasNoErrors();
+        $this->assertCount(2, app(Website::class)->menus());
+        $this->delete('/admin/website-menus/antigo')->assertRedirect();
+        $this->assertCount(1, app(Website::class)->menus());
+    }
+
     public function test_global_public_components_use_menu_locations_and_respect_disabled_footer(): void
     {
         $website = app(Website::class);

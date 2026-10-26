@@ -14,7 +14,14 @@ O início da administração assinala as políticas por preencher. Os termos e
 reembolsos apenas entram nesta lista quando o Ecommerce está ativo.
 
 Configurações → Menus permite criar, editar e eliminar menus, com ligações,
-ordem numérica, submenus e abertura num novo separador. As localizações
+ordenação por arrasto ou botões, submenus e abertura num novo separador.
+O catálogo permite pesquisar e adicionar várias ligações de uma vez. Os plugins
+registam fontes de ligações em `MenuLinkRegistry`; o Ecommerce disponibiliza
+loja, carrinho, promoções, produtos, categorias, etiquetas e marcas.
+Pode duplicar ramos, remover seleções, anular operações e pré-visualizar a
+estrutura antes de guardar. Email (`mailto:`), telefone (`tel:`), título,
+descrição, classes CSS e relação da ligação são opcionais. Cada localização
+Cabeçalho/Rodapé recebe um menu; atribuir outro mantém o anterior como personalizado. As localizações
 Cabeçalho e Rodapé são usadas por temas que renderizem o componente Blade:
 
 ```blade

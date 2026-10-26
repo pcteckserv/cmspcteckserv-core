@@ -1,5 +1,14 @@
 # Publicação de versões do Core
 
+## v2.15.0
+
+Reorganiza o editor de menus com catálogo de ligações extensível pelos plugins,
+pesquisa, adição em massa, arrasto e botões de movimento. Permite duplicar ramos,
+criar submenus, remover elementos preservando os filhos e anular operações.
+Inclui pré-visualização da estrutura, título, descrição, classes CSS, relação da
+ligação e endereços de email/telefone. A atribuição de cabeçalho ou rodapé liberta
+a localização anterior sem apagar o menu. O layout adapta-se a telemóveis.
+
 ## v2.14.5
 
 Republica o Core para permitir uma nova atualização das instalações que
