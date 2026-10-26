@@ -18,7 +18,7 @@ class GitTagUpdateChecker
             return $repository === null ? null : $this->latestVersionFromRepository($repository, StarterPackage::token());
         }
 
-        if (Schema::hasTable((new InstalledPlugin())->getTable())) {
+        if (Schema::hasTable((new InstalledPlugin)->getTable())) {
             $plugin = InstalledPlugin::query()->where('package', $package)->whereNotNull('installed_version')->first();
 
             if (($plugin?->metadata['repository_type'] ?? null) === 'path') {
@@ -34,7 +34,7 @@ class GitTagUpdateChecker
 
         $repository = config("cms-core.updates.repositories.{$package}");
 
-        if ((! is_string($repository) || $repository === '') && Schema::hasTable((new InstalledPlugin())->getTable())) {
+        if ((! is_string($repository) || $repository === '') && Schema::hasTable((new InstalledPlugin)->getTable())) {
             $plugin = InstalledPlugin::query()->where('package', $package)->whereNotNull('installed_version')->first();
             $metadata = $plugin?->metadata ?? [];
             $repository = match ($metadata['repository_type'] ?? null) {
@@ -92,7 +92,8 @@ class GitTagUpdateChecker
 
     protected function latestGithubVersion(string $repository, mixed $token): ?string
     {
-        if (! is_string($token) || $token === '' || ! preg_match('#^https://github\.com/([^/]+)/([^/.]+)(?:\.git)?$#', $repository, $matches)) {
+        $tagsUrl = $this->githubTagsUrl($repository);
+        if (! is_string($token) || $token === '' || $tagsUrl === null) {
             return null;
         }
 
@@ -109,7 +110,7 @@ class GitTagUpdateChecker
             ],
         ]);
 
-        $response = @file_get_contents("https://api.github.com/repos/{$matches[1]}/{$matches[2]}/tags?per_page=100", false, $context);
+        $response = @file_get_contents($tagsUrl, false, $context);
 
         if (! is_string($response)) {
             return null;
@@ -128,6 +129,15 @@ class GitTagUpdateChecker
             ->filter()
             ->sort(fn (string $a, string $b): int => version_compare($a, $b))
             ->last();
+    }
+
+    protected function githubTagsUrl(string $repository): ?string
+    {
+        if (! preg_match('#^https://github\.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+?)(?:\.git)?/?$#', $repository, $matches)) {
+            return null;
+        }
+
+        return "https://api.github.com/repos/{$matches[1]}/{$matches[2]}/tags?per_page=100";
     }
 
     private function versionFromLine(string $line): ?string

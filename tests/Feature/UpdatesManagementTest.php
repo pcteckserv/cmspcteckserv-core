@@ -101,6 +101,16 @@ class UpdatesManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_github_api_supports_repository_names_with_dots(): void
+    {
+        $checker = new GitTagUpdateChecker;
+        $method = new \ReflectionMethod($checker, 'githubTagsUrl');
+        $expected = 'https://api.github.com/repos/pcteckserv/cms.demonstracao/tags?per_page=100';
+        $this->assertSame($expected, $method->invoke($checker, 'https://github.com/pcteckserv/cms.demonstracao.git'));
+        $this->assertSame($expected, $method->invoke($checker, 'https://github.com/pcteckserv/cms.demonstracao'));
+        $this->assertNull($method->invoke($checker, 'https://outro.example/pcteckserv/cms.demonstracao.git'));
+    }
+
     public function test_site_version_can_be_supplied_by_configuration_when_version_file_is_absent(): void
     {
         $base = $this->app->basePath();
