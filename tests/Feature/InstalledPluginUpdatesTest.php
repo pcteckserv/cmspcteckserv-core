@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Pcteckserv\CmsCore\Models\InstalledPlugin;
+use Pcteckserv\CmsCore\Plugins\DTOs\AvailablePlugin;
 use Pcteckserv\CmsCore\Plugins\PluginCatalog;
+use Pcteckserv\CmsCore\Plugins\PluginRepository;
 use Pcteckserv\CmsCore\Updates\GitTagUpdateChecker;
 use Pcteckserv\CmsCore\Updates\PackageVersionRegistry;
 use Tests\TestCase;
@@ -12,6 +14,14 @@ use Tests\TestCase;
 class InstalledPluginUpdatesTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_manifest_versions_are_detected_for_plugins_with_missing_repository_metadata(): void
+    {
+        $plugin = InstalledPlugin::create(['slug' => 'agenda', 'name' => 'pcteckserv/cms-agenda', 'package' => 'pcteckserv/cms-agenda', 'label' => 'Agenda', 'status' => 'enabled', 'installed_version' => '0.13.0', 'metadata' => []]);
+        $source = new AvailablePlugin('agenda', 'cmspcteckserv-agenda', $plugin->package, 'Agenda', null, null, '*@dev', '/fixture', '0.15.0');
+        $this->mock(PluginRepository::class)->shouldReceive('find')->with('agenda')->once()->andReturn($source);
+        $this->assertSame('0.15.0', (new GitTagUpdateChecker)->latestVersion($plugin->package));
+    }
 
     public function test_plugin_instalado_pelo_painel_entra_no_registo_de_atualizacoes(): void
     {

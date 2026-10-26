@@ -10,6 +10,7 @@ use Pcteckserv\CmsCore\Models\UserProfile;
 use Pcteckserv\CmsCore\Security\AccountFactor;
 use Pcteckserv\CmsCore\Security\TwoFactor;
 use Pcteckserv\CmsCore\Services\StaffProfileUpdater;
+use Pcteckserv\CmsCore\Support\AccountFormChanges;
 
 class ProfileController
 {
@@ -21,6 +22,7 @@ class ProfileController
     public function update(Request $request)
     {
         $user = auth('web')->user();
+        AccountFormChanges::apply($request, $user->email);
         $request->merge(['email' => mb_strtolower(trim((string) $request->input('email')))]);
         $data = $request->validate([
             'name' => 'required|string|max:190', 'email' => ['required', 'email', 'max:254', Rule::unique($user::class, 'email')->ignore($user->getKey(), $user->getKeyName())],

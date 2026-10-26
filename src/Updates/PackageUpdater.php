@@ -50,21 +50,23 @@ class PackageUpdater
             }
             (new ComposerRepositoryCleaner)->preferRemotePackage($package, $repository);
         }
-        $plugin = InstalledPlugin::query()->where('package', $package)->whereNotNull('installed_version')->first();
+        $plugin = InstalledPlugin::query()->where('package', $package)->first();
         $isPathPlugin = $plugin !== null && ($plugin->metadata['repository_type'] ?? null) === 'path';
-
-        if ($isPathPlugin) {
+        $source = null;
+        if ($plugin !== null) {
             try {
                 $source = app(PluginRepository::class)->find($plugin->slug);
+                $isPathPlugin = $isPathPlugin || $source?->package === $package;
             } catch (Throwable $exception) {
-                Log::warning('Falha ao atualizar a origem do plugin.', [
-                    'package' => $package,
-                    'exception' => $exception::class,
-                ]);
+                if ($isPathPlugin) {
+                    Log::warning('Falha ao atualizar a origem do plugin.', ['package' => $package, 'exception' => $exception::class]);
 
-                return new UpdateResult(false, 'Não foi possível atualizar o repositório do plugin. Verifique a ligação e as credenciais de acesso.');
+                    return new UpdateResult(false, 'Não foi possível atualizar o repositório do plugin. Verifique a ligação e as credenciais de acesso.');
+                }
             }
+        }
 
+        if ($isPathPlugin) {
             if ($source === null || $source->package !== $package) {
                 return new UpdateResult(false, 'O plugin não foi encontrado no repositório configurado.');
             }
@@ -201,6 +203,7 @@ class PackageUpdater
 
         if ($isPathPlugin) {
             $metadata = $plugin->metadata ?? [];
+            $metadata['repository_type'] = 'path';
             $metadata['last_applied_release'] = $availableVersion;
             $metadata['version'] = $availableVersion;
             $metadata['repository_url'] = $source->repositoryPath;

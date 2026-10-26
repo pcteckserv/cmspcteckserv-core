@@ -7,6 +7,7 @@ http.createServer((req,res)=>{
  if(url.pathname==='/health'){res.end('ok');return;}
  let file,type='text/html';
  if(url.pathname.startsWith('/admin/website/'))file=path.join(fixtures,'website-'+url.pathname.split('/').pop()+'.html');
+ else if(url.pathname==='/cms-account-form.js'){file=path.resolve(__dirname,'../../resources/js/account-form.js');type='application/javascript';}
  else if(url.pathname==='/politica-de-privacidade')file=path.join(fixtures,'website-policy.html');
  else if(routes[url.pathname])file=path.join(fixtures,routes[url.pathname]+'.html');
  else if(url.pathname.startsWith('/build/assets/')){const name=path.basename(url.pathname);if(!/^[\w.-]+$/.test(name)){res.writeHead(400);res.end();return;}file=path.join(assets,'assets',name);type=name.endsWith('.css')?'text/css':name.endsWith('.js')?'application/javascript':'font/woff2';}

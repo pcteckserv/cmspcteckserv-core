@@ -39,6 +39,8 @@
                                 <span class="badge text-bg-danger">Falhou</span>
                             @elseif (($status['state'] ?? null) === 'succeeded')
                                 <span class="badge text-bg-success">Concluída</span>
+                            @elseif ($package->availableVersion === null)
+                                <span class="badge text-bg-secondary">Não foi possível verificar</span>
                             @elseif ($package->hasUpdate())
                                 <span class="badge text-bg-warning">Update disponível</span>
                             @else
@@ -60,7 +62,7 @@
                                     <button class="btn btn-primary btn-sm" type="submit">Atualizar</button>
                                 </form>
                             @else
-                                <button class="btn btn-outline-secondary btn-sm" type="button" disabled>Sem update</button>
+                                <button class="btn btn-outline-secondary btn-sm" type="button" disabled>{{ $package->availableVersion === null ? 'Por verificar' : 'Sem update' }}</button>
                             @endif
                         </td>
                     </tr>

@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Pcteckserv\CmsCore\Security\AccountFactor;
+use Pcteckserv\CmsCore\Support\AccountFormChanges;
 
 class AdminCustomersController
 {
@@ -27,6 +28,9 @@ class AdminCustomersController
 
     public function save(Request $r, ?int $customer = null)
     {
+        if ($customer) {
+            AccountFormChanges::apply($r, Customer::findOrFail($customer)->email);
+        }
         $r->merge(['email' => mb_strtolower(trim((string) $r->input('email')))]);
         $d = $r->validate(['name' => 'required|string|max:190', 'email' => ['required', 'email', 'max:254', Rule::unique('cms_shop_customers')->ignore($customer)], 'company' => 'nullable|string|max:190', 'phone' => 'nullable|string|max:30', 'vat' => 'nullable|string|max:30', 'active' => 'required|boolean', 'groups' => 'nullable|array|max:100', 'groups.*' => 'integer|distinct|exists:cms_customer_groups,id']);
         $c = DB::transaction(function () use ($d, $customer) {

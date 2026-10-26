@@ -38,6 +38,10 @@ trait HasCmsAccess
             return true;
         }
 
+        if ($this->cmsState?->direct_permissions_enabled) {
+            return $this->cmsPermissions()->where('key', $permission)->exists();
+        }
+
         if ($this->cmsPermissions()->where('key', $permission)->exists()) {
             return true;
         }

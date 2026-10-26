@@ -9,10 +9,11 @@ class UserState extends Model
 {
     protected $table = 'cms_user_states';
 
-    protected $fillable = ['state', 'last_login_at'];
+    protected $fillable = ['state', 'last_login_at', 'direct_permissions_enabled'];
 
     protected $casts = [
         'last_login_at' => 'datetime',
+        'direct_permissions_enabled' => 'boolean',
     ];
 
     public function user(): MorphTo

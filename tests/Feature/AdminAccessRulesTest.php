@@ -109,7 +109,7 @@ class AdminAccessRulesTest extends TestCase
         $response = $this->actingAs($admin)
             ->get(route('admin.users.create'))
             ->assertOk()
-            ->assertSee('Ativar permissões diretas');
+            ->assertSee('Usar apenas permissões diretas');
 
         $document = new \DOMDocument;
         @$document->loadHTML($response->getContent());

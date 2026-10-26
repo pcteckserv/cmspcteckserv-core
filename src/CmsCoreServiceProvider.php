@@ -42,6 +42,7 @@ use Pcteckserv\CmsCore\Http\Middleware\InjectAdminShortcut;
 use Pcteckserv\CmsCore\Http\Middleware\InjectConsentManager;
 use Pcteckserv\CmsCore\Plugins\PluginCatalog;
 use Pcteckserv\CmsCore\Plugins\PluginManager;
+use Pcteckserv\CmsCore\Plugins\PluginRepository;
 use Pcteckserv\CmsCore\Security\RequireTwoFactor;
 use Pcteckserv\CmsCore\Seo\Http\Middleware\HandleSeoRedirects;
 use Pcteckserv\CmsCore\Seo\Http\Middleware\TrackSeoNotFound;
@@ -82,6 +83,7 @@ class CmsCoreServiceProvider extends ServiceProvider
         $this->app->singleton(AdminMenuRegistry::class);
         $this->app->singleton(SeoRegistry::class);
         $this->app->singleton(PluginCatalog::class);
+        $this->app->scoped(PluginRepository::class);
         $this->app->singleton(PluginManager::class);
         $this->app->alias(SeoRegistry::class, 'cms.seo.registry');
         $this->app->singleton(ConsentManagerContract::class, ConsentManager::class);

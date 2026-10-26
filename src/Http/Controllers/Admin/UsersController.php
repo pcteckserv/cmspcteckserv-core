@@ -81,7 +81,7 @@ class UsersController extends Controller
                 'password' => Hash::make($data['password']),
             ]);
 
-            $user->cmsState()->create(['state' => $data['state']]);
+            $user->cmsState()->create(['state' => $data['state'], 'direct_permissions_enabled' => $request->user()->can('core.users.manage_roles') && $request->boolean('direct_permissions_enabled')]);
             $user->cmsRoles()->sync($request->roleIds());
             $user->cmsPermissions()->sync($request->permissionIds());
 
@@ -142,6 +142,7 @@ class UsersController extends Controller
             $user->update($payload);
             $user->cmsState()->updateOrCreate([], ['state' => $data['state']]);
             if ($request->user()->can('core.users.manage_roles')) {
+                $user->cmsState()->update(['direct_permissions_enabled' => $request->boolean('direct_permissions_enabled')]);
                 $user->cmsRoles()->sync($request->roleIds());
                 $permissionIds = $this->permissions->preservingUnregistered(
                     $request->permissionIds(),

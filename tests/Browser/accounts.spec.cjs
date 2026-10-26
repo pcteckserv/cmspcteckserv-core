@@ -31,3 +31,12 @@ test('customer profile controls remain in the customer area',async({page})=>{
  await expect(page.locator('[name="name"]')).toHaveValue('Maria');await expect(page.locator('.admin-sidebar')).toHaveCount(0);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
+
+test('editing a profile requires an explicit email or password change',async({page})=>{
+ await page.goto('/admin/perfil');
+ const email=page.locator('[data-edit-email]'),password=page.locator('[data-new-password]').first();
+ const original=await email.inputValue();await expect(email).toHaveJSProperty('readOnly',true);await expect(password).toBeDisabled();await expect(password).toHaveValue('');
+ await page.locator('[data-enable-email-change]').check();await email.fill('changed@example.test');await page.locator('[data-enable-email-change]').uncheck();await expect(email).toHaveValue(original);
+ const toggle=page.locator('[data-enable-password-change]');await toggle.evaluate(el=>{el.checked=true;el.dispatchEvent(new Event('change',{bubbles:true}));});await expect(password).toBeEnabled();
+ await password.evaluate(el=>el.value='browser-injected');await toggle.evaluate(el=>{el.checked=false;el.dispatchEvent(new Event('change',{bubbles:true}));});await expect(password).toBeDisabled();await expect(password).toHaveValue('');
+});

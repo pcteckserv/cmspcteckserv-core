@@ -8,6 +8,7 @@ use Illuminate\Validation\Rules\Password;
 use Pcteckserv\CmsCore\Models\Role;
 use Pcteckserv\CmsCore\Services\StaffProfileUpdater;
 use Pcteckserv\CmsCore\Services\UserModelResolver;
+use Pcteckserv\CmsCore\Support\AccountFormChanges;
 
 class UpdateUserRequest extends FormRequest
 {
@@ -20,6 +21,11 @@ class UpdateUserRequest extends FormRequest
         }
 
         return ! (method_exists($target, 'isCmsSuperAdmin') && $target->isCmsSuperAdmin() && ! $this->user()->isCmsSuperAdmin());
+    }
+
+    protected function prepareForValidation(): void
+    {
+        AccountFormChanges::apply($this, $this->route('user')?->email);
     }
 
     public function rules(UserModelResolver $resolver): array

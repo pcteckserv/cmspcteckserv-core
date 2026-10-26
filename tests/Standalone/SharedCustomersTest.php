@@ -119,6 +119,31 @@ class SharedCustomersTest extends TestCase
         $this->get('/cliente/moradas')->assertOk()->assertSee('Porto');
     }
 
+    public function test_explicit_direct_mode_ignores_role_permissions_and_can_deny_everything(): void
+    {
+        $user = $this->manager();
+        $direct = Permission::firstOrCreate(['key' => 'fixture.direct'], ['label' => 'Direta', 'group' => 'Teste']);
+        $user->cmsPermissions()->attach($direct);
+        $this->assertTrue($user->hasCmsPermission('ecommerce.catalog.view'));
+        $user->cmsState()->updateOrCreate([], ['state' => 'active', 'direct_permissions_enabled' => true]);
+        $this->assertFalse($user->fresh()->hasCmsPermission('ecommerce.catalog.view'));
+        $this->assertTrue($user->fresh()->hasCmsPermission('fixture.direct'));
+        $user->cmsPermissions()->detach();
+        $this->assertFalse($user->fresh()->hasCmsPermission('ecommerce.catalog.view'));
+        $user->cmsState()->update(['direct_permissions_enabled' => false]);
+        $this->assertTrue($user->fresh()->hasCmsPermission('ecommerce.catalog.view'));
+    }
+
+    public function test_browser_filled_password_and_email_are_ignored_without_explicit_edit_intent(): void
+    {
+        $user = $this->manager();
+        $hash = $user->password;
+        $this->actingAs($user)->put('/admin/perfil', ['account_form_controlled' => 1, 'name' => 'Nome alterado', 'email' => 'browser@example.test', 'current_password' => 'password-test-123', 'password' => 'browser-password-123', 'password_confirmation' => 'browser-password-123'])->assertSessionHasNoErrors();
+        $this->assertSame('gestor@example.test', $user->fresh()->email);
+        $this->assertSame($hash, $user->fresh()->password);
+        $this->assertSame('Nome alterado', $user->fresh()->name);
+    }
+
     public function test_contact_resolution_does_not_login_or_overwrite_existing_customer(): void
     {
         $c = $this->customer();

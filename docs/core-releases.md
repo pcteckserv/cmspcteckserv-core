@@ -1,5 +1,16 @@
 # Publicação de versões do Core
 
+## v2.18.0
+
+Permissões diretas passam a ter um modo explícito: quando ativo, ignoram as
+permissões dos papéis. A migração preserva as atribuições diretas existentes.
+Os formulários de edição exigem intenção explícita para alterar email ou senha,
+com validação no servidor para proteger contra preenchimento automático.
+
+A deteção de versões dos plugins consulta os metadados do catálogo, incluindo
+instalações antigas sem origem registada. Uma versão não verificada deixa de
+ser apresentada como atualizada. O catálogo é reutilizado durante o pedido.
+
 ## v2.17.0
 
 Entrega avatares existentes em /storage/staff-avatars sem depender de storage:link,

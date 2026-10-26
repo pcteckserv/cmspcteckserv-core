@@ -25,6 +25,7 @@ use Pcteckserv\CmsCore\Http\Controllers\Auth\AuthenticatedSessionController;
 use Pcteckserv\CmsCore\Http\Controllers\Consent\ConsentRecordController;
 use Pcteckserv\CmsCore\Http\Controllers\MaintenanceAccessController;
 use Pcteckserv\CmsCore\Http\Controllers\PublicMediaController;
+use Pcteckserv\CmsCore\Http\Controllers\PublicStaffAvatarController;
 use Pcteckserv\CmsCore\Http\Controllers\WebsitePublicController;
 use Pcteckserv\CmsCore\Seo\Http\Controllers\RobotsTxtController;
 use Pcteckserv\CmsCore\Seo\Http\Controllers\SeoAuditController;
@@ -36,7 +37,9 @@ use Pcteckserv\CmsCore\Seo\Http\Controllers\SitemapController;
 use Pcteckserv\CmsCore\Support\Website;
 
 // Compatibilidade com alojamentos sem ligação simbólica para o disco público.
-Route::get('/storage/staff-avatars/{filename}', \Pcteckserv\CmsCore\Http\Controllers\PublicStaffAvatarController::class)->name('cms-core.staff-avatar.public');
+Route::get('/cms-account-form.js', fn () => response()->file(__DIR__.'/../resources/js/account-form.js', ['Content-Type' => 'application/javascript; charset=UTF-8']))->name('cms-core.account-form-script');
+
+Route::get('/storage/staff-avatars/{filename}', PublicStaffAvatarController::class)->name('cms-core.staff-avatar.public');
 
 Route::get('/storage/'.trim((string) config('cms-core.media.directory', 'cms/media'), '/').'/{path}',
     PublicMediaController::class)

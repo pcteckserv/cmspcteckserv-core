@@ -132,7 +132,7 @@ class PackageVersionRegistry
 
         $plugin = InstalledPlugin::query()->where('package', $package)->whereNotNull('installed_version')->first();
 
-        if (($plugin?->metadata['repository_type'] ?? null) === 'path') {
+        if ($plugin !== null) {
             $manifestVersion = ($this->installedPluginVersionReader ?? new InstalledPluginVersionReader)->read($package);
 
             if ($manifestVersion !== null) {

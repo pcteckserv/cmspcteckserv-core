@@ -12,8 +12,7 @@ class PluginManager
     public function __construct(
         private readonly PluginCatalog $catalog,
         private readonly ?InstalledPluginVersionReader $installedVersionReader = null,
-    ) {
-    }
+    ) {}
 
     /**
      * @return Collection<int, InstalledPlugin>
@@ -25,8 +24,8 @@ class PluginManager
                 $plugin = InstalledPlugin::query()->firstOrNew(['slug' => $definition->slug]);
                 $isInstalled = $this->isComposerInstalled($definition->package);
                 $metadata = $plugin->metadata ?? [];
-                $manifestVersion = $isInstalled && ($metadata['repository_type'] ?? null) === 'path'
-                    ? ($this->installedVersionReader ?? new InstalledPluginVersionReader())->read($definition->package)
+                $manifestVersion = $isInstalled
+                    ? ($this->installedVersionReader ?? new InstalledPluginVersionReader)->read($definition->package)
                     : null;
 
                 if ($manifestVersion !== null) {

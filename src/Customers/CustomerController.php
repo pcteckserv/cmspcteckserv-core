@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Route;
 use Pcteckserv\CmsCore\Plugins\PluginManager;
 use Pcteckserv\CmsCore\Security\TwoFactor;
+use Pcteckserv\CmsCore\Support\AccountFormChanges;
+use Pcteckserv\CmsCore\Support\Website;
 
 class CustomerController
 {
@@ -18,7 +20,7 @@ class CustomerController
 
     public function register()
     {
-        abort_unless(app(\Pcteckserv\CmsCore\Support\Website::class)->registration(), 404);
+        abort_unless(app(Website::class)->registration(), 404);
 
         return view('cms-core::customers.auth', ['mode' => 'register']);
     }
@@ -50,7 +52,7 @@ class CustomerController
 
     public function store(Request $r)
     {
-        abort_unless(app(\Pcteckserv\CmsCore\Support\Website::class)->registration(), 403);
+        abort_unless(app(Website::class)->registration(), 403);
         $r->merge(['email' => mb_strtolower(trim((string) $r->input('email')))]);
         $d = $r->validate(['name' => 'required|string|max:190', 'email' => 'required|email|max:254|unique:cms_shop_customers,email', 'password' => 'required|string|min:12|max:200|confirmed', 'terms' => 'accepted']);
         $c = Customer::create(array_intersect_key($d, array_flip(['name', 'email', 'password'])));
@@ -80,6 +82,7 @@ class CustomerController
     public function update(Request $r)
     {
         $c = auth('shop_customer')->user();
+        AccountFormChanges::apply($r);
         $d = $r->validate(['name' => 'required|string|max:190', 'company' => 'nullable|string|max:190', 'phone' => 'nullable|string|max:30', 'vat' => 'nullable|string|max:30', 'current_password' => 'required|string|max:500', 'password' => 'nullable|string|min:12|max:200|confirmed']);
         if (! Hash::check($d['current_password'], $c->password)) {
             return back()->withErrors(['current_password' => 'Palavra-passe incorreta.']);

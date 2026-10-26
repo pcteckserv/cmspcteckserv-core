@@ -19,3 +19,5 @@ O Composer continua a instalar a package através de `path`, podendo mostrar
 `dev-main` na linha de comandos. A versão apresentada pelo CMS corresponde aos
 metadados publicados; não representa uma release Composer nem um checkout de tag.
 As versões do Core continuam distribuídas através das respetivas tags Git.
+
+A restrição `version_constraint` dos plugins do catálogo é `*@dev`, tal como nos Formulários de contacto. Não deve receber a versão mínima do Core: essa dependência pertence ao `require` do `composer.json` do plugin. A versão disponível é consultada no catálogo mesmo em instalações sem `repository_type`; uma consulta sem resultado é apresentada como não verificada.

@@ -10,15 +10,20 @@ use Symfony\Component\Process\Process;
 
 class PluginRepository
 {
+    private ?Collection $catalog = null;
+
     /**
      * @return Collection<int, AvailablePlugin>
      */
     public function available(): Collection
     {
+        if ($this->catalog !== null) {
+            return $this->catalog;
+        }
         $root = $this->ensureLocalCopy();
         $metadataFile = (string) config('cms-plugins.metadata_file', 'cms-plugin.json');
 
-        return collect(File::directories($root))
+        return $this->catalog = collect(File::directories($root))
             ->map(fn (string $directory): ?AvailablePlugin => $this->fromDirectory($directory, $metadataFile))
             ->filter()
             ->sortBy('label')
@@ -126,7 +131,7 @@ class PluginRepository
     }
 
     /**
-     * @param array<int, string> $command
+     * @param  array<int, string>  $command
      */
     private function run(array $command): void
     {
