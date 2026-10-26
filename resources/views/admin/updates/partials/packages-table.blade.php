@@ -15,7 +15,18 @@
                 @forelse ($packages as $package)
                     @php($status = $statuses[$package->name] ?? null)
                     <tr>
-                        <td class="fw-semibold">{{ $package->name }}</td>
+                        <td class="fw-semibold">
+                            @if (\Pcteckserv\CmsCore\Updates\StarterPackage::is($package->name))
+                                {{ \Pcteckserv\CmsCore\Updates\StarterPackage::displayName() }}
+                                @if ($repository = \Pcteckserv\CmsCore\Updates\StarterPackage::repositoryLabel())
+                                    <a class="d-block small fw-normal text-break" href="https://github.com/{{ $repository }}" target="_blank" rel="noopener noreferrer">{{ $repository }}</a>
+                                @else
+                                    <span class="d-block small fw-normal text-secondary">{{ \Pcteckserv\CmsCore\Updates\StarterPackage::repository() ? 'Repositório do projeto configurado' : 'Repositório do projeto não configurado' }}</span>
+                                @endif
+                            @else
+                                {{ $package->name }}
+                            @endif
+                        </td>
                         <td>{{ $package->installedVersion ?? '-' }}</td>
                         <td>{{ $package->availableVersion ?? 'Não verificada' }}</td>
                         <td>{{ $package->formattedCheckedAt() }}</td>

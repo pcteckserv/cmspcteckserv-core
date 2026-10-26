@@ -1,5 +1,19 @@
 # Publicação de versões do Core
 
+## v2.14.2
+
+A página `/admin/updates` identifica o projeto pelo `APP_NAME` (`app.name`)
+e apresenta o repositório GitHub definido em `STARTER_GITHUB_REPOSITORY`.
+O nome Starter deixa de aparecer no título, na identificação do projeto e
+nas mensagens da atualização. Core e plugins continuam separados.
+O identificador interno mantém compatibilidade com o registo de versões,
+rotas, permissões e histórico. O endereço apresentado nunca inclui credenciais.
+
+Validação: 21 testes de atualizações aprovados (89 asserções). Suite completa
+do Core: 154 testes, 148 aprovados, com as seis falhas anteriores nas áreas
+de permissões, SEO e configuração dos testes de plugins/Composer.
+Os 45 testes do site anfitrião também passaram (186 asserções).
+
 ## v2.11.0
 
 Adiciona QR code local à configuração TOTP, mantendo a chave manual como

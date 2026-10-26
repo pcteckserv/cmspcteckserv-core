@@ -33,13 +33,13 @@ class StarterUpdater
         $repository = StarterPackage::repository();
 
         if ($repository === null) {
-            return new UpdateResult(false, 'Configure STARTER_GITHUB_REPOSITORY antes de atualizar o Starter.');
+            return new UpdateResult(false, 'Configure STARTER_GITHUB_REPOSITORY com o repositório deste projeto antes de o atualizar.');
         }
 
         $version = $availableVersion ?: app(GitTagUpdateChecker::class)->latestVersion(StarterPackage::NAME);
 
         if (! is_string($version) || $version === '') {
-            return new UpdateResult(false, 'Não foi encontrada uma versão válida do Starter no repositório configurado.');
+            return new UpdateResult(false, 'Não foi encontrada uma versão válida do projeto no repositório configurado.');
         }
 
         $temporaryPath = storage_path('framework/cache/cms-starter-'.bin2hex(random_bytes(6)));
@@ -55,15 +55,15 @@ class StarterUpdater
             $errorOutput = $exception->getProcess()->getErrorOutput();
 
             if (str_contains($errorOutput, 'could not read Username') || str_contains($errorOutput, 'Authentication failed') || str_contains($errorOutput, 'Duplicate header')) {
-                return new UpdateResult(false, 'Falha de autenticação ao descarregar o Starter do GitHub. Verifique se STARTER_GITHUB_TOKEN ou CMS_GITHUB_TOKEN está configurado e com permissões de leitura no repositório.');
+                return new UpdateResult(false, 'Falha de autenticação ao descarregar o projeto do GitHub. Verifique se STARTER_GITHUB_TOKEN ou CMS_GITHUB_TOKEN está configurado e com permissões de leitura no repositório.');
             }
 
-            return new UpdateResult(false, 'Falha ao atualizar o Starter: '.$exception->getMessage());
+            return new UpdateResult(false, 'Falha ao atualizar o projeto: '.$exception->getMessage());
         } finally {
             File::deleteDirectory($temporaryPath);
         }
 
-        return new UpdateResult(true, 'Starter atualizado com sucesso para '.$version.'.');
+        return new UpdateResult(true, 'Projeto '.StarterPackage::displayName().' atualizado com sucesso para '.$version.'.');
     }
 
     private function cloneRepository(string $repository, string $version, string $destination): void
@@ -193,7 +193,7 @@ class StarterUpdater
     }
 
     /**
-     * @param array<int, string> $arguments
+     * @param  array<int, string>  $arguments
      */
     private function runArtisan(array $arguments): void
     {

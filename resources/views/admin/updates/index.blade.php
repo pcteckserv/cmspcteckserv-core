@@ -34,7 +34,7 @@
     <h2 class="h5 mb-3">Core</h2>
     @include('cms-core::admin.updates.partials.packages-table', ['packages' => $corePackages, 'statuses' => $statuses])
 
-    <h2 class="h5 mt-4 mb-3">Starter</h2>
+    <h2 class="h5 mt-4 mb-3">Projeto — {{ \Pcteckserv\CmsCore\Updates\StarterPackage::displayName() }}</h2>
     @include('cms-core::admin.updates.partials.packages-table', ['packages' => $starterPackages, 'statuses' => $statuses])
 
     <h2 class="h5 mt-4 mb-3">Plugins</h2>

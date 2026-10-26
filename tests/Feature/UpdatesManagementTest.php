@@ -13,6 +13,7 @@ use Pcteckserv\CmsCore\Plugins\PluginCatalog;
 use Pcteckserv\CmsCore\Support\ComposerCommand;
 use Pcteckserv\CmsCore\Updates\ComposerInstalledPackageReader;
 use Pcteckserv\CmsCore\Updates\GitTagUpdateChecker;
+use Pcteckserv\CmsCore\Updates\InstalledPackage;
 use Pcteckserv\CmsCore\Updates\PackageUpdater;
 use Pcteckserv\CmsCore\Updates\PackageVersionRegistry;
 use Pcteckserv\CmsCore\Updates\StarterPackage;
@@ -100,6 +101,37 @@ class TestGitTagUpdateChecker extends GitTagUpdateChecker
 class UpdatesManagementTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_updates_identifies_the_project_by_app_name_and_its_configured_repository(): void
+    {
+        config([
+            'app.name' => 'Demonstração CMS',
+            'cms-core.updates.starter.repository' => 'pcteckserv/cms.demonstracao',
+        ]);
+        $this->mock(PackageVersionRegistry::class)->shouldReceive('checkRemoteUpdates')->once()->andReturn(collect([
+            new InstalledPackage(StarterPackage::NAME, '0.0.1', '1.0.3', 'stable', null),
+        ]));
+
+        $this->actingAs($this->superAdmin())->get(route('admin.updates.index'))
+            ->assertOk()
+            ->assertSee('Projeto — Demonstração CMS')
+            ->assertSee('https://github.com/pcteckserv/cms.demonstracao')
+            ->assertSee('pcteckserv/cms.demonstracao')
+            ->assertDontSee('>Starter</h2>', false)
+            ->assertSee(route('admin.updates.run', ['package' => StarterPackage::NAME]), false);
+    }
+
+    public function test_project_repository_label_omits_credentials_and_handles_git_urls(): void
+    {
+        foreach (['pcteckserv/cms.demonstracao', 'https://github.com/pcteckserv/cms.demonstracao.git', 'git@github.com:pcteckserv/cms.demonstracao.git', 'https://private-token@github.com/pcteckserv/cms.demonstracao.git'] as $repository) {
+            config(['cms-core.updates.starter.repository' => $repository]);
+            $this->assertSame('pcteckserv/cms.demonstracao', StarterPackage::repositoryLabel());
+        }
+
+        config(['cms-core.updates.starter.repository' => 'https://private-token@other.example/project.git', 'app.name' => '']);
+        $this->assertNull(StarterPackage::repositoryLabel());
+        $this->assertSame('Projeto', StarterPackage::displayName());
+    }
 
     public function test_github_api_supports_repository_names_with_dots(): void
     {
