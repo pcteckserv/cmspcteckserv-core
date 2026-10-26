@@ -1,5 +1,32 @@
 # Publicação de versões do Core
 
+## v2.14.4
+
+Adiciona entrega pública controlada dos ficheiros da biblioteca no endereço
+`/storage/cms/media/...` (ou no diretório de media configurado). Os URLs
+existentes mantêm-se válidos quando o alojamento não tem `storage:link`,
+incluindo instalações antigas em que a aplicação ficou na pasta pública.
+Não move os ficheiros nem altera os registos ou URLs gravados.
+
+A entrega só permite caminhos registados no Media correspondente ao UUID,
+em discos locais com visibilidade pública, incluindo variantes conhecidas.
+Ficheiros privados, apagados, inexistentes e caminhos fora da raiz do disco
+são rejeitados. Respostas usam cache condicional, MIME detetado pelo servidor,
+`nosniff` e CSP restritiva. Com symlink funcional, o servidor continua a servir
+diretamente os ficheiros. Novas instalações mantêm a separação das pastas.
+
+Inclui a reparação do atualizador de 2.14.3. Uma instalação ainda em 2.14.1
+precisa primeiro dos dois ficheiros de reparação por FTP, na pasta onde estão
+`artisan` e `composer.json`, preservando a estrutura `vendor/...`. Depois,
+atualizar o Core no painel: o Composer descarrega esta versão do repositório
+e `optimize:clear` disponibiliza a nova rota. Não reinstalar a base de dados.
+
+Validação: 160 testes do Core e 680 asserções aprovados, incluindo a atualização
+real com Composer/Git e a entrega pública sem symlink e com URL em subpasta.
+
+Validação: 160 testes do Core e 680 asserções aprovados, incluindo a atualização
+real com Composer/Git e a entrega pública sem symlink e com URL em subpasta.
+
 ## v2.14.3
 
 Corrige a atualização do Core em instalações publicadas a partir de um pacote

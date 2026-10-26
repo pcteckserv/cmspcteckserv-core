@@ -20,9 +20,12 @@ use Pcteckserv\CmsCore\Http\Controllers\Admin\SiteOptionsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\SmtpSettingsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\UpdatesController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\UsersController;
+use Pcteckserv\CmsCore\Http\Controllers\Admin\WebsiteController;
 use Pcteckserv\CmsCore\Http\Controllers\Auth\AuthenticatedSessionController;
 use Pcteckserv\CmsCore\Http\Controllers\Consent\ConsentRecordController;
 use Pcteckserv\CmsCore\Http\Controllers\MaintenanceAccessController;
+use Pcteckserv\CmsCore\Http\Controllers\PublicMediaController;
+use Pcteckserv\CmsCore\Http\Controllers\WebsitePublicController;
 use Pcteckserv\CmsCore\Seo\Http\Controllers\RobotsTxtController;
 use Pcteckserv\CmsCore\Seo\Http\Controllers\SeoAuditController;
 use Pcteckserv\CmsCore\Seo\Http\Controllers\SeoDashboardController;
@@ -30,11 +33,17 @@ use Pcteckserv\CmsCore\Seo\Http\Controllers\SeoNotFoundController;
 use Pcteckserv\CmsCore\Seo\Http\Controllers\SeoRedirectsController;
 use Pcteckserv\CmsCore\Seo\Http\Controllers\SeoSettingsController;
 use Pcteckserv\CmsCore\Seo\Http\Controllers\SitemapController;
+use Pcteckserv\CmsCore\Support\Website;
+
+// Compatibilidade com alojamentos sem ligação simbólica para o disco público.
+Route::get('/storage/'.trim((string) config('cms-core.media.directory', 'cms/media'), '/').'/{path}',
+    PublicMediaController::class)
+    ->where('path', '.+')->name('cms-core.media.public');
 
 Route::middleware('web')->group(function (): void {
-    Route::get('/{slug}', [\Pcteckserv\CmsCore\Http\Controllers\WebsitePublicController::class, 'policy'])->whereIn('slug', array_values(\Pcteckserv\CmsCore\Support\Website::SLUGS))->name('website.policy');
-    Route::get('/menus/{slug}', [\Pcteckserv\CmsCore\Http\Controllers\WebsitePublicController::class, 'menu'])->name('website.menu');
-    Route::get('/site-custom.css', [\Pcteckserv\CmsCore\Http\Controllers\WebsitePublicController::class, 'css'])->name('website.css');
+    Route::get('/{slug}', [WebsitePublicController::class, 'policy'])->whereIn('slug', array_values(Website::SLUGS))->name('website.policy');
+    Route::get('/menus/{slug}', [WebsitePublicController::class, 'menu'])->name('website.menu');
+    Route::get('/site-custom.css', [WebsitePublicController::class, 'css'])->name('website.css');
     Route::get('/favicon.ico', function () {
         $path = __DIR__.'/../resources/images/favicon.png';
 
@@ -96,10 +105,10 @@ Route::middleware('web')->group(function (): void {
         ->group(function (): void {
             Route::get('/', DashboardController::class)->name('dashboard');
             Route::get('/site-options', [SiteOptionsController::class, 'edit'])->name('site-options.edit');
-            Route::get('/website/{section}', [\Pcteckserv\CmsCore\Http\Controllers\Admin\WebsiteController::class, 'edit'])->name('website.edit');
+            Route::get('/website/{section}', [WebsiteController::class, 'edit'])->name('website.edit');
             Route::get('/website-admin.js', fn () => response()->file(__DIR__.'/../resources/js/website-admin.js', ['Content-Type' => 'application/javascript; charset=UTF-8']))->name('website.admin-script');
-            Route::put('/website/{section}', [\Pcteckserv\CmsCore\Http\Controllers\Admin\WebsiteController::class, 'update'])->name('website.update');
-            Route::delete('/website-menus/{slug}', [\Pcteckserv\CmsCore\Http\Controllers\Admin\WebsiteController::class, 'destroy'])->name('website.menus.destroy');
+            Route::put('/website/{section}', [WebsiteController::class, 'update'])->name('website.update');
+            Route::delete('/website-menus/{slug}', [WebsiteController::class, 'destroy'])->name('website.menus.destroy');
             Route::put('/site-options', [SiteOptionsController::class, 'update'])->name('site-options.update');
             Route::get('/footer', [FooterSettingsController::class, 'edit'])->name('footer.edit');
             Route::put('/footer', [FooterSettingsController::class, 'update'])->name('footer.update');
@@ -177,4 +186,4 @@ Route::middleware('web')->group(function (): void {
             Route::resource('users', UsersController::class)->except(['show']);
             Route::resource('roles', RolesController::class)->except(['show']);
         });
-    });
+});
