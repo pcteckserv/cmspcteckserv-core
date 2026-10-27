@@ -1,7 +1,7 @@
 const http=require('http'),fs=require('fs'),path=require('path');
 const fixtures=path.resolve(__dirname,'../Standalone/.fixtures');
 const assets=process.env.CMS_BROWSER_ASSETS||path.resolve(__dirname,'../../../novosite/public/build');
-const routes={'/admin/perfil':'profile','/seguranca/web':'security','/cliente':'customer-account','/cliente/perfil':'customer-profile','/seguranca/shop_customer':'customer-security','/cliente/moradas':'customer-addresses'};
+const routes={'/admin/clientes/criar':'admin-customer-create','/admin/clientes/1':'admin-customer-edit','/admin/perfil':'profile','/seguranca/web':'security','/cliente':'customer-account','/cliente/perfil':'customer-profile','/seguranca/shop_customer':'customer-security','/cliente/moradas':'customer-addresses'};
 http.createServer((req,res)=>{
  const url=new URL(req.url,'http://127.0.0.1:9878');
  if(url.pathname==='/health'){res.end('ok');return;}

@@ -31,12 +31,19 @@ class AdminCustomersController
         if ($customer) {
             AccountFormChanges::apply($r, Customer::findOrFail($customer)->email);
         }
+        $setPassword = $r->boolean('change_password');
+        if (! $setPassword) {
+            $r->merge(['password' => null, 'password_confirmation' => null]);
+        }
         $r->merge(['email' => mb_strtolower(trim((string) $r->input('email')))]);
-        $d = $r->validate(['name' => 'required|string|max:190', 'email' => ['required', 'email', 'max:254', Rule::unique('cms_shop_customers')->ignore($customer)], 'company' => 'nullable|string|max:190', 'phone' => 'nullable|string|max:30', 'vat' => 'nullable|string|max:30', 'active' => 'required|boolean', 'groups' => 'nullable|array|max:100', 'groups.*' => 'integer|distinct|exists:cms_customer_groups,id']);
-        $c = DB::transaction(function () use ($d, $customer) {
-            $c = $customer ? Customer::lockForUpdate()->findOrFail($customer) : new Customer(['password' => bin2hex(random_bytes(32))]);
-            $c->fill(array_diff_key($d, ['groups' => true]));
-            if (! $c->active) {
+        $d = $r->validate(['name' => 'required|string|max:190', 'email' => ['required', 'email', 'max:254', Rule::unique('cms_shop_customers')->ignore($customer)], 'company' => 'nullable|string|max:190', 'phone' => 'nullable|string|max:30', 'vat' => 'nullable|string|max:30', 'active' => 'required|boolean', 'groups' => 'nullable|array|max:100', 'groups.*' => 'integer|distinct|exists:cms_customer_groups,id', 'change_password' => 'nullable|boolean', 'password' => [Rule::requiredIf($setPassword), 'nullable', 'string', 'min:12', 'max:200', 'confirmed']]);
+        $c = DB::transaction(function () use ($d, $customer, $setPassword) {
+            $c = $customer ? Customer::lockForUpdate()->findOrFail($customer) : new Customer;
+            if (! $customer || $setPassword) {
+                $c->password = $setPassword ? $d['password'] : bin2hex(random_bytes(32));
+            }
+            $c->fill(array_diff_key($d, ['groups' => true, 'change_password' => true, 'password' => true]));
+            if (! $c->active || $setPassword) {
                 $c->remember_token = null;
             }
             $c->save();
@@ -45,7 +52,7 @@ class AdminCustomersController
             return $c;
         });
 
-        return redirect()->route('admin.customers.edit', $c->id)->with('status', 'Cliente guardado. Uma conta nova pode definir a palavra-passe pela recuperação de acesso.');
+        return redirect()->route('admin.customers.edit', $c->id)->with('status', $setPassword ? 'Cliente guardado. Palavra-passe definida.' : ($customer ? 'Cliente guardado.' : 'Cliente guardado. Pode definir a palavra-passe pela recuperação de acesso.'));
     }
 
     public function destroy(int $customer)

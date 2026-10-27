@@ -35,6 +35,9 @@ class RenderAccountFixturesTest extends SharedCustomersTest
             file_put_contents($dir.'/'.$file.'.html', str_replace('</head>', $assets.'</head>', $this->get($url)->assertOk()->getContent()));
         }
         $customer = $this->customer();
+        foreach (['admin-customer-create' => '/admin/clientes/criar', 'admin-customer-edit' => '/admin/clientes/'.$customer->id] as $file => $url) {
+            file_put_contents($dir.'/'.$file.'.html', str_replace('</head>', $assets.'</head>', $this->get($url)->assertOk()->getContent()));
+        }
         $this->actingAs($customer, 'shop_customer');
         AccountFactor::create(['guard' => 'shop_customer', 'account_id' => $customer->id, 'secret' => app(TwoFactor::class)->secret()]);
         foreach (['customer-profile' => '/cliente/perfil', 'customer-account' => '/cliente', 'customer-security' => '/seguranca/shop_customer', 'customer-addresses' => '/cliente/moradas'] as $file => $url) {

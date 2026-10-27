@@ -40,3 +40,11 @@ test('editing a profile requires an explicit email or password change',async({pa
  const toggle=page.locator('[data-enable-password-change]');await toggle.evaluate(el=>{el.checked=true;el.dispatchEvent(new Event('change',{bubbles:true}));});await expect(password).toBeEnabled();
  await password.evaluate(el=>el.value='browser-injected');await toggle.evaluate(el=>{el.checked=false;el.dispatchEvent(new Event('change',{bubbles:true}));});await expect(password).toBeDisabled();await expect(password).toHaveValue('');
 });
+
+test('administrators explicitly enable empty customer password fields on creation and edit',async({page},info)=>{
+ for(const url of ['/admin/clientes/criar','/admin/clientes/1']){
+  await page.setViewportSize({width:390,height:844});await page.goto(url);const password=page.locator('[name=password]'),confirmation=page.locator('[name=password_confirmation]');await expect(password).toBeDisabled();await expect(password).toHaveValue('');await expect(confirmation).toHaveValue('');
+  const toggle=page.locator('[data-enable-password-change]');await toggle.check();await expect(password).toBeEnabled();await expect(confirmation).toBeEnabled();await password.fill('customer-password-123');await confirmation.fill('customer-password-123');await toggle.uncheck();await expect(password).toBeDisabled();await expect(password).toHaveValue('');await expect(confirmation).toHaveValue('');
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:info.outputPath(url.endsWith('criar')?'customer-create-mobile.png':'customer-edit-mobile.png'),fullPage:true});
+ }
+});

@@ -157,6 +157,59 @@ class SharedCustomersTest extends TestCase
         $this->assertTrue($new->hasCmsRole('core.client'));
     }
 
+    public function test_admin_can_create_a_customer_with_an_optional_confirmed_password(): void
+    {
+        $manager = $this->manager();
+        $this->actingAs($manager, 'web');
+        $this->get('/admin/clientes/criar')->assertOk()->assertSee('Definir palavra-passe agora');
+        $data = ['name' => 'Novo cliente', 'email' => 'new@example.test', 'active' => 1, 'change_password' => 1, 'password' => 'customer-password-123', 'password_confirmation' => 'customer-password-123'];
+        $this->post('/admin/clientes', $data)->assertSessionHasNoErrors();
+        $customer = Customer::where('email', $data['email'])->sole();
+        $this->assertNotSame($data['password'], $customer->password);
+        $this->assertTrue(Hash::check($data['password'], $customer->password));
+        $this->post('/cliente/entrar', ['email' => $customer->email, 'password' => $data['password']])->assertSessionHasNoErrors();
+        $this->assertAuthenticatedAs($customer, 'shop_customer');
+        $this->actingAs($manager, 'web');
+        $this->post('/admin/clientes', ['name' => 'Sem senha', 'email' => 'random@example.test', 'active' => 1])->assertSessionHasNoErrors();
+        $this->assertNotEmpty(Customer::where('email', 'random@example.test')->sole()->password);
+    }
+
+    public function test_admin_password_change_requires_intent_and_confirmation_and_revokes_old_customer_access(): void
+    {
+        $customer = $this->customer();
+        $customer->update(['remember_token' => 'old-token']);
+        $old = $customer->password;
+        $this->actingAs($this->manager(), 'web');
+        $data = ['account_form_controlled' => 1, 'name' => $customer->name, 'email' => 'browser@example.test', 'active' => 1, 'password' => 'new-customer-password-123', 'password_confirmation' => 'new-customer-password-123'];
+        $this->put('/admin/clientes/'.$customer->id, $data)->assertSessionHasNoErrors();
+        $this->assertSame($old, $customer->fresh()->password);
+        $this->assertSame('old-token', $customer->fresh()->remember_token);
+        $this->assertSame($customer->email, $customer->fresh()->email);
+        $data['change_password'] = 1;
+        $this->put('/admin/clientes/'.$customer->id, array_replace($data, ['password_confirmation' => 'wrong-confirmation']))->assertSessionHasErrors('password');
+        $this->put('/admin/clientes/'.$customer->id, array_replace($data, ['password' => 'short', 'password_confirmation' => 'short']))->assertSessionHasErrors('password');
+        $this->assertSame($old, $customer->fresh()->password);
+        $this->put('/admin/clientes/'.$customer->id, $data)->assertSessionHasNoErrors();
+        $this->assertTrue(Hash::check($data['password'], $customer->fresh()->password));
+        $this->assertNull($customer->fresh()->remember_token);
+        $this->withSession(['shop_customer.identity' => ['id' => $customer->id, 'hash' => $old]])->actingAs($customer->fresh(), 'shop_customer')->get('/cliente')->assertRedirect(route('customers.login'));
+        $this->assertGuest('shop_customer');
+        $this->post('/cliente/entrar', ['email' => $customer->email, 'password' => 'password-test-123'])->assertSessionHasErrors('email');
+        $this->post('/cliente/entrar', ['email' => $customer->email, 'password' => $data['password']])->assertSessionHasNoErrors();
+        $this->assertAuthenticatedAs($customer, 'shop_customer');
+    }
+
+    public function test_customer_view_permission_does_not_allow_password_changes(): void
+    {
+        $customer = $this->customer();
+        $old = $customer->password;
+        $viewer = CustomerTestUser::create(['name' => 'Leitor', 'email' => 'viewer@example.test', 'password' => bcrypt('password-test-123')]);
+        $viewer->cmsPermissions()->attach(Permission::where('key', 'core.customers.view')->sole());
+        $this->actingAs($viewer, 'web')->get('/admin/clientes/'.$customer->id)->assertOk()->assertDontSee('data-enable-password-change', false);
+        $this->put('/admin/clientes/'.$customer->id, ['name' => $customer->name, 'email' => $customer->email, 'active' => 1, 'change_password' => 1, 'password' => 'unauthorized-pass-123', 'password_confirmation' => 'unauthorized-pass-123'])->assertForbidden();
+        $this->assertSame($old, $customer->fresh()->password);
+    }
+
     public function test_admin_manages_groups_addresses_and_preserves_customer_with_history(): void
     {
         $c = $this->customer();

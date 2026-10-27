@@ -1,5 +1,15 @@
 # Publicação de versões do Core
 
+## v2.19.1
+
+A administração permite definir uma palavra-passe na criação do cliente e
+substituí-la na ficha existente, com confirmação e pelo menos 12 caracteres.
+A opção é explícita: sem ativação, ignora preenchimento automático e preserva
+a senha atual. Sem senha inicial, mantém a recuperação de acesso existente.
+Alterar a senha revoga o token de acesso persistente e as sessões antigas são
+recusadas pelo controlo de identidade dos clientes. Exige core.customers.manage.
+Não requer migrações nem alterações nos plugins.
+
 ## v2.19.0
 
 O perfil profissional permite selecionar e adicionar idiomas, tanto no perfil
