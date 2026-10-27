@@ -9,11 +9,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Orchestra\Testbench\TestCase;
 use Pcteckserv\CmsCore\CmsCoreServiceProvider;
 use Pcteckserv\CmsCore\Contracts\CmsAccessUser;
 use Pcteckserv\CmsCore\Customers\Address;
 use Pcteckserv\CmsCore\Customers\Customer;
+use Pcteckserv\CmsCore\Customers\CustomerAuthReturn;
 use Pcteckserv\CmsCore\Customers\CustomerDirectory;
 use Pcteckserv\CmsCore\Customers\Group;
 use Pcteckserv\CmsCore\Models\Concerns\HasCmsAccess;
@@ -23,6 +25,7 @@ use Pcteckserv\CmsCore\Models\UserProfile;
 use Pcteckserv\CmsCore\Security\AccountFactor;
 use Pcteckserv\CmsCore\Security\AuthenticatorQr;
 use Pcteckserv\CmsCore\Security\TwoFactor;
+use Pcteckserv\CmsCore\Support\Website;
 
 class CustomerTestUser extends User implements CmsAccessUser
 {
@@ -155,6 +158,61 @@ class SharedCustomersTest extends TestCase
         $this->assertGuest('shop_customer');
         $new = app(CustomerDirectory::class)->contact('João', 'joao@example.test');
         $this->assertTrue($new->hasCmsRole('core.client'));
+    }
+
+    public function test_signed_customer_return_is_preserved_after_login_and_registration(): void
+    {
+        $target = url('/agenda?location=1&draft=example').'#booking-services';
+        $customer = $this->customer();
+        $login = URL::temporarySignedRoute('customers.login', now()->addMinutes(30), ['return_to' => $target]);
+        $this->get($login)->assertOk()->assertSee('Continuar sem iniciar sessão');
+        $this->post('/cliente/entrar', ['email' => $customer->email, 'password' => 'wrong'])->assertSessionHasErrors('email');
+        $this->post('/cliente/entrar', ['email' => $customer->email, 'password' => 'password-test-123'])->assertRedirect($target)->assertSessionMissing('customers.auth_return');
+        auth('shop_customer')->logout();
+        app(Website::class)->save('registration', true);
+        $register = URL::temporarySignedRoute('customers.register', now()->addMinutes(30), ['return_to' => $target]);
+        $this->get($register)->assertOk()->assertSee('Já tenho conta');
+        $this->post('/cliente/registar', ['name' => 'Novo', 'email' => 'new-return@example.test', 'password' => 'password-test-123', 'password_confirmation' => 'password-test-123', 'terms' => 1])->assertRedirect($target)->assertSessionMissing('customers.auth_return');
+    }
+
+    public function test_customer_return_rejects_unsigned_external_and_expired_targets(): void
+    {
+        $this->get(route('customers.login', ['return_to' => url('/agenda')]))->assertForbidden();
+        foreach (['https://outside.example.test/agenda', '//outside.example.test/agenda', url('/').'/'.chr(92).'outside.example.test'] as $target) {
+            $url = URL::temporarySignedRoute('customers.login', now()->addMinutes(30), ['return_to' => $target]);
+            $this->get($url)->assertForbidden();
+        }
+        $url = URL::temporarySignedRoute('customers.login', now()->subMinute(), ['return_to' => url('/agenda')]);
+        $this->get($url)->assertForbidden();
+        $this->get('/cliente/entrar')->assertOk()->assertSessionMissing('customers.auth_return');
+    }
+
+    public function test_customer_auth_return_stays_inside_the_dynamic_installation_directory(): void
+    {
+        URL::forceRootUrl('https://example.test/cms');
+        URL::forceScheme('https');
+        try {
+            $valid = CustomerAuthReturn::link('customers.login', 'https://example.test/cms/agenda?location=1');
+            $this->assertStringContainsString('return_to=', $valid);
+            $this->assertStringNotContainsString('return_to=', CustomerAuthReturn::link('customers.login', 'https://example.test/another-site/agenda'));
+        } finally {
+            URL::forceRootUrl(null);
+            URL::forceScheme(null);
+        }
+    }
+
+    public function test_customer_two_factor_challenge_keeps_the_signed_return_destination(): void
+    {
+        $customer = $this->customer();
+        $two = app(TwoFactor::class);
+        $secret = $two->secret();
+        AccountFactor::create(['guard' => 'shop_customer', 'account_id' => $customer->id, 'secret' => $secret, 'confirmed_at' => now()]);
+        $target = url('/agenda?location=1').'#booking-services';
+        $url = URL::temporarySignedRoute('customers.login', now()->addMinutes(30), ['return_to' => $target]);
+        $this->get($url)->assertOk();
+        $this->post('/cliente/entrar', ['email' => $customer->email, 'password' => 'password-test-123'])->assertRedirect(route('security.challenge'));
+        $this->post('/seguranca/verificar', ['code' => $two->code($secret, intdiv(now()->timestamp, 30))])->assertRedirect($target);
+        $this->assertAuthenticatedAs($customer, 'shop_customer');
     }
 
     public function test_admin_can_create_a_customer_with_an_optional_confirmed_password(): void

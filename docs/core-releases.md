@@ -1,5 +1,14 @@
 # Publicação de versões do Core
 
+## v2.20.0
+
+A entrada e o registo de clientes podem retomar uma página pública através de
+uma ligação temporária assinada. O retorno é validado contra a origem e a pasta
+da instalação, preservado nas ligações entre entrada e registo e após dois
+fatores. Destinos sem assinatura, externos ou expirados são recusados. A entrada
+normal e o regresso ao checkout existente mantêm o seu comportamento.
+Não exige migrações. A Agenda 0.17 usa este percurso para retomar a marcação.
+
 ## v2.19.1
 
 A administração permite definir uma palavra-passe na criação do cliente e

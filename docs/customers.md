@@ -123,3 +123,5 @@ Os testes descodificam o QR para verificar o URI TOTP, a chave, o emissor e os
 parâmetros, e verificam os menus e a disposição em telemóvel.
 
 Desde o Core 2.19.1, em Clientes → Criar cliente pode ativar “Definir palavra-passe agora”. Na ficha existente, ative “Alterar palavra-passe”. Preencha a senha e a confirmação (mínimo de 12 caracteres) e guarde. A opção exige permissão para gerir clientes. Sem ativação, os campos permanecem desativados e a senha existente não muda; na criação, o cliente pode definir a sua senha através da recuperação de acesso.
+
+Desde o Core 2.20, `CustomerAuthReturn::link()` permite regressar a uma página da instalação após entrada ou registo. Os destinos são assinados, temporários e limitados à origem e pasta da aplicação; a verificação de dois fatores mantém o destino. O registo continua dependente da configuração global do site.

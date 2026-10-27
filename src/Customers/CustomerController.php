@@ -13,14 +13,18 @@ use Pcteckserv\CmsCore\Support\Website;
 
 class CustomerController
 {
-    public function login()
+    public function login(Request $r)
     {
+        CustomerAuthReturn::capture($r);
+
         return view('cms-core::customers.auth', ['mode' => 'login']);
     }
 
-    public function register()
+    public function register(Request $r)
     {
         abort_unless(app(Website::class)->registration(), 404);
+
+        CustomerAuthReturn::capture($r);
 
         return view('cms-core::customers.auth', ['mode' => 'register']);
     }
@@ -43,11 +47,13 @@ class CustomerController
         }
         $r->session()->regenerate();
         $target = $r->session()->pull('cms_shop.return_checkout', false) && Route::has('shop.checkout') && app(PluginManager::class)->isEnabled('ecommerce') ? 'shop.checkout' : 'customers.account';
-        if ($challenge = app(TwoFactor::class)->challengeIfNeeded($r, 'shop_customer', route($target))) {
+        $target = CustomerAuthReturn::pull($r) ?? route($target);
+        $r->session()->put('shop_customer.identity', ['id' => auth('shop_customer')->id(), 'hash' => auth('shop_customer')->user()->getAuthPassword()]);
+        if ($challenge = app(TwoFactor::class)->challengeIfNeeded($r, 'shop_customer', $target)) {
             return $challenge;
         }
 
-        return redirect()->route($target);
+        return redirect()->to($target);
     }
 
     public function store(Request $r)
@@ -59,7 +65,9 @@ class CustomerController
         auth('shop_customer')->login($c);
         $r->session()->regenerate();
 
-        return redirect()->route('customers.account');
+        $r->session()->put('shop_customer.identity', ['id' => $c->id, 'hash' => $c->getAuthPassword()]);
+
+        return redirect()->to(CustomerAuthReturn::pull($r) ?? route('customers.account'));
     }
 
     public function logout(Request $r)
@@ -144,6 +152,6 @@ class CustomerController
             $c->update(['password' => $password, 'remember_token' => null]);
         });
 
-        return $status === Password::PASSWORD_RESET ? redirect()->route('customers.login')->with('status', 'Palavra-passe atualizada.') : back()->withErrors(['email' => 'A ligação expirou ou não é válida.']);
+        return $status === Password::PASSWORD_RESET ? redirect()->to(CustomerAuthReturn::link('customers.login'))->with('status', 'Palavra-passe atualizada.') : back()->withErrors(['email' => 'A ligação expirou ou não é válida.']);
     }
 }
