@@ -1,5 +1,12 @@
 # Publicação de versões do Core
 
+## v2.19.0
+
+O perfil profissional permite selecionar e adicionar idiomas, tanto no perfil
+próprio como na edição administrativa. A nova coluna JSON languages é opcional;
+a migração preserva os perfis existentes. Campos omitidos por integrações antigas
+não alteram os idiomas guardados. Limite de 20 idiomas com 80 caracteres cada.
+
 ## v2.18.1
 
 A atualização dos plugins do catálogo alinha também a restrição no composer.json

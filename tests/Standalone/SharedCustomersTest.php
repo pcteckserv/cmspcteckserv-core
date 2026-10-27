@@ -317,6 +317,20 @@ class SharedCustomersTest extends TestCase
         $this->assertDatabaseMissing('cms_user_profiles', ['user_id' => $actor->id]);
     }
 
+    public function test_staff_languages_can_be_selected_added_and_cleared_without_changing_biography(): void
+    {
+        $staff = $this->manager();
+        $this->actingAs($staff, 'web');
+        $data = ['name' => $staff->name, 'email' => $staff->email, 'current_password' => 'password-test-123', 'languages_present' => 1, 'languages' => ['Inglês'], 'extra_languages' => " Português (Portugal)\nInglês "];
+        $this->put('/admin/perfil', $data)->assertSessionHasNoErrors();
+        $profile = UserProfile::where('user_id', $staff->id)->sole();
+        $this->assertSame(['Inglês', 'Português (Portugal)'], $profile->languages);
+        $this->put('/admin/perfil', array_replace($data, ['languages' => [], 'extra_languages' => str_repeat('x', 81)]))->assertSessionHasErrors('languages.0');
+        $this->assertSame(['Inglês', 'Português (Portugal)'], $profile->fresh()->languages);
+        $this->put('/admin/perfil', array_replace($data, ['languages' => [], 'extra_languages' => '']))->assertSessionHasNoErrors();
+        $this->assertSame([], $profile->fresh()->languages);
+    }
+
     public function test_staff_can_update_only_their_own_profile_with_current_password(): void
     {
         $staff = $this->manager();

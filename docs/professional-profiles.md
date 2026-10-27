@@ -25,3 +25,4 @@ Testes: UserProfilesTest valida a palavra-passe, armazenamento, remoção e reje
 de SVG. AgendaTest valida a migração idempotente, reutilização do perfil e
 exclusão de contas/agendas privadas. O navegador valida a filtragem por serviço,
 a seleção do profissional e a disposição em mobile.
+Desde o Core 2.19, `languages` contém uma lista JSON de idiomas. A edição própria e administrativa permite selecionar opções comuns e acrescentar outros idiomas, com limite de 20 entradas de 80 caracteres. A apresentação existente continua no campo `biography`. A Agenda 0.16 apresenta os idiomas num separador próprio, contagens de marcações concluídas e clientes distintos, serviços com reserva direta, portefólios pessoais e avaliações aprovadas de visitas concluídas. Os dados privados das marcações não são publicados.

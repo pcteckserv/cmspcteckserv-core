@@ -11,6 +11,11 @@ class UserProfile extends Model
 
     protected $guarded = ['id'];
 
+    protected function casts(): array
+    {
+        return ['languages' => 'array'];
+    }
+
     public function avatarUrl(): ?string
     {
         return $this->avatar_path ? Storage::disk('public')->url($this->avatar_path) : null;
