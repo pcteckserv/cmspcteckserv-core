@@ -152,10 +152,24 @@
                             </a>
                         @endif
 
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button class="btn btn-outline-secondary btn-sm" type="submit">Terminar sessão</button>
-                        </form>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center" type="button" id="cms-profile-menu" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menu de perfil" title="Menu de perfil">
+                                <svg aria-hidden="true" width="20" height="20" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/>
+                                    <path d="M4 21v-2a8 8 0 0 1 16 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                </svg>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cms-profile-menu">
+                                <li><a class="dropdown-item" href="{{ route('admin.profile.edit') }}">Os meus dados</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button class="dropdown-item" type="submit">Terminar sessão</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </header>

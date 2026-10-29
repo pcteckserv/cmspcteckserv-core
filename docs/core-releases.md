@@ -1,5 +1,22 @@
 # Publicação de versões do Core
 
+## v2.10.0
+
+Substitui o botão de terminar sessão por um menu de perfil com acesso a
+«Os meus dados». Cada utilizador autenticado pode alterar o nome, o email e a
+palavra-passe da própria conta, sem necessitar de permissões de gestão de
+utilizadores. Alterar o email ou a palavra-passe exige a palavra-passe atual.
+
+Inclui validação do email único, confirmação da nova palavra-passe, proteção
+CSRF, limitação de pedidos e auditoria sem credenciais. A alteração do email
+remove a verificação anterior; a alteração da palavra-passe renova o token de
+autenticação persistente e o identificador da sessão.
+
+Validação: os 10 testes do perfil passaram, com 89 verificações. A suite completa
+executou 160 testes: 156 passaram e 4 falharam. As mesmas quatro falhas foram
+reproduzidas na versão anterior, nos testes de permissões administrativas e SEO.
+O manifesto foi validado com `composer validate --strict --no-check-publish`.
+
 ## v2.7.0
 
 Adiciona a eliminação definitiva de utilizadores, exclusiva do Super Admin, na

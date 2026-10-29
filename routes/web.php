@@ -14,6 +14,7 @@ use Pcteckserv\CmsCore\Http\Controllers\Admin\FooterSettingsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\MaintenanceSettingsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\MediaController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\PluginsController;
+use Pcteckserv\CmsCore\Http\Controllers\Admin\ProfileController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\Queues\QueueDashboardController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\RolesController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\SiteOptionsController;
@@ -92,6 +93,8 @@ Route::middleware('web')->group(function (): void {
         ->name('admin.')
         ->group(function (): void {
             Route::get('/', DashboardController::class)->name('dashboard');
+            Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+            Route::put('/profile', [ProfileController::class, 'update'])->middleware('throttle:10,1')->name('profile.update');
             Route::get('/site-options', [SiteOptionsController::class, 'edit'])->name('site-options.edit');
             Route::put('/site-options', [SiteOptionsController::class, 'update'])->name('site-options.update');
             Route::get('/footer', [FooterSettingsController::class, 'edit'])->name('footer.edit');
