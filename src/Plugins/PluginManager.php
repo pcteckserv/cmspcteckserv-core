@@ -25,7 +25,12 @@ class PluginManager
                 $plugin = InstalledPlugin::query()->firstOrNew(['slug' => $definition->slug]);
                 $isInstalled = $this->isComposerInstalled($definition->package);
                 $metadata = $plugin->metadata ?? [];
-                $manifestVersion = $isInstalled && ($metadata['repository_type'] ?? null) === 'path'
+                $plugin->package = $definition->package;
+                $isPath = $isInstalled && app(InstalledPluginSource::class)->isPath($plugin);
+                if ($isPath) {
+                    $metadata['repository_type'] = 'path';
+                }
+                $manifestVersion = $isPath
                     ? ($this->installedVersionReader ?? new InstalledPluginVersionReader())->read($definition->package)
                     : null;
 

@@ -5,8 +5,9 @@ namespace Pcteckserv\CmsCore\Updates;
 use Illuminate\Support\Facades\Schema;
 use Pcteckserv\CmsCore\Models\InstalledPlugin;
 use Pcteckserv\CmsCore\Plugins\PluginRepository;
-use Symfony\Component\Process\Exception\ProcessFailedException;
+use Pcteckserv\CmsCore\Plugins\InstalledPluginSource;
 use Symfony\Component\Process\Process;
+use Throwable;
 
 class GitTagUpdateChecker
 {
@@ -21,12 +22,12 @@ class GitTagUpdateChecker
         if (Schema::hasTable((new InstalledPlugin())->getTable())) {
             $plugin = InstalledPlugin::query()->where('package', $package)->whereNotNull('installed_version')->first();
 
-            if (($plugin?->metadata['repository_type'] ?? null) === 'path') {
+            if ($plugin !== null && app(InstalledPluginSource::class)->isPath($plugin)) {
                 try {
                     $source = app(PluginRepository::class)->find($plugin->slug);
 
                     return $source?->package === $package ? $source->version : null;
-                } catch (ProcessFailedException $exception) {
+                } catch (Throwable $exception) {
                     return null;
                 }
             }

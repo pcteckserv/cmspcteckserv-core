@@ -1,5 +1,25 @@
 # Publicação de versões do Core
 
+## v2.11.1
+
+Corrige a descoberta de atualizações de plugins instalados como packages `path`
+sem metadados de origem no registo do CMS. A origem é recuperada dos dados do
+Composer; uma origem explícita continua a prevalecer. O catálogo tem de devolver
+o mesmo package antes de disponibilizar ou aplicar uma atualização.
+
+As atualizações alinham a restrição Composer com o manifesto do plugin quando
+necessário, incluindo mudanças de versão minor em plugins `0.x`. O registo da
+nova versão só é atualizado após confirmar os ficheiros instalados e terminar
+as migrations e a limpeza de cache. O painel mostra «Versão por verificar» quando
+não conhece a versão disponível, em vez de indicar «Atualizado».
+
+Não introduz migrations nem altera conteúdo dos sites.
+
+Validação: os 50 testes de instalação e atualização passaram, com 237 verificações.
+A suite completa executou 187 testes: 183 passaram e mantiveram-se as quatro
+falhas preexistentes de permissões administrativas e SEO, reproduzidas antes da
+correção. O manifesto foi validado com `composer validate --strict --no-check-publish`.
+
 ## v2.11.0
 
 Adiciona um cartão de autenticação de dois fatores em «Os meus dados», com
@@ -70,6 +90,12 @@ consiga detetar a tag.
 Antes de publicar uma nova tag, validar o manifesto com
 `composer validate --strict --no-check-publish` e executar os testes do Core,
 incluindo `tests/Unit/CorePackageManifestTest.php`, através da aplicação de testes.
+
+O `phpunit.xml` carrega o código-fonte local do Core através de `tests/bootstrap.php`.
+Definir `CMS_CORE_TEST_APP` com o caminho de uma aplicação Laravel que tenha as
+dependências de teste instaladas e executar o PHPUnit dessa aplicação com
+`--configuration phpunit.xml`. Os testes usam SQLite em memória e isolam as
+configurações de catálogo e atualizações do site utilizado como ambiente de teste.
 
 Se uma tag já publicada contiver um manifesto inválido, publicar a correção numa
 nova versão PATCH. Não mover nem substituir tags existentes. A tag `v2.6.7`

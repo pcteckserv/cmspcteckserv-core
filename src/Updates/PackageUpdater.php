@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Pcteckserv\CmsCore\Models\InstalledPlugin;
 use Pcteckserv\CmsCore\Plugins\PluginRepository;
 use Pcteckserv\CmsCore\Plugins\InstalledPluginVersionReader;
+use Pcteckserv\CmsCore\Plugins\InstalledPluginSource;
 use Pcteckserv\CmsCore\Support\ComposerCommand;
 use Throwable;
 
@@ -39,7 +40,7 @@ class PackageUpdater
 
         $availableVersion = $this->availableVersion($package);
         $plugin = InstalledPlugin::query()->where('package', $package)->whereNotNull('installed_version')->first();
-        $isPathPlugin = $plugin !== null && ($plugin->metadata['repository_type'] ?? null) === 'path';
+        $isPathPlugin = $plugin !== null && app(InstalledPluginSource::class)->isPath($plugin, $installedPackage);
 
         if ($isPathPlugin) {
             try {
@@ -90,8 +91,7 @@ class PackageUpdater
             }
 
             $composer = $this->run($this->composerCommand->build([
-                'update',
-                $package,
+                ...$this->pathPluginUpdateArguments($package, $source->versionConstraint, $availableVersion),
                 ...$this->dependencyUpdateOption($package),
                 '--no-interaction',
             ]));
@@ -191,6 +191,8 @@ class PackageUpdater
             $metadata = $plugin->metadata ?? [];
             $metadata['last_applied_release'] = $availableVersion;
             $metadata['version'] = $availableVersion;
+            $metadata['repository_type'] = 'path';
+            $metadata['version_constraint'] = $source->versionConstraint;
             $metadata['repository_url'] = $source->repositoryPath;
             $plugin->forceFill(['metadata' => $metadata, 'installed_version' => $availableVersion])->save();
         }
@@ -247,6 +249,21 @@ class PackageUpdater
     private function normalizeVersion(string $version): string
     {
         return ltrim($version, 'v');
+    }
+
+    /** @return array<int, string> */
+    private function pathPluginUpdateArguments(string $package, ?string $constraint, string $version): array
+    {
+        $path = base_path('composer.json');
+        $manifest = is_readable($path) ? json_decode((string) file_get_contents($path), true) : null;
+        $current = is_array($manifest) ? ($manifest['require'][$package] ?? null) : null;
+        $target = is_string($constraint) && trim($constraint) !== '' ? trim($constraint) : $version;
+
+        if (is_string($current) && $current !== $target) {
+            return ['require', $package.':'.$target];
+        }
+
+        return ['update', $package];
     }
 
     /** @return array<int, string> */

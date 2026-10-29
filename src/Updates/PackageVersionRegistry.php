@@ -7,6 +7,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Pcteckserv\CmsCore\Plugins\PluginCatalog;
 use Pcteckserv\CmsCore\Plugins\InstalledPluginVersionReader;
+use Pcteckserv\CmsCore\Plugins\InstalledPluginSource;
 use Pcteckserv\CmsCore\Models\InstalledPlugin;
 
 class PackageVersionRegistry
@@ -133,7 +134,7 @@ class PackageVersionRegistry
 
         $plugin = InstalledPlugin::query()->where('package', $package)->whereNotNull('installed_version')->first();
 
-        if (($plugin?->metadata['repository_type'] ?? null) === 'path') {
+        if ($plugin !== null && app(InstalledPluginSource::class)->isPath($plugin)) {
             $manifestVersion = ($this->installedPluginVersionReader ?? new InstalledPluginVersionReader())->read($package);
 
             if ($manifestVersion !== null) {

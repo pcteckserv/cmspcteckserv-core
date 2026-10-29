@@ -28,6 +28,8 @@
                                 <span class="badge text-bg-danger">Falhou</span>
                             @elseif (($status['state'] ?? null) === 'succeeded')
                                 <span class="badge text-bg-success">Concluída</span>
+                            @elseif ($package->availableVersion === null)
+                                <span class="badge text-bg-secondary">Versão por verificar</span>
                             @elseif ($package->hasUpdate())
                                 <span class="badge text-bg-warning">Update disponível</span>
                             @else
@@ -43,6 +45,8 @@
                         <td class="text-end">
                             @if (in_array($status['state'] ?? null, ['queued', 'running'], true))
                                 <button class="btn btn-outline-secondary btn-sm" type="button" disabled>A processar</button>
+                            @elseif ($package->availableVersion === null)
+                                <button class="btn btn-outline-secondary btn-sm" type="button" disabled>Versão por verificar</button>
                             @elseif ($package->hasUpdate())
                                 <form method="POST" action="{{ route('admin.updates.run', ['package' => $package->name]) }}">
                                     @csrf

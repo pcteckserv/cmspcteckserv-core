@@ -19,8 +19,8 @@ class InstalledPluginUpdatesTest extends TestCase
         require_once dirname(__DIR__, 2).'/src/Updates/PackageVersionRegistry.php';
         config(['cms-plugins.plugins' => [], 'cms-core.updates.packages' => []]);
         $plugin = InstalledPlugin::query()->create([
-            'slug' => 'contact-forms', 'name' => 'pcteckserv/cms-contact-forms',
-            'package' => 'pcteckserv/cms-contact-forms', 'label' => 'Contacto',
+            'slug' => 'contact-forms', 'name' => 'tests/installed-plugin',
+            'package' => 'tests/installed-plugin', 'label' => 'Contacto',
             'status' => 'disabled', 'installed_version' => 'dev-main',
         ]);
         $catalog = new PluginCatalog();
