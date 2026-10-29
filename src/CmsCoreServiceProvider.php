@@ -84,6 +84,7 @@ class CmsCoreServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->registerAuthenticationRateLimiters();
         $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'cms-core');
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
@@ -94,6 +95,7 @@ class CmsCoreServiceProvider extends ServiceProvider
         Blade::component(CmsSeo::class, 'cms-seo');
         Blade::component(CmsSeoEditor::class, 'cms-seo-editor');
         $this->callAfterResolving(Kernel::class, function (Kernel $kernel): void {
+            $kernel->appendMiddlewareToGroup('web', \Pcteckserv\CmsCore\Http\Middleware\EnsureAdminTwoFactorVerified::class);
             $kernel->appendMiddlewareToGroup('web', HandleCmsMaintenanceMode::class);
             $kernel->appendMiddlewareToGroup('web', InjectConsentManager::class);
             $kernel->appendMiddlewareToGroup('web', InjectAdminShortcut::class);
@@ -272,6 +274,24 @@ class CmsCoreServiceProvider extends ServiceProvider
     {
         RateLimiter::for('backups', function (Request $request) {
             return Limit::perMinute(10)->by((string) ($request->user()?->getAuthIdentifier() ?: $request->ip()));
+        });
+    }
+
+    private function registerAuthenticationRateLimiters(): void
+    {
+        $response = fn (Request $request, array $headers) => response(
+            'Demasiadas tentativas. Aguarde um minuto e tente novamente.', 429, $headers,
+        );
+
+        RateLimiter::for('cms-login', fn (Request $request) => Limit::perMinute(10)
+            ->by((string) $request->ip())->response($response));
+        RateLimiter::for('cms-two-factor-settings', fn (Request $request) => Limit::perMinute(5)
+            ->by((string) $request->user()?->getAuthIdentifier())->response($response));
+        RateLimiter::for('cms-two-factor', function (Request $request) use ($response): array {
+            return [
+                Limit::perMinute(5)->by('ip:'.$request->ip())->response($response),
+                Limit::perMinute(5)->by('account:'.$request->session()->get(\Pcteckserv\CmsCore\Services\Auth\PendingTwoFactorLogin::KEY.'.id', 'guest'))->response($response),
+            ];
         });
     }
 

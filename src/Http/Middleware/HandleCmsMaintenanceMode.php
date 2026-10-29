@@ -54,6 +54,7 @@ class HandleCmsMaintenanceMode
             'admin/*',
             'login',
             'logout',
+            'two-factor-challenge',
             'maintenance/access',
             'build/*',
             'storage/*',

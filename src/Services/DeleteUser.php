@@ -20,6 +20,7 @@ class DeleteUser
             $user->cmsRoles()->detach();
             $user->cmsPermissions()->detach();
             $user->cmsState()->delete();
+            app(\Pcteckserv\CmsCore\Services\Auth\TwoFactorManager::class)->query($user)->delete();
 
             $deleted = in_array(SoftDeletes::class, class_uses_recursive($user), true)
                 ? $user->forceDelete()

@@ -11,12 +11,17 @@ use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Pcteckserv\CmsCore\ActivityLog\Contracts\ActivityLoggerContract;
 use Pcteckserv\CmsCore\Http\Requests\Admin\UpdateProfileRequest;
+use Pcteckserv\CmsCore\Services\Auth\TwoFactorManager;
 
 class ProfileController extends Controller
 {
-    public function edit(Request $request): View
+    public function edit(Request $request, TwoFactorManager $twoFactor): View
     {
-        return view('cms-core::admin.profile.edit', ['user' => $request->user()]);
+        return view('cms-core::admin.profile.edit', [
+            'user' => $request->user(),
+            'twoFactorEnabled' => $twoFactor->enabled($request->user()) !== null,
+            'twoFactorSetup' => $twoFactor->setup($request->user(), $request->session()->get(TwoFactorManager::SETUP)),
+        ]);
     }
 
     public function update(UpdateProfileRequest $request, ActivityLoggerContract $activityLogger): RedirectResponse

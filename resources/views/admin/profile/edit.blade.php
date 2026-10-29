@@ -48,4 +48,5 @@
             <a class="btn btn-outline-secondary" href="{{ route('admin.dashboard') }}">Cancelar</a>
         </div>
     </form>
+    @include('cms-core::admin.profile.partials.two-factor')
 @endsection

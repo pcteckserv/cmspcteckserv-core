@@ -8,6 +8,9 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Pcteckserv\CmsCore\ActivityLog\Contracts\ActivityLoggerContract;
+use Pcteckserv\CmsCore\Services\Auth\CompleteAdminLogin;
+use Pcteckserv\CmsCore\Services\Auth\PendingTwoFactorLogin;
+use Pcteckserv\CmsCore\Services\Auth\TwoFactorManager;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -31,7 +34,11 @@ class AuthenticatedSessionController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+        $request->session()->forget([PendingTwoFactorLogin::KEY, TwoFactorManager::VERIFIED]);
+        $provider = Auth::guard('web')->getProvider();
+        $user = $provider->retrieveByCredentials($credentials);
+
+        if (! $user || ! $provider->validateCredentials($user, $credentials)) {
             $this->activityLogger->log(
                 action: 'auth.login_failed',
                 category: 'authentication',
@@ -44,34 +51,20 @@ class AuthenticatedSessionController extends Controller
                 ->onlyInput('email');
         }
 
-        $user = Auth::user();
-
         if (method_exists($user, 'isCmsActive') && ! $user->isCmsActive()) {
-            Auth::guard('web')->logout();
-
             return back()
                 ->withErrors(['email' => 'Esta conta encontra-se inativa.'])
                 ->onlyInput('email');
         }
 
-        if (method_exists($user, 'cmsState')) {
-            $user->cmsState()->updateOrCreate([], [
-                'state' => method_exists($user, 'cmsAccessState') ? $user->cmsAccessState() : 'active',
-                'last_login_at' => now(),
-            ]);
+        $provider->rehashPasswordIfRequired($user, $credentials);
+
+        if (app(TwoFactorManager::class)->enabled($user)) {
+            app(PendingTwoFactorLogin::class)->begin($request, $user, $request->boolean('remember'));
+            return redirect()->route('two-factor.challenge');
         }
 
-        $request->session()->regenerate();
-
-        $this->activityLogger->log(
-            action: 'auth.login',
-            category: 'authentication',
-            description: 'Utilizador iniciou sessão.',
-            subject: $user,
-            user: $user,
-        );
-
-        return redirect()->intended(route('admin.dashboard'));
+        return app(CompleteAdminLogin::class)->handle($request, $user, $request->boolean('remember'));
     }
 
     public function destroy(Request $request): RedirectResponse

@@ -22,6 +22,8 @@ use Pcteckserv\CmsCore\Http\Controllers\Admin\SmtpSettingsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\UpdatesController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\UsersController;
 use Pcteckserv\CmsCore\Http\Controllers\Auth\AuthenticatedSessionController;
+use Pcteckserv\CmsCore\Http\Controllers\Auth\TwoFactorChallengeController;
+use Pcteckserv\CmsCore\Http\Controllers\Admin\TwoFactorSettingsController;
 use Pcteckserv\CmsCore\Http\Controllers\Consent\ConsentRecordController;
 use Pcteckserv\CmsCore\Http\Controllers\MaintenanceAccessController;
 use Pcteckserv\CmsCore\Seo\Http\Controllers\RobotsTxtController;
@@ -70,8 +72,12 @@ Route::middleware('web')->group(function (): void {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
 
     Route::middleware('guest')->group(function (): void {
-        Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.store');
+        Route::post('/login', [AuthenticatedSessionController::class, 'store'])->middleware('throttle:cms-login')->name('login.store');
     });
+
+    Route::get('/two-factor-challenge', [TwoFactorChallengeController::class, 'create'])->name('two-factor.challenge');
+    Route::post('/two-factor-challenge', [TwoFactorChallengeController::class, 'store'])->middleware('throttle:cms-two-factor')->name('two-factor.verify');
+    Route::delete('/two-factor-challenge', [TwoFactorChallengeController::class, 'cancel'])->name('two-factor.cancel');
 
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
         ->middleware('auth')
@@ -95,6 +101,12 @@ Route::middleware('web')->group(function (): void {
             Route::get('/', DashboardController::class)->name('dashboard');
             Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
             Route::put('/profile', [ProfileController::class, 'update'])->middleware('throttle:10,1')->name('profile.update');
+            Route::prefix('profile/two-factor')->name('profile.two-factor.')->middleware('throttle:cms-two-factor-settings')->group(function (): void {
+                Route::post('/', [TwoFactorSettingsController::class, 'begin'])->name('begin');
+                Route::post('/confirm', [TwoFactorSettingsController::class, 'confirm'])->name('confirm');
+                Route::delete('/', [TwoFactorSettingsController::class, 'disable'])->name('disable');
+                Route::post('/recovery-codes', [TwoFactorSettingsController::class, 'regenerate'])->name('regenerate');
+            });
             Route::get('/site-options', [SiteOptionsController::class, 'edit'])->name('site-options.edit');
             Route::put('/site-options', [SiteOptionsController::class, 'update'])->name('site-options.update');
             Route::get('/footer', [FooterSettingsController::class, 'edit'])->name('footer.edit');

@@ -1,5 +1,29 @@
 # Publicação de versões do Core
 
+## v2.11.0
+
+Adiciona um cartão de autenticação de dois fatores em «Os meus dados», com
+configuração por QR ou chave manual, confirmação por código TOTP e códigos de
+recuperação de utilização única. O login só termina depois de validar o segundo
+fator. Sessões anteriores e cookies de autenticação persistente também têm de
+validar o 2FA para aceder ao `/admin`.
+
+Inclui chaves encriptadas, hashes dos códigos de recuperação, proteção contra
+reutilização de códigos, CSRF, limites por conta e IP e auditoria sem credenciais.
+A configuração e a desativação exigem a palavra-passe atual. O QR é gerado
+localmente com BaconQrCode; os códigos TOTP são validados com Google2FA.
+
+Após atualizar as dependências Composer na aplicação, executar
+`php artisan migrate --force`. É necessária a extensão PHP `xmlwriter`.
+Consultar [a documentação de 2FA](two-factor-authentication.md) para configuração
+e recuperação.
+
+Validação: os 55 testes relacionados passaram, incluindo 21 testes novos de 2FA,
+com 364 verificações. A suite completa executou 181 testes: 177 passaram e
+mantiveram-se as quatro falhas preexistentes em permissões administrativas e SEO.
+O manifesto foi validado com `composer validate --strict --no-check-publish` e a
+auditoria das novas dependências não encontrou avisos de vulnerabilidades.
+
 ## v2.10.0
 
 Substitui o botão de terminar sessão por um menu de perfil com acesso a
