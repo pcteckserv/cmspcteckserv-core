@@ -1,5 +1,16 @@
 # Publicação de versões do Core
 
+## v2.11.3
+
+Remove os textos «Painel de administração» e «Navegação» da barra lateral,
+mantendo o logótipo, os menus e as respetivas permissões. Remove também os
+estilos que deixaram de ser utilizados. Sem migrations.
+
+Validação: os seis testes da barra lateral e do registo de menus passaram, com
+27 verificações. A suite completa executou 191 testes: 187 passaram e mantiveram-se
+as quatro falhas preexistentes de permissões administrativas e SEO. O SCSS foi
+compilado sem erros.
+
 ## v2.11.2
 
 Melhora a barra lateral administrativa com logótipo fixo, deslocamento independente

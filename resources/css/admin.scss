@@ -49,8 +49,6 @@ body {
     border-bottom: 1px solid rgba(255, 255, 255, .07);
     display: flex;
     flex: 0 0 auto;
-    flex-direction: column;
-    gap: .65rem;
     justify-content: center;
     padding: 1.5rem 1rem 1.25rem;
     text-decoration: none;
@@ -63,19 +61,6 @@ body {
     max-width: 10.5rem;
     object-fit: contain;
     width: auto;
-}
-
-.cms-admin-brand-caption,
-.cms-sidebar-heading {
-    color: #a5adb7;
-    font-size: .625rem;
-    font-weight: 600;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-}
-
-.cms-sidebar-heading {
-    margin: .25rem .8rem .65rem;
 }
 
 .admin-sidebar > .nav {

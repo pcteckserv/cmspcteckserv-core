@@ -14,12 +14,10 @@
 <body>
     <div class="admin-shell d-md-flex bg-light">
         <aside class="admin-sidebar text-white">
-            <a class="cms-admin-brand" href="{{ route('admin.dashboard') }}" aria-label="PCTECKSERV — Painel de administração">
+            <a class="cms-admin-brand" href="{{ route('admin.dashboard') }}" aria-label="PCTECKSERV">
                 <img src="{{ asset('vendor/cms-core/images/logotipos-pcteckserv-texto.svg') }}" alt="PCTECKSERV">
-                <span class="cms-admin-brand-caption">Painel de administração</span>
             </a>
             <nav class="nav nav-pills flex-column" aria-label="Menu principal">
-                <span class="cms-sidebar-heading">Navegação</span>
                 <a @class(['nav-link', 'active' => request()->routeIs('admin.dashboard')]) aria-current="{{ request()->routeIs('admin.dashboard') ? 'page' : 'false' }}" href="{{ route('admin.dashboard') }}">Dashboard</a>
                 @canany(['core.users.view', 'core.roles.view'])
                     @php($accessMenuOpen = request()->routeIs('admin.users.*') || request()->routeIs('admin.roles.*'))
