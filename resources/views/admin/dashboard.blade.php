@@ -1,6 +1,9 @@
 @extends('cms-core::admin.layouts.app', ['title' => 'Painel de Administração'])
 
 @section('content')
+    @foreach ($dashboardNotices ?? [] as $noticeView)
+        @include($noticeView)
+    @endforeach
     @if ($maintenanceIsActive ?? false)
         <div class="alert alert-warning d-flex flex-column flex-lg-row align-items-lg-center gap-3 mb-4">
             <div>
