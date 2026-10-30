@@ -13,12 +13,14 @@
 </head>
 <body>
     <div class="admin-shell d-md-flex bg-light">
-        <aside class="admin-sidebar bg-dark text-white p-3">
-            <a class="cms-admin-brand mb-4" href="{{ route('admin.dashboard') }}" aria-label="PCTECKSERV">
+        <aside class="admin-sidebar text-white">
+            <a class="cms-admin-brand" href="{{ route('admin.dashboard') }}" aria-label="PCTECKSERV — Painel de administração">
                 <img src="{{ asset('vendor/cms-core/images/logotipos-pcteckserv-texto.svg') }}" alt="PCTECKSERV">
+                <span class="cms-admin-brand-caption">Painel de administração</span>
             </a>
-            <nav class="nav nav-pills flex-column">
-                <a @class(['nav-link', 'active' => request()->routeIs('admin.dashboard')]) href="{{ route('admin.dashboard') }}">Dashboard</a>
+            <nav class="nav nav-pills flex-column" aria-label="Menu principal">
+                <span class="cms-sidebar-heading">Navegação</span>
+                <a @class(['nav-link', 'active' => request()->routeIs('admin.dashboard')]) aria-current="{{ request()->routeIs('admin.dashboard') ? 'page' : 'false' }}" href="{{ route('admin.dashboard') }}">Dashboard</a>
                 @canany(['core.users.view', 'core.roles.view'])
                     @php($accessMenuOpen = request()->routeIs('admin.users.*') || request()->routeIs('admin.roles.*'))
                     <button
@@ -33,25 +35,25 @@
                     </button>
                     <div @class(['collapse cms-sidebar-submenu', 'show' => $accessMenuOpen]) id="cms-access-submenu">
                         @can('core.users.view')
-                            <a @class(['nav-link', 'active' => request()->routeIs('admin.users.*')]) href="{{ route('admin.users.index') }}">Lista</a>
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.users.*')]) aria-current="{{ request()->routeIs('admin.users.*') ? 'page' : 'false' }}" href="{{ route('admin.users.index') }}">Lista</a>
                         @endcan
                         @can('core.roles.view')
-                            <a @class(['nav-link', 'active' => request()->routeIs('admin.roles.*')]) href="{{ route('admin.roles.index') }}">Regras de acesso</a>
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.roles.*')]) aria-current="{{ request()->routeIs('admin.roles.*') ? 'page' : 'false' }}" href="{{ route('admin.roles.index') }}">Regras de acesso</a>
                         @endcan
                     </div>
                 @endcanany
                 @can('media.view')
-                    <a @class(['nav-link', 'active' => request()->routeIs('admin.media.*')]) href="{{ route('admin.media.index') }}">Media</a>
+                    <a @class(['nav-link', 'active' => request()->routeIs('admin.media.*')]) aria-current="{{ request()->routeIs('admin.media.*') ? 'page' : 'false' }}" href="{{ route('admin.media.index') }}">Media</a>
                 @endcan
                 @foreach (app(\Pcteckserv\CmsCore\Support\Navigation\AdminMenuRegistry::class)->visible() as $menuItem)
                     @if(!empty($menuItem['children']))
                     @php($pluginMenuOpen = request()->routeIs($menuItem['active']) || collect($menuItem['children'])->contains(fn($child) => request()->routeIs($child['active'])))
                     <button class="nav-link cms-sidebar-menu-toggle text-start {{ $pluginMenuOpen ? 'active' : '' }}" type="button" data-bs-toggle="collapse" data-bs-target="#plugin-menu-{{ $menuItem['key'] }}" aria-controls="plugin-menu-{{ $menuItem['key'] }}" aria-expanded="{{ $pluginMenuOpen ? 'true' : 'false' }}">{{ $menuItem['label'] }}</button>
                     <div id="plugin-menu-{{ $menuItem['key'] }}" class="collapse cms-sidebar-submenu {{ $pluginMenuOpen ? 'show' : '' }}">
-                        @foreach($menuItem['children'] as $child)<a @class(['nav-link','active'=>request()->routeIs($child['active'])]) href="{{ route($child['route']) }}">{{ $child['label'] }}</a>@endforeach
+                        @foreach($menuItem['children'] as $child)<a @class(['nav-link','active'=>request()->routeIs($child['active'])]) aria-current="{{ request()->routeIs($child['active']) ? 'page' : 'false' }}" href="{{ route($child['route']) }}">{{ $child['label'] }}</a>@endforeach
                     </div>
                     @else
-                    <a @class(['nav-link', 'active' => request()->routeIs($menuItem['active'])]) href="{{ route($menuItem['route']) }}">{{ $menuItem['label'] }}</a>
+                    <a @class(['nav-link', 'active' => request()->routeIs($menuItem['active'])]) aria-current="{{ request()->routeIs($menuItem['active']) ? 'page' : 'false' }}" href="{{ route($menuItem['route']) }}">{{ $menuItem['label'] }}</a>
                     @endif
                 @endforeach
                 @canany(['core.site-options.view', 'footer.view-settings', 'seo.view', 'maintenance.view', 'core.smtp.view', 'consent.view'])
@@ -68,20 +70,20 @@
                     </button>
                     <div @class(['collapse cms-sidebar-submenu', 'show' => $configMenuOpen]) id="cms-config-submenu">
                         @can('core.site-options.view')
-                            <a @class(['nav-link', 'active' => request()->routeIs('admin.site-options.*')]) href="{{ route('admin.site-options.edit') }}">Opções gerais</a>
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.site-options.*')]) aria-current="{{ request()->routeIs('admin.site-options.*') ? 'page' : 'false' }}" href="{{ route('admin.site-options.edit') }}">Opções gerais</a>
                         @endcan
                         @can('footer.view-settings')
-                            <a @class(['nav-link', 'active' => request()->routeIs('admin.footer.*')]) href="{{ route('admin.footer.edit') }}">Footer</a>
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.footer.*')]) aria-current="{{ request()->routeIs('admin.footer.*') ? 'page' : 'false' }}" href="{{ route('admin.footer.edit') }}">Footer</a>
                         @endcan
                         @can('seo.view')
-                            <a @class(['nav-link', 'active' => request()->routeIs('admin.seo.*')]) href="{{ route('admin.seo.dashboard') }}">SEO</a>
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.seo.*')]) aria-current="{{ request()->routeIs('admin.seo.*') ? 'page' : 'false' }}" href="{{ route('admin.seo.dashboard') }}">SEO</a>
                         @endcan
                         @can('consent.view')
-                            <a @class(['nav-link', 'active' => request()->routeIs('admin.consent.*')]) href="{{ route('admin.consent.dashboard') }}">Consentimentos</a>
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.consent.*')]) aria-current="{{ request()->routeIs('admin.consent.*') ? 'page' : 'false' }}" href="{{ route('admin.consent.dashboard') }}">Consentimentos</a>
                         @endcan
                         @can('maintenance.view')
                             @php($cmsMaintenanceActive = app(\Pcteckserv\CmsCore\Services\Maintenance\MaintenanceModeManager::class)->isActive())
-                            <a @class(['nav-link d-flex align-items-center justify-content-between gap-2', 'active' => request()->routeIs('admin.maintenance.*')]) href="{{ route('admin.maintenance.edit') }}">
+                            <a @class(['nav-link d-flex align-items-center justify-content-between gap-2', 'active' => request()->routeIs('admin.maintenance.*')]) aria-current="{{ request()->routeIs('admin.maintenance.*') ? 'page' : 'false' }}" href="{{ route('admin.maintenance.edit') }}">
                                 <span>Modo de Manutenção</span>
                                 @if ($cmsMaintenanceActive)
                                     <span class="badge text-bg-warning">ATIVO</span>
@@ -89,7 +91,7 @@
                             </a>
                         @endcan
                         @can('core.smtp.view')
-                            <a @class(['nav-link', 'active' => request()->routeIs('admin.smtp-settings.*')]) href="{{ route('admin.smtp-settings.edit') }}">SMTP</a>
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.smtp-settings.*')]) aria-current="{{ request()->routeIs('admin.smtp-settings.*') ? 'page' : 'false' }}" href="{{ route('admin.smtp-settings.edit') }}">SMTP</a>
                         @endcan
                     </div>
                 @endcanany
@@ -107,22 +109,22 @@
                     </button>
                     <div @class(['collapse cms-sidebar-submenu', 'show' => $systemMenuOpen]) id="cms-system-submenu">
                         @can('core.activity-logs.view')
-                            <a @class(['nav-link', 'active' => request()->routeIs('admin.activity-logs.*')]) href="{{ route('admin.activity-logs.index') }}">Logs de Atividade</a>
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.activity-logs.*')]) aria-current="{{ request()->routeIs('admin.activity-logs.*') ? 'page' : 'false' }}" href="{{ route('admin.activity-logs.index') }}">Logs de Atividade</a>
                         @endcan
                         @can('backups.view')
-                            <a @class(['nav-link', 'active' => request()->routeIs('admin.backups.*')]) href="{{ route('admin.backups.index') }}">Backups</a>
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.backups.*')]) aria-current="{{ request()->routeIs('admin.backups.*') ? 'page' : 'false' }}" href="{{ route('admin.backups.index') }}">Backups</a>
                         @endcan
                         @can('queues.view')
-                            <a @class(['nav-link', 'active' => request()->routeIs('admin.queues.*')]) href="{{ route('admin.queues.dashboard') }}">Tarefas</a>
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.queues.*')]) aria-current="{{ request()->routeIs('admin.queues.*') ? 'page' : 'false' }}" href="{{ route('admin.queues.dashboard') }}">Tarefas</a>
                         @endcan
                         @can('core.laravel-commands.view')
-                            <a @class(['nav-link', 'active' => request()->routeIs('admin.laravel-commands.*')]) href="{{ route('admin.laravel-commands.index') }}">Comandos Laravel</a>
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.laravel-commands.*')]) aria-current="{{ request()->routeIs('admin.laravel-commands.*') ? 'page' : 'false' }}" href="{{ route('admin.laravel-commands.index') }}">Comandos Laravel</a>
                         @endcan
                         @can('updates.view')
-                            <a @class(['nav-link', 'active' => request()->routeIs('admin.updates.*')]) href="{{ route('admin.updates.index') }}">Atualizações</a>
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.updates.*')]) aria-current="{{ request()->routeIs('admin.updates.*') ? 'page' : 'false' }}" href="{{ route('admin.updates.index') }}">Atualizações</a>
                         @endcan
                         @can('plugins.view')
-                            <a @class(['nav-link', 'active' => request()->routeIs('admin.plugins.*')]) href="{{ route('admin.plugins.index') }}">Plugins</a>
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.plugins.*')]) aria-current="{{ request()->routeIs('admin.plugins.*') ? 'page' : 'false' }}" href="{{ route('admin.plugins.index') }}">Plugins</a>
                         @endcan
                     </div>
                 @endcanany

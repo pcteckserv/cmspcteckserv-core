@@ -1,5 +1,18 @@
 # Publicação de versões do Core
 
+## v2.11.2
+
+Melhora a barra lateral administrativa com logótipo fixo, deslocamento independente
+do menu, submenus mais compactos e destaque da página atual em laranja suave.
+Inclui foco visível por teclado, identificação acessível da página atual e respeito
+pela preferência de movimento reduzido. Mantém as permissões e a integração dos
+menus dos plugins, sem migrations nem alterações ao Starter ou aos plugins.
+
+Validação: os seis testes da barra lateral e do registo de menus passaram, com
+27 verificações. A suite completa executou 191 testes: 187 passaram e mantiveram-se
+as quatro falhas preexistentes de permissões administrativas e SEO. O SCSS foi
+compilado e o resultado foi verificado numa pré-visualização no navegador.
+
 ## v2.11.1
 
 Corrige a descoberta de atualizações de plugins instalados como packages `path`
