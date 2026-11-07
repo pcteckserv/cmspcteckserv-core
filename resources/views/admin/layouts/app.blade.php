@@ -54,8 +54,8 @@
                     <a @class(['nav-link', 'active' => request()->routeIs($menuItem['active'])]) aria-current="{{ request()->routeIs($menuItem['active']) ? 'page' : 'false' }}" href="{{ route($menuItem['route']) }}">{{ $menuItem['label'] }}</a>
                     @endif
                 @endforeach
-                @canany(['core.site-options.view', 'footer.view-settings', 'seo.view', 'maintenance.view', 'core.smtp.view', 'consent.view'])
-                    @php($configMenuOpen = request()->routeIs('admin.site-options.*') || request()->routeIs('admin.footer.*') || request()->routeIs('admin.seo.*') || request()->routeIs('admin.maintenance.*') || request()->routeIs('admin.smtp-settings.*') || request()->routeIs('admin.consent.*'))
+                @canany(['core.geography.view', 'core.site-options.view', 'footer.view-settings', 'seo.view', 'maintenance.view', 'core.smtp.view', 'consent.view'])
+                    @php($configMenuOpen = request()->routeIs('admin.geography.*') || request()->routeIs('admin.site-options.*') || request()->routeIs('admin.footer.*') || request()->routeIs('admin.seo.*') || request()->routeIs('admin.maintenance.*') || request()->routeIs('admin.smtp-settings.*') || request()->routeIs('admin.consent.*'))
                     <button
                         @class(['nav-link cms-sidebar-menu-toggle text-start', 'active' => $configMenuOpen])
                         type="button"
@@ -67,6 +67,9 @@
                         Configurações
                     </button>
                     <div @class(['collapse cms-sidebar-submenu', 'show' => $configMenuOpen]) id="cms-config-submenu">
+                        @can('core.geography.view')
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.geography.*')]) aria-current="{{ request()->routeIs('admin.geography.*') ? 'page' : 'false' }}" href="{{ route('admin.geography.index') }}">Países e regiões</a>
+                        @endcan
                         @can('core.site-options.view')
                             <a @class(['nav-link', 'active' => request()->routeIs('admin.site-options.*')]) aria-current="{{ request()->routeIs('admin.site-options.*') ? 'page' : 'false' }}" href="{{ route('admin.site-options.edit') }}">Opções gerais</a>
                         @endcan

@@ -35,6 +35,14 @@ use Pcteckserv\CmsCore\Seo\Http\Controllers\SeoSettingsController;
 use Pcteckserv\CmsCore\Seo\Http\Controllers\SitemapController;
 
 Route::middleware('web')->group(function (): void {
+    Route::get('/vendor/cms-core/geography.js', function () {
+        return response(file_get_contents(__DIR__.'/../resources/js/geography.js'), 200, [
+            'Content-Type' => 'text/javascript; charset=UTF-8',
+            'Cache-Control' => 'public, max-age=3600',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    })->defaults('sitemap', false)->name('cms-core.geography.script');
+
     Route::get('/favicon.ico', function () {
         $path = __DIR__.'/../resources/images/favicon.png';
 
@@ -99,6 +107,12 @@ Route::middleware('web')->group(function (): void {
         ->name('admin.')
         ->group(function (): void {
             Route::get('/', DashboardController::class)->name('dashboard');
+            Route::prefix('geography')->name('geography.')->middleware('can:core.geography.view')->group(function (): void {
+                Route::get('/', [\Pcteckserv\CmsCore\Http\Controllers\Admin\GeographyController::class, 'index'])->name('index');
+                Route::post('/', [\Pcteckserv\CmsCore\Http\Controllers\Admin\GeographyController::class, 'store'])->middleware('throttle:10,1')->name('store');
+                Route::get('/{country}', [\Pcteckserv\CmsCore\Http\Controllers\Admin\GeographyController::class, 'edit'])->where('country', '[A-Z]{2}')->name('edit');
+                Route::put('/{country}', [\Pcteckserv\CmsCore\Http\Controllers\Admin\GeographyController::class, 'update'])->where('country', '[A-Z]{2}')->middleware('throttle:30,1')->name('update');
+            });
             Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
             Route::put('/profile', [ProfileController::class, 'update'])->middleware('throttle:10,1')->name('profile.update');
             Route::prefix('profile/two-factor')->name('profile.two-factor.')->middleware('throttle:cms-two-factor-settings')->group(function (): void {

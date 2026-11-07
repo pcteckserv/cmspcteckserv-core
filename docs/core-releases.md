@@ -1,5 +1,16 @@
 # Publicação de versões do Core
 
+## v2.13.0
+
+Acrescenta o catálogo partilhado de países e regiões e a gestão/importação nas
+configurações do Core, com permissões próprias. A migration preserva o catálogo
+anterior da Loja. Consulte [Países e regiões](geography.md) para atualização e API.
+
+Validação: os quatro testes de geografia e os cinco testes JavaScript passaram.
+A suite completa executou 195 testes: 189 passaram e mantiveram-se seis falhas
+preexistentes de permissões, menus, gestão de plugins e SEO, reproduzidas no código
+anterior. O manifesto Composer foi validado.
+
 ## v2.11.3
 
 Remove os textos «Painel de administração» e «Navegação» da barra lateral,

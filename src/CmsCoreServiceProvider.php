@@ -70,6 +70,7 @@ class CmsCoreServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/cms-core.php', 'cms-core');
         $this->mergeConfigFrom(__DIR__.'/../config/cms-backups.php', 'cms-backups');
         $this->mergeConfigFrom(__DIR__.'/../config/cms-plugins.php', 'cms-plugins');
+        $this->app->scoped(\Pcteckserv\CmsCore\Geography\CountryCatalog::class);
         $this->app->singleton(PermissionRegistry::class);
         $this->app->singleton(\Pcteckserv\CmsCore\Support\Navigation\AdminMenuRegistry::class);
         $this->app->singleton(SeoRegistry::class);
@@ -175,6 +176,8 @@ class CmsCoreServiceProvider extends ServiceProvider
             'core.roles.create' => ['label' => 'Criar roles', 'group' => 'Roles'],
             'core.roles.update' => ['label' => 'Editar roles', 'group' => 'Roles'],
             'core.roles.delete' => ['label' => 'Eliminar roles', 'group' => 'Roles'],
+            'core.geography.view' => ['label' => 'Consultar países e regiões', 'group' => 'Países e regiões'],
+            'core.geography.update' => ['label' => 'Importar e editar países e regiões', 'group' => 'Países e regiões'],
             'core.site-options.view' => ['label' => 'Ver opções gerais', 'group' => 'Opções gerais'],
             'core.site-options.update' => ['label' => 'Editar opções gerais', 'group' => 'Opções gerais'],
             'core.smtp.view' => ['label' => 'Ver configuração SMTP', 'group' => 'SMTP'],
