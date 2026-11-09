@@ -1,4 +1,9 @@
-@php($iconName = in_array($name ?? '', array_keys(\Pcteckserv\CmsCore\Support\IconCatalog::options()), true) ? $name : '')
+@php($definition = \Pcteckserv\CmsCore\Support\IconCatalog::icon((string) ($name ?? '')))
+@if ($definition)
+    {{-- SVG local, sanitizado na geração do catálogo e resolvido por identificador permitido. --}}
+    {!! $definition['svg'] !!}
+@else
+@php($iconName = array_key_exists($name ?? '', \Pcteckserv\CmsCore\Support\IconCatalog::options()) ? $name : '')
 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
     @switch($iconName)
         @case('check')<polyline points="20 6 9 17 4 12"/>@break
@@ -18,3 +23,4 @@
         @case('sparkles')<path d="m12 3 1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2L12 3Z"/><path d="m19 14 1.1 2.9L23 18l-2.9 1.1L19 22l-1.1-2.9L15 18l2.9-1.1L19 14Z"/>@break
     @endswitch
 </svg>
+@endif

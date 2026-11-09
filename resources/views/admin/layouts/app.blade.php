@@ -185,5 +185,6 @@
     @include('cms-core::admin.partials.help-widget')
     @include('cms-core::admin.partials.media-preview-modal')
     @include('cms-core::admin.partials.media-picker-modal')
+    @stack('cms-icon-picker-modal')
 </body>
 </html>
