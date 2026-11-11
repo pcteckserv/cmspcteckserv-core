@@ -8,6 +8,7 @@ use DOMXPath;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Pcteckserv\CmsCore\Models\Permission;
+use Pcteckserv\CmsCore\Models\Role;
 use Pcteckserv\CmsCore\Services\PermissionSynchronizer;
 use Pcteckserv\CmsCore\Support\Navigation\AdminMenuRegistry;
 use Tests\TestCase;
@@ -79,6 +80,40 @@ class AdminSidebarTest extends TestCase
         $this->assertSame(1, $xpath->query('//div[@id="plugin-menu-catalogue"]//a[@aria-current="page"]')->length);
         $this->assertSame(0, $xpath->query('//aside//script')->length);
         $this->assertSame('Catálogo <script>alert(1)</script>', $xpath->query('//aside//button[@aria-controls="plugin-menu-catalogue"]')->item(0)->textContent);
+    }
+
+    public function test_compilar_aparece_no_submenu_sistema_e_nao_no_cabecalho_para_super_admin(): void
+    {
+        Route::get('/test-compile', fn () => '')->name('deploy.compile');
+        Route::getRoutes()->refreshNameLookups();
+        $user = User::factory()->create();
+        $role = Role::query()->firstOrCreate(
+            ['key' => config('cms-core.super_admin_role', 'core.super_admin')],
+            ['name' => 'Super Admin', 'is_protected' => true],
+        );
+        $user->cmsRoles()->attach($role);
+
+        $response = $this->actingAs($user)->get(route('admin.dashboard'))->assertOk();
+        $xpath = $this->sidebarXPath($response->getContent());
+        $compileUrl = route('deploy.compile');
+
+        $this->assertSame(1, $xpath->query('//div[@id="cms-system-submenu"]/a[@href="'.$compileUrl.'"]')->length);
+        $this->assertSame(0, $xpath->query('//header//a[@href="'.$compileUrl.'"]')->length);
+    }
+
+    public function test_compilar_fica_oculto_para_utilizador_com_permissao_de_sistema_sem_ser_super_admin(): void
+    {
+        Route::get('/test-compile', fn () => '')->name('deploy.compile');
+        Route::getRoutes()->refreshNameLookups();
+        app(PermissionSynchronizer::class)->sync();
+        $user = User::factory()->create();
+        $user->cmsPermissions()->sync(Permission::query()->where('key', 'core.activity-logs.view')->pluck('id'));
+
+        $response = $this->actingAs($user)->get(route('admin.dashboard'))->assertOk();
+        $xpath = $this->sidebarXPath($response->getContent());
+
+        $this->assertSame(1, $xpath->query('//div[@id="cms-system-submenu"]')->length);
+        $this->assertSame(0, $xpath->query('//a[@href="'.route('deploy.compile').'"]')->length);
     }
 
     private function sidebarXPath(string $html): DOMXPath

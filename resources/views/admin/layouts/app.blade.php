@@ -127,6 +127,12 @@
                         @can('plugins.view')
                             <a @class(['nav-link', 'active' => request()->routeIs('admin.plugins.*')]) aria-current="{{ request()->routeIs('admin.plugins.*') ? 'page' : 'false' }}" href="{{ route('admin.plugins.index') }}">Plugins</a>
                         @endcan
+                        @if (auth()->user()?->isCmsSuperAdmin() && \Illuminate\Support\Facades\Route::has('deploy.compile'))
+                            <a class="nav-link d-flex align-items-center gap-2" href="{{ route('deploy.compile') }}" title="Compilar o site">
+                                @include('cms-core::components.icons.compile')
+                                <span>Compilar</span>
+                            </a>
+                        @endif
                     </div>
                 @endcanany
             </nav>
@@ -145,13 +151,6 @@
                         @if (is_string($publicSiteUrl) && in_array(strtolower((string) parse_url($publicSiteUrl, PHP_URL_SCHEME)), ['http', 'https'], true))
                             <a class="btn btn-outline-secondary btn-sm" href="{{ $publicSiteUrl }}" target="_blank" rel="noopener noreferrer" title="Abrir o site público num novo separador">
                                 Ver site
-                            </a>
-                        @endif
-
-                        @if (auth()->user()?->isCmsSuperAdmin() && \Illuminate\Support\Facades\Route::has('deploy.compile'))
-                            <a class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-2" href="{{ route('deploy.compile') }}" title="Compilar o site">
-                                @include('cms-core::components.icons.compile')
-                                <span>Compilar</span>
                             </a>
                         @endif
 
