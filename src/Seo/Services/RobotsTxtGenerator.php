@@ -4,23 +4,28 @@ namespace Pcteckserv\CmsCore\Seo\Services;
 
 use Illuminate\Support\Facades\Cache;
 use Pcteckserv\CmsCore\Support\SiteOptions;
+use Pcteckserv\CmsCore\Support\SiteUrl;
 
 class RobotsTxtGenerator
 {
     public const CACHE_KEY = 'cms-core.seo.robots';
 
-    public function __construct(private readonly SiteOptions $siteOptions)
-    {
-    }
+    public function __construct(private readonly SiteOptions $siteOptions) {}
 
     public function text(): string
     {
-        return Cache::rememberForever(self::CACHE_KEY, fn (): string => $this->buildText());
+        return Cache::remember($this->cacheKey(), 3600, fn (): string => $this->buildText());
     }
 
     public function clearCache(): void
     {
         Cache::forget(self::CACHE_KEY);
+        Cache::forget($this->cacheKey());
+    }
+
+    private function cacheKey(): string
+    {
+        return self::CACHE_KEY.':'.hash('sha256', app(SiteUrl::class)->base());
     }
 
     private function buildText(): string

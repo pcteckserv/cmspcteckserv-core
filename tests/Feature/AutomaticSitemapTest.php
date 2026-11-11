@@ -9,7 +9,6 @@ use Pcteckserv\CmsCore\Seo\Contracts\SitemapProviderInterface;
 use Pcteckserv\CmsCore\Seo\DTOs\SitemapUrl;
 use Pcteckserv\CmsCore\Seo\Services\SitemapGenerator;
 use Pcteckserv\CmsCore\Seo\Support\Facades\Seo;
-use Pcteckserv\CmsCore\Support\SiteOptions;
 use Tests\TestCase;
 
 class AutomaticSitemapTest extends TestCase
@@ -19,7 +18,7 @@ class AutomaticSitemapTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        app(SiteOptions::class)->setMany(['seo_base_url' => 'https://example.test/']);
+        config(['app.url' => 'https://example.test/']);
     }
 
     public function test_static_public_routes_are_discovered_without_executing_them(): void
@@ -90,7 +89,7 @@ class AutomaticSitemapTest extends TestCase
 
         $this->assertStringContainsString('https://example.test/new-public-page', $generator->xml());
 
-        app(SiteOptions::class)->setMany(['seo_base_url' => 'https://new.example.test']);
+        config(['app.url' => 'https://new.example.test']);
         $this->assertStringContainsString('https://new.example.test/new-public-page', $generator->xml());
         $this->assertStringNotContainsString('<loc>https://example.test/', $generator->xml());
     }

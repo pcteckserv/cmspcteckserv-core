@@ -65,8 +65,8 @@
         <div class="row g-3 align-items-start mb-4">
             <label class="col-lg-2 col-form-label fw-semibold" for="site_url">Endereço do site (URL)</label>
             <div class="col-lg-5">
-                <input id="site_url" name="site_url" type="url" class="form-control @error('site_url') is-invalid @enderror" value="{{ old('site_url', $options['site_url']) }}" required>
-                <div class="form-text">Digite aqui o endereço público principal do site do cliente.</div>
+                <input id="site_url" name="site_url" type="url" class="form-control @error('site_url') is-invalid @enderror" value="{{ $options['site_url'] }}" readonly>
+                <div class="form-text">O endereço público é definido pela configuração do site e atualizado durante a migração.</div>
                 @error('site_url')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror

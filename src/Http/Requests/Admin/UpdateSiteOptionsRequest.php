@@ -4,6 +4,7 @@ namespace Pcteckserv\CmsCore\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Pcteckserv\CmsCore\Rules\SiteLink;
 
 class UpdateSiteOptionsRequest extends FormRequest
 {
@@ -17,7 +18,7 @@ class UpdateSiteOptionsRequest extends FormRequest
         return [
             'site_title' => ['required', 'string', 'max:120'],
             'site_description' => ['nullable', 'string', 'max:255'],
-            'site_icon_url' => ['nullable', 'string', 'max:2048'],
+            'site_icon_url' => ['nullable', 'string', new SiteLink, 'max:2048'],
             'site_icon_media_id' => [
                 'nullable',
                 'integer',
@@ -26,7 +27,7 @@ class UpdateSiteOptionsRequest extends FormRequest
                 ),
             ],
             'remove_site_icon' => ['nullable', 'boolean'],
-            'site_url' => ['required', 'url', 'max:2048'],
+            'site_url' => ['exclude'],
             'admin_email' => ['required', 'email', 'max:255'],
             'locale' => ['required', Rule::in(array_keys($this->locales()))],
         ];

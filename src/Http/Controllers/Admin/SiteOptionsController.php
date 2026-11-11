@@ -44,7 +44,6 @@ class SiteOptionsController extends Controller
         unset($validated['site_icon_media_id'], $validated['remove_site_icon']);
 
         $siteOptions->setMany($validated);
-        $this->syncAppUrlEnv($validated['site_url']);
 
         return back()->with('cms_site_options_success', 'Opções gerais guardadas com sucesso.');
     }
@@ -81,42 +80,5 @@ class SiteOptionsController extends Controller
         return is_string($default) && $default !== ''
             ? $default
             : '/vendor/cms-core/images/favicon.png';
-    }
-
-    private function syncAppUrlEnv(string $url): void
-    {
-        config(['app.url' => $url]);
-
-        $envPath = base_path('.env');
-        $envValue = $this->formatEnvValue($url);
-
-        if (! file_exists($envPath)) {
-            file_put_contents($envPath, "APP_URL={$envValue}".PHP_EOL);
-
-            return;
-        }
-
-        $contents = file_get_contents($envPath);
-
-        if ($contents === false) {
-            return;
-        }
-
-        if (preg_match('/^APP_URL=/m', $contents) === 1) {
-            $contents = preg_replace('/^APP_URL=.*/m', "APP_URL={$envValue}", $contents);
-        } else {
-            $contents = rtrim($contents).PHP_EOL."APP_URL={$envValue}".PHP_EOL;
-        }
-
-        file_put_contents($envPath, $contents);
-    }
-
-    private function formatEnvValue(string $value): string
-    {
-        if ($value === '' || preg_match('/\s|#|"/', $value) !== 1) {
-            return $value;
-        }
-
-        return '"'.str_replace('"', '\"', $value).'"';
     }
 }

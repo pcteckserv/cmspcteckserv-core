@@ -1,5 +1,27 @@
 # Publicação de versões do Core
 
+## v3.0.0
+
+O endereço público passa a ser definido exclusivamente por `config('app.url')`,
+normalmente através de `APP_URL`. As opções gerais e o URL base de SEO ficam
+apenas de consulta; guardar estas opções deixa de escrever no `.env`.
+
+O favicon, imagens SEO, canonicals e sitemap reconhecem referências internas
+legadas e acompanham o endereço atual. Os URLs externos mantêm o domínio e os
+valores antigos das opções são preservados para identificar referências legadas.
+A cache de robots.txt distingue o domínio ativo.
+
+**Atualização incompatível:** rever a restrição Composer do Core para `^3.0` e
+atualizar em conjunto Loja 0.48.0 e Clientes 1.3.0 quando instalados.
+Os registos históricos de aceitação conservam os URLs originais. Sem migrations
+ou alterações aos dados dos sites. Consultar [Endereços do site](site-urls.md).
+
+Validação: 32 testes específicos do Core, 143 da Loja e a suite de Clientes
+(48 testes) passaram. As suites completas mantêm as falhas já reproduzidas na
+origem: Core 202/209 aprovados, Loja 676/681 e Clientes 48/48. Sem falhas novas
+nos testes alterados ou criados.
+
+
 ## v2.13.0
 
 Acrescenta o catálogo partilhado de países e regiões e a gestão/importação nas

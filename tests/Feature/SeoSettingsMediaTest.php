@@ -10,6 +10,7 @@ use Pcteckserv\CmsCore\Models\Permission;
 use Pcteckserv\CmsCore\Models\Role;
 use Pcteckserv\CmsCore\Services\PermissionSynchronizer;
 use Pcteckserv\CmsCore\Support\SiteOptions;
+use Pcteckserv\CmsCore\Support\SiteUrl;
 use Tests\TestCase;
 
 class SeoSettingsMediaTest extends TestCase
@@ -42,7 +43,8 @@ class SeoSettingsMediaTest extends TestCase
         ])->assertSessionHasNoErrors()->assertRedirect();
 
         $options = app(SiteOptions::class);
-        $url = Storage::disk('public')->url('seo/image.webp');
+        $url = app(SiteUrl::class)->absolute(Storage::disk('public')->url('seo/image.webp'));
+        $this->assertDatabaseHas('cms_site_options', ['key' => 'seo_default_og_image', 'value' => '/storage/seo/image.webp']);
         $this->assertSame($url, $options->get('seo_default_og_image'));
         $this->assertSame($url, $options->get('seo_organization_logo'));
         $this->assertDatabaseMissing('cms_site_options', ['key' => 'seo_default_og_image_media_id']);

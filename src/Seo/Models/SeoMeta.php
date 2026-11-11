@@ -4,6 +4,7 @@ namespace Pcteckserv\CmsCore\Seo\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Pcteckserv\CmsCore\Casts\SiteLink;
 
 class SeoMeta extends Model
 {
@@ -31,6 +32,9 @@ class SeoMeta extends Model
     ];
 
     protected $casts = [
+        'canonical_url' => SiteLink::class,
+        'og_image' => SiteLink::class,
+        'twitter_image' => SiteLink::class,
         'robots_index' => 'boolean',
         'robots_follow' => 'boolean',
         'schema_data' => 'array',

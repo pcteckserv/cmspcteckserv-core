@@ -4,6 +4,7 @@ namespace Pcteckserv\CmsCore\Seo\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Pcteckserv\CmsCore\Rules\SiteLink;
 
 class UpdateSeoSettingsRequest extends FormRequest
 {
@@ -19,16 +20,16 @@ class UpdateSeoSettingsRequest extends FormRequest
             'seo_default_title' => ['required', 'string', 'max:120'],
             'seo_title_template' => ['required', 'string', 'max:160'],
             'seo_default_description' => ['nullable', 'string', 'max:320'],
-            'seo_default_og_image' => ['nullable', 'url', 'max:2048'],
+            'seo_default_og_image' => ['nullable', 'string', new SiteLink, 'max:2048'],
             'seo_default_og_image_media_id' => ['nullable', 'integer', Rule::exists('cms_media', 'id')->where('media_type', 'image')->whereNull('deleted_at')],
             'seo_twitter_card' => ['required', 'in:summary,summary_large_image'],
             'seo_default_robots_index' => ['nullable', 'boolean'],
             'seo_default_robots_follow' => ['nullable', 'boolean'],
             'seo_auto_canonical' => ['nullable', 'boolean'],
-            'seo_base_url' => ['required', 'url', 'max:2048'],
+            'seo_base_url' => ['exclude'],
             'seo_organization_name' => ['nullable', 'string', 'max:160'],
             'seo_organization_type' => ['required', 'string', 'max:80'],
-            'seo_organization_logo' => ['nullable', 'url', 'max:2048'],
+            'seo_organization_logo' => ['nullable', 'string', new SiteLink, 'max:2048'],
             'seo_organization_logo_media_id' => ['nullable', 'integer', Rule::exists('cms_media', 'id')->where('media_type', 'image')->whereNull('deleted_at')],
             'seo_organization_phone' => ['nullable', 'string', 'max:80'],
             'seo_organization_email' => ['nullable', 'email', 'max:160'],
@@ -43,7 +44,7 @@ class UpdateSeoSettingsRequest extends FormRequest
             'seo_generate_robots_txt' => ['nullable', 'boolean'],
             'seo_robots_allow' => ['nullable', 'string', 'max:4000'],
             'seo_robots_disallow' => ['nullable', 'string', 'max:4000', 'not_regex:/^\s*\/\s*$/m'],
-            'seo_robots_sitemap_url' => ['nullable', 'url', 'max:2048'],
+            'seo_robots_sitemap_url' => ['nullable', 'string', new SiteLink, 'max:2048'],
             'seo_robots_advanced' => ['nullable', 'string', 'max:8000', 'not_regex:/Disallow:\s*\/\s*$/mi'],
         ];
     }

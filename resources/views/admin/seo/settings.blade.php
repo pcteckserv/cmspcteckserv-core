@@ -16,7 +16,7 @@
                 <div class="tab-pane fade show active" id="seo-base">
                     <div class="row g-3">
                         <div class="col-md-6"><label class="form-label">Nome do site</label><input class="form-control" name="seo_site_name" value="{{ old('seo_site_name', $options['seo_site_name']) }}" required></div>
-                        <div class="col-md-6"><label class="form-label">URL base</label><input class="form-control" name="seo_base_url" value="{{ old('seo_base_url', $options['seo_base_url']) }}" required></div>
+                        <div class="col-md-6"><label class="form-label">URL base</label><input class="form-control" name="seo_base_url" value="{{ $options['seo_base_url'] }}" readonly></div>
                         <div class="col-md-6"><label class="form-label">Título SEO padrão</label><input class="form-control" name="seo_default_title" value="{{ old('seo_default_title', $options['seo_default_title']) }}" required></div>
                         <div class="col-md-6"><label class="form-label">Template do título</label><input class="form-control" name="seo_title_template" value="{{ old('seo_title_template', $options['seo_title_template']) }}" required></div>
                         <div class="col-12"><label class="form-label">Meta description padrão</label><textarea class="form-control" name="seo_default_description" rows="3">{{ old('seo_default_description', $options['seo_default_description']) }}</textarea></div>
