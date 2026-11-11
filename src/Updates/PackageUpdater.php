@@ -39,6 +39,9 @@ class PackageUpdater
         }
 
         $availableVersion = $this->availableVersion($package);
+        $updateCoreConstraint = $package === 'pcteckserv/cms-core'
+            && is_string($availableVersion)
+            && version_compare($this->normalizeVersion($availableVersion), $this->normalizeVersion($previousVersion), '>');
         $plugin = InstalledPlugin::query()->where('package', $package)->whereNotNull('installed_version')->first();
         $isPathPlugin = $plugin !== null && app(InstalledPluginSource::class)->isPath($plugin, $installedPackage);
 
@@ -122,9 +125,11 @@ class PackageUpdater
             }
         } else {
             $composer = $this->run($this->composerCommand->build([
-                'update',
-                $package,
+                ...($updateCoreConstraint
+                    ? ['require', $package.':^'.$this->normalizeVersion($availableVersion)]
+                    : ['update', $package]),
                 ...$this->dependencyUpdateOption($package),
+                '--no-interaction',
             ]));
 
             if (! $composer->isSuccessful()) {
@@ -138,7 +143,7 @@ class PackageUpdater
             return new UpdateResult(false, 'Não foi possível confirmar a versão instalada após executar o Composer. Verifique a instalação antes de tentar novamente.');
         }
 
-        if (! $isPathPlugin && $previousVersion !== null && $updatedVersion === $previousVersion
+        if (! $isPathPlugin && ! $updateCoreConstraint && $previousVersion !== null && $updatedVersion === $previousVersion
             && ($installedPackage['dist']['type'] ?? null) !== 'path'
             && is_string($availableVersion)
             && version_compare($this->normalizeVersion($availableVersion), $this->normalizeVersion($previousVersion), '>')) {
