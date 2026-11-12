@@ -51,9 +51,11 @@ class BackupNotificationService
         }
 
         try {
-            Mail::raw($this->message($plan, $event, $run), function ($message) use ($emails, $event): void {
-                $message->to($emails)->subject($this->subject($event));
-            });
+            Mail::to($emails)->send(new \Pcteckserv\CmsCore\Mail\ThemedMail([
+                'subject' => $this->subject($event),
+                'heading' => $this->subject($event),
+                'body' => $this->message($plan, $event, $run),
+            ]));
 
             $plan->forceFill([
                 'last_alert_sent_at' => now(),

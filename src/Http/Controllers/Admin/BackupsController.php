@@ -159,9 +159,11 @@ class BackupsController extends Controller
         }
 
         try {
-            Mail::raw('Este email confirma que os alertas de backups do CMS PCTECKSERV estão configurados.', function ($message) use ($emails): void {
-                $message->to($emails)->subject('[CMS PCTECKSERV] Teste de alertas de backup');
-            });
+            Mail::to($emails)->send(new \Pcteckserv\CmsCore\Mail\ThemedMail([
+                'subject' => '[CMS PCTECKSERV] Teste de alertas de backup',
+                'heading' => 'Teste de alertas de backup',
+                'body' => 'Este email confirma que os alertas de backups do CMS PCTECKSERV estão configurados.',
+            ]));
             $this->audit('backups.alert.test_sent', $request);
 
             return back()->with('cms_backups_success', 'Email de teste enviado com sucesso.');

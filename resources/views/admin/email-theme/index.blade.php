@@ -36,6 +36,7 @@
         <li>Atualize esta página para ver o resultado e envie um email de teste para confirmar a apresentação no seu programa de correio.</li>
     </ol>
     <p>Para trabalhar com uma IA, indique-lhe estes ficheiros e o contrato <code>$email</code>. Peça-lhe para alterar apenas a apresentação no site, preservar <code>email-content</code> e o escaping, e não modificar o Core nem os plugins.</p>
-    <p class="mb-0">Os assuntos, títulos, textos, variáveis de personalização e regras de envio continuam nas configurações do plugin responsável. Uma alteração ao tema global aplica-se aos módulos que utilizam este layout.</p>
+    <p>Os assuntos, títulos, textos, variáveis de personalização e regras de envio continuam nas configurações do plugin responsável. Uma alteração ao tema global aplica-se aos emails de Clientes, Loja, Agenda, Blog, Ecommerce, Formulários de contacto, Imobiliário e Moloni, assim como aos testes SMTP e alertas de backup.</p>
+    <p class="mb-0">Para desenvolver novos envios, utilize <code>Pcteckserv\CmsCore\Mail\ThemedMail</code> ou uma view que estenda <code>cms-core::emails.layout</code>. Não crie um cabeçalho ou rodapé independente no plugin. Os conteúdos são escapados; ligações de acesso, anexos e cabeçalhos específicos continuam a ser responsabilidade do módulo.</p>
 </section>
 @endsection

@@ -17,6 +17,17 @@ final class ThemedMail extends Mailable
         return new Envelope(subject: $this->email['subject']);
     }
 
+    public function build(): self
+    {
+        return $this->withSymfonyMessage(function ($message): void {
+            $body = $this->email['body'] ?? '';
+            if (!empty($this->email['action_url'])) {
+                $body .= "\n\n".($this->email['action_label'] ?? 'Abrir ligação').': '.$this->email['action_url'];
+            }
+            $message->text($body);
+        });
+    }
+
     public function content(): Content
     {
         return new Content(view: 'cms-core::emails.message', with: ['email' => $this->email]);

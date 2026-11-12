@@ -55,11 +55,11 @@ class SmtpSettingsController extends Controller
             $siteOptions->applyMailConfig();
             app('mail.manager')->purge('smtp');
 
-            Mail::raw('Este email confirma que a configuração SMTP do CMS PCTECK está operacional.', function ($message) use ($validated): void {
-                $message
-                    ->to($validated['test_recipient'])
-                    ->subject('Teste SMTP - CMS PCTECK');
-            });
+            Mail::to($validated['test_recipient'])->send(new \Pcteckserv\CmsCore\Mail\ThemedMail([
+                'subject' => 'Teste SMTP - CMS PCTECK',
+                'heading' => 'Teste SMTP',
+                'body' => 'Este email confirma que a configuração SMTP do CMS PCTECK está operacional.',
+            ]));
         } catch (Throwable $exception) {
             return back()
                 ->withInput()
