@@ -337,7 +337,10 @@ class UpdatesManagementTest extends TestCase
                 $this->commands[] = $command;
                 $process = Mockery::mock(Process::class);
                 $process->shouldReceive('isSuccessful')->andReturn(false);
-                $process->shouldReceive('getErrorOutput')->andReturn('Dependency conflict');
+                $process->shouldReceive('getOutput')->andReturn('');
+                $process->shouldReceive('getErrorOutput')->andReturn(
+                    str_repeat("Loading repositories\x08\r\n", 200)."\x1B[31mDependency conflict\x1B[0m"
+                );
 
                 return $process;
             }
@@ -347,6 +350,9 @@ class UpdatesManagementTest extends TestCase
 
         $this->assertFalse($result->successful);
         $this->assertStringContainsString('Composer falhou', $result->message);
+        $this->assertStringEndsWith('Dependency conflict', $result->message);
+        $this->assertStringNotContainsString("\x08", $result->message);
+        $this->assertStringNotContainsString("\x1B", $result->message);
         $this->assertSame([
             ['require', 'pcteckserv/cms-core:^3.0.0', '--with-all-dependencies', '--no-interaction'],
         ], $updater->commands);

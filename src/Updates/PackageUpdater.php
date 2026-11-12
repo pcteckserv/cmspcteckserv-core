@@ -10,6 +10,7 @@ use Pcteckserv\CmsCore\Plugins\PluginRepository;
 use Pcteckserv\CmsCore\Plugins\InstalledPluginVersionReader;
 use Pcteckserv\CmsCore\Plugins\InstalledPluginSource;
 use Pcteckserv\CmsCore\Support\ComposerCommand;
+use Pcteckserv\CmsCore\Support\ProcessFailureOutput;
 use Throwable;
 
 class PackageUpdater
@@ -229,13 +230,7 @@ class PackageUpdater
 
     private function processOutput(Process $process): string
     {
-        $output = trim($process->getErrorOutput()) ?: trim($process->getOutput());
-
-        if ($output === '') {
-            return 'sem detalhe devolvido pelo processo.';
-        }
-
-        return mb_strimwidth($output, 0, 800, '...');
+        return (new ProcessFailureOutput())->summarize($process);
     }
 
     private function availableVersion(string $package): ?string
