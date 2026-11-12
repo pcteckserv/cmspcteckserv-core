@@ -54,8 +54,8 @@
                     <a @class(['nav-link', 'active' => request()->routeIs($menuItem['active'])]) aria-current="{{ request()->routeIs($menuItem['active']) ? 'page' : 'false' }}" href="{{ route($menuItem['route']) }}">{{ $menuItem['label'] }}</a>
                     @endif
                 @endforeach
-                @canany(['core.geography.view', 'core.site-options.view', 'footer.view-settings', 'seo.view', 'maintenance.view', 'core.smtp.view', 'consent.view'])
-                    @php($configMenuOpen = request()->routeIs('admin.geography.*') || request()->routeIs('admin.site-options.*') || request()->routeIs('admin.footer.*') || request()->routeIs('admin.seo.*') || request()->routeIs('admin.maintenance.*') || request()->routeIs('admin.smtp-settings.*') || request()->routeIs('admin.consent.*'))
+                @canany(['core.geography.view', 'core.site-options.view', 'footer.view-settings', 'seo.view', 'maintenance.view', 'core.smtp.view', 'core.email-theme.view', 'consent.view'])
+                    @php($configMenuOpen = request()->routeIs('admin.geography.*') || request()->routeIs('admin.site-options.*') || request()->routeIs('admin.footer.*') || request()->routeIs('admin.seo.*') || request()->routeIs('admin.maintenance.*') || request()->routeIs('admin.smtp-settings.*') || request()->routeIs('admin.email-theme.*') || request()->routeIs('admin.consent.*'))
                     <button
                         @class(['nav-link cms-sidebar-menu-toggle text-start', 'active' => $configMenuOpen])
                         type="button"
@@ -93,6 +93,9 @@
                         @endcan
                         @can('core.smtp.view')
                             <a @class(['nav-link', 'active' => request()->routeIs('admin.smtp-settings.*')]) aria-current="{{ request()->routeIs('admin.smtp-settings.*') ? 'page' : 'false' }}" href="{{ route('admin.smtp-settings.edit') }}">SMTP</a>
+                        @endcan
+                        @can('core.email-theme.view')
+                            <a @class(['nav-link', 'active' => request()->routeIs('admin.email-theme.*')]) aria-current="{{ request()->routeIs('admin.email-theme.*') ? 'page' : 'false' }}" href="{{ route('admin.email-theme.index') }}">Tema de email</a>
                         @endcan
                     </div>
                 @endcanany

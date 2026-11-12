@@ -133,6 +133,11 @@ Route::middleware('web')->group(function (): void {
             Route::get('/smtp-settings', [SmtpSettingsController::class, 'edit'])->name('smtp-settings.edit');
             Route::put('/smtp-settings', [SmtpSettingsController::class, 'update'])->name('smtp-settings.update');
             Route::post('/smtp-settings/test', [SmtpSettingsController::class, 'test'])->name('smtp-settings.test');
+            Route::prefix('email-theme')->name('email-theme.')->middleware('can:core.email-theme.view')->group(function (): void {
+                Route::get('/', [\Pcteckserv\CmsCore\Http\Controllers\Admin\EmailThemeController::class, 'index'])->name('index');
+                Route::get('/preview', [\Pcteckserv\CmsCore\Http\Controllers\Admin\EmailThemeController::class, 'preview'])->name('preview');
+                Route::post('/test', [\Pcteckserv\CmsCore\Http\Controllers\Admin\EmailThemeController::class, 'test'])->middleware(['can:core.email-theme.test', 'throttle:cms-email-theme-test'])->name('test');
+            });
             Route::get('/laravel-commands', [ArtisanCommandsController::class, 'index'])->name('laravel-commands.index');
             Route::post('/laravel-commands/{command}/run', [ArtisanCommandsController::class, 'run'])->name('laravel-commands.run');
             Route::get('/queues', QueueDashboardController::class)->name('queues.dashboard');

@@ -86,6 +86,9 @@ class CmsCoreServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerAuthenticationRateLimiters();
+        RateLimiter::for('cms-email-theme-test', fn (Request $request) => Limit::perMinute(5)
+            ->by('email-theme-test:'.$request->user()?->getAuthIdentifier())
+            ->response(fn ($request, $headers) => response('Aguarde um minuto antes de enviar outro email de teste.', 429, $headers)->header('Content-Type', 'text/plain; charset=UTF-8')));
         $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'cms-core');
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
@@ -119,6 +122,9 @@ class CmsCoreServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../resources/views' => resource_path('views/vendor/cms-core'),
         ], 'cms-core-views');
+        $this->publishes([
+            __DIR__.'/../resources/views/emails' => resource_path('views/vendor/cms-core/emails'),
+        ], 'cms-core-email-theme');
 
         $this->publishes([
             __DIR__.'/../resources/images' => public_path('vendor/cms-core/images'),
@@ -183,6 +189,8 @@ class CmsCoreServiceProvider extends ServiceProvider
             'core.smtp.view' => ['label' => 'Ver configuração SMTP', 'group' => 'SMTP'],
             'core.smtp.update' => ['label' => 'Editar configuração SMTP', 'group' => 'SMTP'],
             'core.smtp.test' => ['label' => 'Enviar teste SMTP', 'group' => 'SMTP'],
+            'core.email-theme.view' => ['label' => 'Consultar tema de email', 'group' => 'Tema de email'],
+            'core.email-theme.test' => ['label' => 'Enviar teste do tema de email', 'group' => 'Tema de email'],
             'core.laravel-commands.view' => ['label' => 'Ver comandos Laravel', 'group' => 'Comandos Laravel'],
             'core.laravel-commands.run' => ['label' => 'Executar comandos Laravel', 'group' => 'Comandos Laravel'],
             'footer.view-settings' => ['label' => 'Ver configuração do footer', 'group' => 'Footer'],
