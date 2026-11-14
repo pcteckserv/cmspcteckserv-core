@@ -4,6 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="cms-upload-max-bytes" content="{{ (int)config('cms-core.media.max_size',24576)*1024 }}">
+    <meta name="cms-upload-batch-bytes" content="{{ (int)config('cms-core.media.batch_max_size',245760)*1024 }}">
     <title>{{ $title ?? 'Administração' }}</title>
     <link rel="icon" type="image/png" href="{{ app(\Pcteckserv\CmsCore\Support\SiteOptions::class)->siteIconUrl() }}">
     @vite([
@@ -17,7 +19,8 @@
             <a class="cms-admin-brand" href="{{ route('admin.dashboard') }}" aria-label="PCTECKSERV">
                 <img src="{{ asset('vendor/cms-core/images/logotipos-pcteckserv-texto.svg') }}" alt="PCTECKSERV">
             </a>
-            <nav class="nav nav-pills flex-column" aria-label="Menu principal">
+            <button class="btn btn-outline-light d-md-none w-100 my-3" type="button" data-admin-mobile-menu aria-controls="cms-admin-navigation" aria-expanded="false">Menu de administração ☰</button>
+            <nav id="cms-admin-navigation" class="nav nav-pills flex-column" aria-label="Menu principal">
                 <a @class(['nav-link', 'active' => request()->routeIs('admin.dashboard')]) aria-current="{{ request()->routeIs('admin.dashboard') ? 'page' : 'false' }}" href="{{ route('admin.dashboard') }}">Dashboard</a>
                 @canany(['core.users.view', 'core.roles.view'])
                     @php($accessMenuOpen = request()->routeIs('admin.users.*') || request()->routeIs('admin.roles.*'))

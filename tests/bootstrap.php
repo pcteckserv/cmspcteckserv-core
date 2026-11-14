@@ -1,7 +1,7 @@
 <?php
 
 $coreRoot = dirname(__DIR__);
-$applicationRoot = getenv('CMS_CORE_TEST_APP') ?: dirname($coreRoot).'/pcteckcms_starter';
+$applicationRoot = getenv('CMS_CORE_TEST_APP') ?: dirname($coreRoot).'/cmspcteckserv-starter';
 $configCache = sys_get_temp_dir().'/cms-core-tests-'.bin2hex(random_bytes(8)).'.php';
 putenv('APP_CONFIG_CACHE='.$configCache);
 $_ENV['APP_CONFIG_CACHE'] = $configCache;

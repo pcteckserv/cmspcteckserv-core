@@ -1,6 +1,37 @@
 import './bootstrap';
 import './components/icon-picker';
 
+const cmsUploadError = (files, batch = true) => {
+    const list=Array.from(files),max=Number(document.querySelector('meta[name="cms-upload-max-bytes"]')?.content||25165824),total=Number(document.querySelector('meta[name="cms-upload-batch-bytes"]')?.content||251658240);
+    if(list.some(file=>file.size>max))return 'Cada ficheiro pode ter até '+Math.round(max/1048576)+' MB.';
+    if(batch&&list.reduce((sum,file)=>sum+file.size,0)>total)return 'O envio excede '+Math.round(total/1048576)+' MB. Divida os ficheiros por vários envios.';
+    return null;
+};
+document.addEventListener('submit',event=>{
+    const files=[...event.target.querySelectorAll('input[type="file"]')].flatMap(input=>Array.from(input.files??[]));
+    const error=cmsUploadError(files);if(!error)return;
+    event.preventDefault();let status=event.target.querySelector('[data-upload-validation]');if(!status){status=document.createElement('p');status.dataset.uploadValidation='';status.className='alert alert-danger';status.setAttribute('role','alert');event.target.prepend(status);}status.textContent=error;status.scrollIntoView({block:'center'});
+},true);
+
+const mobileMenu = document.querySelector('[data-admin-mobile-menu]');
+const adminNavigation = document.querySelector('#cms-admin-navigation');
+if (mobileMenu && adminNavigation) {
+    const closeMobile = () => {
+        mobileMenu.setAttribute('aria-expanded', 'false');
+        adminNavigation.removeAttribute('data-mobile-open');
+    };
+    if (window.matchMedia('(max-width: 767.98px)').matches) {
+        adminNavigation.querySelectorAll('.collapse.show').forEach(panel => panel.classList.remove('show'));
+        adminNavigation.querySelectorAll('[data-bs-toggle="collapse"]').forEach(button => button.setAttribute('aria-expanded', 'false'));
+    }
+    mobileMenu.addEventListener('click', () => {
+        const open = mobileMenu.getAttribute('aria-expanded') !== 'true';
+        mobileMenu.setAttribute('aria-expanded', String(open));
+        adminNavigation.toggleAttribute('data-mobile-open', open);
+    });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') { closeMobile(); } });
+}
+
 document.querySelectorAll('[data-cms-help-widget]').forEach((widget) => {
     const toggle = widget.querySelector('[data-cms-help-toggle]');
     const panel = widget.querySelector('[data-cms-help-panel]');
@@ -231,6 +262,7 @@ document.querySelectorAll('[data-cms-media-upload-url]').forEach((dropzone) => {
             return;
         }
 
+        const limitError=cmsUploadError(files);if(limitError){renderResult(limitError,'error');input.value='';return;}
         const formData = new FormData();
         Array.from(files).forEach((file) => formData.append('files[]', file));
 
@@ -548,6 +580,12 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
             const selectedFiles = Array.from(files || []);
 
             if (! activePicker?.dataset.uploadUrl || selectedFiles.length === 0) {
+                return;
+            }
+            const limitError = cmsUploadError(selectedFiles, false);
+            if (limitError) {
+                setStatus(limitError, true);
+                file.value = '';
                 return;
             }
 

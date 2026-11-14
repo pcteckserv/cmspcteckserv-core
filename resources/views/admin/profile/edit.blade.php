@@ -10,7 +10,7 @@
         <div class="alert alert-danger" role="alert">Corrija os campos assinalados.</div>
     @endif
 
-    <form method="POST" action="{{ route('admin.profile.update') }}" class="bg-white border rounded p-4">
+    <form method="POST" enctype="multipart/form-data" action="{{ route('admin.profile.update') }}" class="bg-white border rounded p-4">
         @csrf
         @method('PUT')
 
@@ -42,6 +42,8 @@
                 <input class="form-control" id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password">
             </div>
         </div>
+
+        @include('cms-core::admin.partials.staff-profile')
 
         <div class="mt-4 d-flex gap-2">
             <button class="btn btn-primary" type="submit">Guardar alterações</button>

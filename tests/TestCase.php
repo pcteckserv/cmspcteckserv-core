@@ -13,6 +13,9 @@ abstract class TestCase extends LaravelTestCase
         $app['config']->set([
             'cms-plugins.plugins' => [],
             'cms-plugins.repository_url' => '',
+            'cms-plugins.local_repository' => null,
+            'cms-core.updates.bundled_versions' => [],
+            'cms-core.updates.starter.version' => null,
             'cms-core.updates.packages' => ['pcteckserv/cms-core'],
             'cms-core.updates.repositories' => [],
             'cms-core.updates.github_token' => null,

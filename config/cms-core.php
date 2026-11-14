@@ -167,7 +167,8 @@ return [
     'media' => [
         'disk' => env('CMS_MEDIA_DISK', 'public'),
         'directory' => env('CMS_MEDIA_DIRECTORY', 'cms/media'),
-        'max_size' => env('CMS_MEDIA_MAX_SIZE', 10 * 1024),
+        'max_size' => env('CMS_MEDIA_MAX_SIZE', 24 * 1024),
+        'batch_max_size' => env('CMS_MEDIA_BATCH_MAX_SIZE', 240 * 1024),
         'allow_svg' => env('CMS_MEDIA_ALLOW_SVG', false),
         'allowed_extensions' => ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'pdf'],
         'allowed_mimes' => [

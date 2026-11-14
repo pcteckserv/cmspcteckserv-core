@@ -5,9 +5,9 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ViewErrorBag;
 use Pcteckserv\CmsCore\Models\Media;
 use Pcteckserv\CmsCore\Models\Role;
@@ -18,6 +18,35 @@ use Tests\TestCase;
 class MediaManagerTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_limite_de_24_mb_e_total_de_240_mb_sao_validados(): void
+    {
+        Storage::fake('public');
+        config(['cms-core.media.max_size' => 24576, 'cms-core.media.batch_max_size' => 245760]);
+        $this->actingAs($this->superAdmin())->postJson(route('admin.media.store'), ['files' => [UploadedFile::fake()->create('manual.pdf', 24576, 'application/pdf')]])->assertSuccessful();
+        $this->postJson(route('admin.media.store'), ['files' => [UploadedFile::fake()->create('maior.pdf', 24577, 'application/pdf')]])->assertUnprocessable()->assertJsonValidationErrors('files.0');
+        $files = [];
+        for ($i = 0; $i < 11; $i++) {
+            $files[] = UploadedFile::fake()->create('manual-'.$i.'.pdf', 24576, 'application/pdf');
+        }
+        $this->postJson(route('admin.media.store'), ['files' => $files])->assertUnprocessable()->assertJsonValidationErrors('files');
+        $this->postJson(route('admin.media.store'), ['files' => [['nested' => UploadedFile::fake()->create('manual.pdf', 1, 'application/pdf')]]])->assertUnprocessable();
+        $this->assertDatabaseCount('cms_media', 1);
+    }
+
+    public function test_upload_recusado_pelo_php_apresenta_mensagem_util(): void
+    {
+        $file = new UploadedFile(tempnam(sys_get_temp_dir(), 'cms-upload'), 'capa.jpg', 'image/jpeg', UPLOAD_ERR_INI_SIZE, true);
+        $response = $this->actingAs($this->superAdmin())->postJson(route('admin.media.store'), ['files' => [$file]]);
+        $response->assertUnprocessable()->assertJsonValidationErrors('files.0');
+        $this->assertStringContainsString('limite de upload do servidor', $response->json('errors')['files.0'][0]);
+    }
+
+    public function test_menu_mobile_inicia_fechado_sem_ocultar_navegacao_desktop(): void
+    {
+        $this->actingAs($this->superAdmin())->get(route('admin.dashboard'))->assertOk()->assertSee('data-admin-mobile-menu', false)->assertSee('aria-controls="cms-admin-navigation" aria-expanded="false"', false);
+        $this->assertStringContainsString('#cms-admin-navigation:not([data-mobile-open])', file_get_contents(__DIR__.'/../../resources/css/admin.scss'));
+    }
 
     public function test_super_admin_consegue_ver_biblioteca_de_media(): void
     {
@@ -37,7 +66,7 @@ class MediaManagerTest extends TestCase
 
     public function test_selector_de_media_pode_selecionar_varias_imagens_existentes(): void
     {
-        view()->share('errors', new ViewErrorBag());
+        view()->share('errors', new ViewErrorBag);
         $html = Blade::render('<x-cms-media-picker name="gallery_media_ids" label="Imagens" multiple clearable />');
 
         $this->assertStringContainsString('data-cms-media-picker-multiple="true"', $html);

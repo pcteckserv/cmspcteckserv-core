@@ -161,3 +161,8 @@ contém `version: 2.6.6`; a correção deve ser distribuída numa versão poster
 Após a publicação, voltar a verificar as versões disponíveis no painel antes de
 atualizar o site. Alterar apenas a branch principal não corrige o manifesto
 guardado numa tag anterior.
+## v3.1.2
+
+Integra as melhorias já distribuídas no MaxiHome 3.0.3 com a linha central 3.1.1: dependências de plugins, compatibilidade declarada com o Core, perfis profissionais e avatares, preservação do 2FA legado, limites de media de 24 MB, menu móvel e versões incluídas no pacote do site. Mantém o tema global de email, a gestão de ícones, os URLs canónicos e a recuperação do resultado do Composer da linha central.
+
+As migrations de perfis e 2FA são as que já acompanhavam a distribuição do MaxiHome; os registos e dados existentes são preservados. Os testes adicionais cobrem ativação/desativação de dependências e compatibilidade de metadados. Não existem tags de plugins nesta entrega; o Core continua a usar tags Git sem campo `version` no manifesto Composer.

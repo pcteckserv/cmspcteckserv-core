@@ -17,7 +17,7 @@ class UpdateProfileRequest extends FormRequest
     {
         $user = $this->user();
 
-        return [
+        return array_merge(\Pcteckserv\CmsCore\Services\StaffProfileUpdater::rules(), [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique($user::class, 'email')->ignore($user)],
             'current_password' => [
@@ -25,7 +25,7 @@ class UpdateProfileRequest extends FormRequest
                 'nullable', 'string', 'current_password',
             ],
             'password' => ['nullable', 'string', 'confirmed', Password::defaults()],
-        ];
+        ]);
     }
 
     public function messages(): array

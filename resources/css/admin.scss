@@ -954,3 +954,7 @@ form.bg-white.border,
     outline: 2px solid currentColor;
     outline-offset: 2px;
 }
+
+@media (max-width: 767.98px) {
+    #cms-admin-navigation:not([data-mobile-open]) { display: none; }
+}

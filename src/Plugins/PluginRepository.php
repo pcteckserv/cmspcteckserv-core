@@ -15,7 +15,8 @@ class PluginRepository
      */
     public function available(): Collection
     {
-        $root = $this->ensureLocalCopy();
+        $local = config('cms-plugins.local_repository');
+        $root = is_string($local) && File::isDirectory($local) ? $local : $this->ensureLocalCopy();
         $metadataFile = (string) config('cms-plugins.metadata_file', 'cms-plugin.json');
 
         return collect(File::directories($root))
@@ -65,6 +66,8 @@ class PluginRepository
             return null;
         }
 
+        $composerPath = $directory.DIRECTORY_SEPARATOR.'composer.json';
+        $composer = File::isFile($composerPath) ? json_decode(File::get($composerPath), true) : [];
         return new AvailablePlugin(
             slug: $slug,
             directory: $directoryName,
@@ -75,6 +78,7 @@ class PluginRepository
             versionConstraint: isset($data['version_constraint']) && is_string($data['version_constraint']) ? $data['version_constraint'] : null,
             repositoryPath: $directory,
             version: $version,
+            coreConstraint: $composer['require']['pcteckserv/cms-core'] ?? null,
         );
     }
 

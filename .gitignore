@@ -1,1 +1,8 @@
 .phpunit.result.cache
+.phpunit.cache/
+tests/.runtime/
+tests/Standalone/.fixtures/
+tests/Browser/node_modules/
+tests/Browser/test-results/
+vendor/
+.env

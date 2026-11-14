@@ -19,6 +19,7 @@ class ProfileController extends Controller
     {
         return view('cms-core::admin.profile.edit', [
             'user' => $request->user(),
+            'profile' => \Pcteckserv\CmsCore\Models\UserProfile::firstOrNew(['user_id' => $request->user()->getKey()]),
             'twoFactorEnabled' => $twoFactor->enabled($request->user()) !== null,
             'twoFactorSetup' => $twoFactor->setup($request->user(), $request->session()->get(TwoFactorManager::SETUP)),
         ]);
@@ -45,6 +46,8 @@ class ProfileController extends Controller
 
         DB::transaction(function () use ($user, $activityLogger, $oldValues, $passwordChanged): void {
             $user->save();
+
+            app(\Pcteckserv\CmsCore\Services\StaffProfileUpdater::class)->update(request(), $user->getKey());
 
             $activityLogger->log(
                 action: 'user.profile_updated',

@@ -31,11 +31,13 @@ class PackageVersionRegistry
 
         return $packages->map(function (string $package) use ($channel): InstalledPackage {
             $installedVersion = $this->installedVersion($package);
+            $bundledVersion = config('cms-core.updates.bundled_versions.'.$package);
 
             DB::table('cms_installed_packages')->updateOrInsert(
                 ['name' => $package],
                 [
                     'installed_version' => $installedVersion,
+                    'available_version' => $bundledVersion ?: DB::table('cms_installed_packages')->where('name', $package)->value('available_version'),
                     'channel' => $channel,
                     'checked_at' => now(),
                     'updated_at' => now(),
@@ -43,7 +45,7 @@ class PackageVersionRegistry
                 ],
             );
 
-            return new InstalledPackage($package, $installedVersion, null, $channel, now()->toDateTimeString());
+            return new InstalledPackage($package, $installedVersion, $bundledVersion, $channel, now()->toDateTimeString());
         });
     }
 
@@ -127,9 +129,9 @@ class PackageVersionRegistry
     private function installedVersion(string $package): ?string
     {
         if (StarterPackage::is($package)) {
-            return is_file(StarterPackage::versionFile())
+            return config('cms-core.updates.starter.version') ?: (is_file(StarterPackage::versionFile())
                 ? trim((string) file_get_contents(StarterPackage::versionFile()))
-                : null;
+                : null);
         }
 
         $plugin = InstalledPlugin::query()->where('package', $package)->whereNotNull('installed_version')->first();

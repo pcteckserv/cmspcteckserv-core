@@ -1,5 +1,7 @@
 <?php
 
+\Illuminate\Support\Facades\Route::get('/storage/staff-avatars/{filename}', \Pcteckserv\CmsCore\Http\Controllers\PublicStaffAvatarController::class)->name('cms-core.staff-avatar.public');
+
 use Illuminate\Support\Facades\Route;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\ActivityLogController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\ArtisanCommandsController;

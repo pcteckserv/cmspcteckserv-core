@@ -17,6 +17,7 @@
     },
     "require": {
         "php": "^8.3",
+        "composer/semver": "^3.4",
         "ext-xmlwriter": "*",
         "bacon/bacon-qr-code": "^3.0",
         "pragmarx/google2fa": "^9.0",

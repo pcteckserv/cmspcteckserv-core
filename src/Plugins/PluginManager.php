@@ -88,6 +88,12 @@ class PluginManager
             ]);
         }
 
+        foreach (config('cms-plugins.plugins.'.$slug.'.requires', []) as $dependency) {
+            if (! $this->isEnabled($dependency)) {
+                throw ValidationException::withMessages(['plugin' => 'Ative primeiro o plugin '.(config('cms-plugins.plugins.'.$dependency.'.label') ?: $dependency).'.']);
+            }
+        }
+
         $plugin->forceFill([
             'status' => 'enabled',
             'enabled_at' => now(),
@@ -101,6 +107,12 @@ class PluginManager
     public function disable(string $slug): InstalledPlugin
     {
         $plugin = $this->findOrFail($slug);
+
+        foreach (config('cms-plugins.plugins', []) as $dependent => $definition) {
+            if (in_array($slug, $definition['requires'] ?? [], true) && InstalledPlugin::where('slug', $dependent)->where('status', 'enabled')->exists()) {
+                throw ValidationException::withMessages(['plugin' => 'Desative primeiro o plugin '.($definition['label'] ?? $dependent).'.']);
+            }
+        }
 
         $plugin->forceFill([
             'status' => 'disabled',

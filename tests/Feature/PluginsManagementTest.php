@@ -38,7 +38,7 @@ class PluginsManagementTest extends TestCase
         \Illuminate\Support\Facades\Route::getRoutes()->refreshNameLookups();
     }
 
-    public function test_plugin_instalado_nao_aparece_na_lista_de_disponiveis(): void
+    public function test_plugin_instalado_permanece_no_catalogo_com_versao_disponivel(): void
     {
         $plugin = new InstalledPlugin(['slug' => 'contact-forms', 'package' => 'pcteckserv/cms-contact-forms', 'installed_version' => '1.0.0']);
         $this->mock(\Pcteckserv\CmsCore\Plugins\PluginManager::class)
@@ -46,8 +46,9 @@ class PluginsManagementTest extends TestCase
         $this->mock(PluginRepository::class)->shouldReceive('available')->once()
             ->andReturn(collect([$this->availablePlugin()]));
 
-        $this->actingAs($this->superAdmin())->get(route('admin.plugins.index'))
-            ->assertOk()->assertViewHas('availablePlugins', fn ($items) => $items->isEmpty());
+        $response = $this->actingAs($this->superAdmin())->get(route('admin.plugins.index'))
+            ->assertOk()->assertViewHas('availablePlugins', fn ($items) => $items->count() === 1 && $items->first()->package === $plugin->package);
+        $this->assertSame(1, substr_count($response->getContent(), '<td>'.$plugin->package.'</td>'));
     }
 
     public function test_eliminacao_exige_autenticacao_e_permissao(): void
@@ -128,7 +129,7 @@ class PluginsManagementTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.plugins.index'))
             ->assertOk()
-            ->assertDontSee('Plugins disponíveis')
+            ->assertSee('Plugins disponíveis para instalar')
             ->assertSee('Formulários de contacto')
             ->assertSee('pcteckserv/cms-contact-forms')
             ->assertSee('Instalar');

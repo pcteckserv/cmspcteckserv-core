@@ -15,12 +15,14 @@
                 @forelse ($packages as $package)
                     @php($status = $statuses[$package->name] ?? null)
                     <tr>
-                        <td class="fw-semibold">{{ $package->name }}</td>
+                        <td class="fw-semibold">{{ \Pcteckserv\CmsCore\Updates\StarterPackage::is($package->name) ? \Pcteckserv\CmsCore\Updates\StarterPackage::displayName() : $package->name }}</td>
                         <td>{{ $package->installedVersion ?? '-' }}</td>
                         <td>{{ $package->availableVersion ?? 'Não verificada' }}</td>
                         <td>{{ $package->formattedCheckedAt() }}</td>
                         <td>
-                            @if (($status['state'] ?? null) === 'queued')
+                            @if ($package->installedVersion === null)
+                                <span class="badge text-bg-secondary">Não instalado</span>
+                            @elseif (($status['state'] ?? null) === 'queued')
                                 <span class="badge text-bg-info">Na fila</span>
                             @elseif (($status['state'] ?? null) === 'running')
                                 <span class="badge text-bg-primary">Em execução</span>

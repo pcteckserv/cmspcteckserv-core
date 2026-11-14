@@ -30,7 +30,7 @@ class PluginsController extends Controller
 
         return view('cms-core::admin.plugins.index', [
             'plugins' => $installedPlugins,
-            'availablePlugins' => $availablePlugins->reject(fn ($plugin) => $installedPackages->contains($plugin->package))->values(),
+            'availablePlugins' => $availablePlugins->values(),
             'pluginRepositoryError' => $repositoryError,
             'pluginsEnabled' => config('cms-plugins.enabled', true),
         ]);

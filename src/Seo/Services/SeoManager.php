@@ -24,9 +24,10 @@ class SeoManager
         $global = $this->globalDefaults();
         $module = $this->resolveFromRegisteredResolvers($subject);
         $model = $this->resolveFromModel($subject);
-        $data = array_replace($global, $module, $model, array_filter($overrides, static fn ($value) => $value !== null && $value !== ''));
+        $specific = array_replace($module, $model, array_filter($overrides, static fn ($value) => $value !== null && $value !== ''));
+        $data = array_replace($global, $specific);
 
-        $pageTitle = $data['title'] ?: data_get($subject, 'title', data_get($subject, 'name', $global['title']));
+        $pageTitle = ($specific['title'] ?? null) ?: (data_get($subject, 'title') ?: data_get($subject, 'name') ?: $global['title']);
         $template = $this->siteOptions->get('seo_title_template', '{page_title} | {site_name}');
         $title = $this->variables->resolve($template, $subject, ['page_title' => $pageTitle]);
         $description = $data['description'] ?: $global['description'];

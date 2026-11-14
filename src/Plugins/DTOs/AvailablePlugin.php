@@ -14,7 +14,17 @@ class AvailablePlugin
         public readonly ?string $versionConstraint,
         public readonly string $repositoryPath,
         public readonly ?string $version = null,
+        public readonly ?string $coreConstraint = null,
     ) {
+    }
+
+    public function compatible(): bool
+    {
+        try {
+            return ! $this->coreConstraint || \Composer\Semver\Semver::satisfies(\Composer\InstalledVersions::getPrettyVersion('pcteckserv/cms-core'), $this->coreConstraint);
+        } catch (\UnexpectedValueException) {
+            return false;
+        }
     }
 
     /**

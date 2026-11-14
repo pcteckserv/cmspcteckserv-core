@@ -5,6 +5,7 @@ return [
     'repository_url' => env('CMS_PLUGINS_REPOSITORY_URL', 'https://github.com/pcteckserv/cmspcteckserv-plugins.git'),
     'repository_branch' => env('CMS_PLUGINS_REPOSITORY_BRANCH'),
     'metadata_file' => 'cms-plugin.json',
+    'local_repository' => env('CMS_PLUGINS_LOCAL_REPOSITORY'),
 
     /*
     |--------------------------------------------------------------------------
