@@ -61,7 +61,7 @@ class AdminSidebarTest extends TestCase
     {
         Route::middleware(['web', 'auth'])->get('/test-sidebar-catalogue', fn () => view('cms-core::admin.layouts.app'))->name('test.sidebar.catalogue');
         Route::getRoutes()->refreshNameLookups();
-        $this->mock(AdminMenuRegistry::class)->shouldReceive('visible')->andReturn(collect([
+        $this->partialMock(AdminMenuRegistry::class)->shouldReceive('visible')->andReturn(collect([
             [
                 'key' => 'catalogue',
                 'label' => 'Catálogo <script>alert(1)</script>',

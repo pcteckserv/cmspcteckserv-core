@@ -41,7 +41,7 @@ class PluginsManagementTest extends TestCase
     public function test_plugin_instalado_permanece_no_catalogo_com_versao_disponivel(): void
     {
         $plugin = new InstalledPlugin(['slug' => 'contact-forms', 'package' => 'pcteckserv/cms-contact-forms', 'installed_version' => '1.0.0']);
-        $this->mock(\Pcteckserv\CmsCore\Plugins\PluginManager::class)
+        $this->partialMock(\Pcteckserv\CmsCore\Plugins\PluginManager::class)
             ->shouldReceive('all')->once()->andReturn(collect([$plugin]));
         $this->mock(PluginRepository::class)->shouldReceive('available')->once()
             ->andReturn(collect([$this->availablePlugin()]));
@@ -96,6 +96,10 @@ class PluginsManagementTest extends TestCase
         config(['cms-plugins.plugins' => [
             'blog' => $this->pluginConfig(),
         ]]);
+        $this->partialMock(\Pcteckserv\CmsCore\Plugins\PluginManager::class)
+            ->shouldReceive('all')->once()->andReturn(collect([new InstalledPlugin([
+                'slug'=>'blog', 'package'=>'pcteckserv/cms-blog', 'label'=>'Blog', 'installed_version'=>null,
+            ])]));
 
         $this->mock(PluginRepository::class)
             ->shouldReceive('available')
