@@ -11,6 +11,7 @@ use Pcteckserv\CmsCore\Updates\PackageVersionRegistry;
 use Pcteckserv\CmsCore\Updates\StarterPackage;
 use Pcteckserv\CmsCore\Updates\UpdateStatusRepository;
 use Throwable;
+use Pcteckserv\CmsCore\Models\InstalledPlugin;
 
 class UpdatesController extends Controller
 {
@@ -49,7 +50,7 @@ class UpdatesController extends Controller
 
         $allowedPackages = collect(config('cms-core.updates.packages', []))
             ->when(StarterPackage::repository() !== null, fn ($packages) => $packages->push(StarterPackage::NAME))
-            ->merge($plugins->packages())
+            ->merge(InstalledPlugin::query()->where('status', 'enabled')->whereNotNull('installed_version')->pluck('package'))
             ->unique()
             ->values()
             ->all();

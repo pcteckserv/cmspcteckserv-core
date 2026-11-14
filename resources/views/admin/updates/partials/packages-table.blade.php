@@ -15,7 +15,9 @@
                 @forelse ($packages as $package)
                     @php($status = $statuses[$package->name] ?? null)
                     <tr>
-                        <td class="fw-semibold">{{ \Pcteckserv\CmsCore\Updates\StarterPackage::is($package->name) ? \Pcteckserv\CmsCore\Updates\StarterPackage::displayName() : $package->name }}</td>
+                        <td class="fw-semibold">{{ \Pcteckserv\CmsCore\Updates\StarterPackage::is($package->name) ? \Pcteckserv\CmsCore\Updates\StarterPackage::displayName().' · Starter' : $package->name }}
+                            @if(\Pcteckserv\CmsCore\Updates\StarterPackage::is($package->name) && ($repository = \Pcteckserv\CmsCore\Updates\StarterPackage::repositoryLabel()))<div class="small text-secondary fw-normal">{{ $repository }}</div>@endif
+                        </td>
                         <td>{{ $package->installedVersion ?? '-' }}</td>
                         <td>{{ $package->availableVersion ?? 'Não verificada' }}</td>
                         <td>{{ $package->formattedCheckedAt() }}</td>
@@ -45,7 +47,9 @@
                             @endif
                         </td>
                         <td class="text-end">
-                            @if (in_array($status['state'] ?? null, ['queued', 'running'], true))
+                            @if ($package->name === 'pcteckserv/cms-core' && !config('cms-core.updates.allow_core_updates', true))
+                                <button class="btn btn-outline-secondary btn-sm" type="button" disabled>Atualização manual</button>
+                            @elseif (in_array($status['state'] ?? null, ['queued', 'running'], true))
                                 <button class="btn btn-outline-secondary btn-sm" type="button" disabled>A processar</button>
                             @elseif ($package->availableVersion === null)
                                 <button class="btn btn-outline-secondary btn-sm" type="button" disabled>Versão por verificar</button>

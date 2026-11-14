@@ -33,6 +33,13 @@ class PackageUpdater
             return ($this->starterUpdater ?? app(StarterUpdater::class))->update($this->availableVersion($package));
         }
 
+        if ($package === 'pcteckserv/cms-core' && !config('cms-core.updates.allow_core_updates', true)) {
+            return new UpdateResult(false, 'O Core está protegido neste site. A atualização exige validação de compatibilidade separada.');
+        }
+        if ($package !== 'pcteckserv/cms-core' && !InstalledPlugin::query()->where('package', $package)->where('status', 'enabled')->whereNotNull('installed_version')->exists()) {
+            return new UpdateResult(false, 'Só é possível atualizar plugins instalados e ativos.');
+        }
+
         $installedPackage = $this->installedComposerPackage($package);
         $previousVersion = $installedPackage['version'] ?? null;
         if (! is_string($previousVersion) || $previousVersion === '') {
@@ -43,6 +50,9 @@ class PackageUpdater
         $updateCoreConstraint = $package === 'pcteckserv/cms-core'
             && is_string($availableVersion)
             && version_compare($this->normalizeVersion($availableVersion), $this->normalizeVersion($previousVersion), '>');
+        if ($package === 'pcteckserv/cms-core' && ($installedPackage['dist']['type'] ?? null) === 'path') {
+            return new UpdateResult(false, 'O Core deste site é distribuído como snapshot pelo Starter. A versão local não pode ser alterada para uma tag remota sem os ficheiros correspondentes. Atualize a distribuição do site após validar a compatibilidade.');
+        }
         $plugin = InstalledPlugin::query()->where('package', $package)->whereNotNull('installed_version')->first();
         $isPathPlugin = $plugin !== null && app(InstalledPluginSource::class)->isPath($plugin, $installedPackage);
 
@@ -67,6 +77,12 @@ class PackageUpdater
             }
 
             $availableVersion = $source->version;
+        }
+
+        if ($plugin !== null) {
+            $release = $plugin->metadata['last_applied_release'] ?? $plugin->metadata['version'] ?? null;
+            $state = new InstalledPackage($package, $previousVersion, $availableVersion, 'stable', null, is_string($release) ? $release : null);
+            if (!$state->hasUpdate()) return new UpdateResult(false, 'Não existe uma atualização disponível para este plugin.');
         }
 
         if (! $isPathPlugin
@@ -269,9 +285,7 @@ class PackageUpdater
     /** @return array<int, string> */
     private function dependencyUpdateOption(string $package): array
     {
-        return $package === 'pcteckserv/cms-core'
-            ? ['--with-all-dependencies']
-            : ['--with-dependencies'];
+        return ['--with-dependencies', '--minimal-changes'];
     }
 
     protected function updateComposerPathRepositoryVersion(string $package, string $availableVersion): bool

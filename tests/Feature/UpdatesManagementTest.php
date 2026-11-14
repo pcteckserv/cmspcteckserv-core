@@ -100,7 +100,7 @@ class UpdatesManagementTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_http_update_reads_real_metadata_and_updates_path_manifest(): void
+    public function test_http_update_does_not_relabel_an_old_core_snapshot_as_a_remote_release(): void
     {
         $admin = $this->superAdmin();
         $originalBase = base_path();
@@ -145,13 +145,13 @@ class UpdatesManagementTest extends TestCase
             $this->app->setBasePath($directory);
             $this->actingAs($admin)
                 ->post(route('admin.updates.run', ['package' => 'pcteckserv/cms-core']))
-                ->assertSessionHas('cms_update_success')
-                ->assertSessionMissing('cms_update_error');
-            $this->assertCount(3, $updater->commands);
+                ->assertSessionHas('cms_update_error')
+                ->assertSessionMissing('cms_update_success');
+            $this->assertCount(0, $updater->commands);
             $this->assertDatabaseHas('cms_installed_packages', [
-                'name' => 'pcteckserv/cms-core', 'installed_version' => '2.3.11',
+                'name' => 'pcteckserv/cms-core', 'installed_version' => '2.3.10',
             ]);
-            $this->assertSame('2.3.11', (new ComposerInstalledPackageReader())->read('pcteckserv/cms-core')['version']);
+            $this->assertSame('2.3.10', (new ComposerInstalledPackageReader())->read('pcteckserv/cms-core')['version']);
         } finally {
             $this->app->setBasePath($originalBase);
             $files->deleteDirectory($directory);
@@ -273,7 +273,7 @@ class UpdatesManagementTest extends TestCase
         $this->assertStringContainsString('continua em 2.3.3', $result->message);
     }
 
-    public function test_update_prepara_versao_do_repositorio_path_antes_de_executar_composer(): void
+    public function test_update_refuses_to_change_core_path_version_without_new_source_files(): void
     {
         DB::table('cms_installed_packages')->insert([
             'name' => 'pcteckserv/cms-core',
@@ -286,9 +286,8 @@ class UpdatesManagementTest extends TestCase
         ]);
 
         $reader = Mockery::mock(ComposerInstalledPackageReader::class);
-        $reader->shouldReceive('read')->twice()->andReturn(
+        $reader->shouldReceive('read')->once()->andReturn(
             ['version' => '2.3.6', 'dist' => ['type' => 'path', 'reference' => 'old']],
-            ['version' => '2.3.7', 'dist' => ['type' => 'path', 'reference' => 'new']],
         );
 
         $updater = new TestablePackageUpdater(
@@ -300,10 +299,10 @@ class UpdatesManagementTest extends TestCase
 
         $result = $updater->update('pcteckserv/cms-core');
 
-        $this->assertTrue($result->successful);
-        $this->assertTrue($updater->pathRepositoryPreparedBeforeFirstCommand);
-        $this->assertSame(['pcteckserv/cms-core' => 'v2.3.7'], $updater->pathRepositoryVersions);
-        $this->assertSame(['require', 'pcteckserv/cms-core:^2.3.7', '--with-all-dependencies', '--no-interaction'], $updater->commands[0]);
+        $this->assertFalse($result->successful);
+        $this->assertStringContainsString('snapshot', $result->message);
+        $this->assertSame([], $updater->pathRepositoryVersions);
+        $this->assertSame([], $updater->commands);
     }
 
     public function test_core_major_update_changes_constraint_before_resolving_dependencies(): void
@@ -319,7 +318,7 @@ class UpdatesManagementTest extends TestCase
 
         $this->assertTrue($updater->update('pcteckserv/cms-core')->successful);
         $this->assertSame([
-            ['require', 'pcteckserv/cms-core:^3.0.0', '--with-all-dependencies', '--no-interaction'],
+            ['require', 'pcteckserv/cms-core:^3.0.0', '--with-dependencies', '--minimal-changes', '--no-interaction'],
             ['artisan', 'migrate', '--force'],
             ['artisan', 'optimize:clear'],
         ], $updater->commands);
@@ -354,7 +353,7 @@ class UpdatesManagementTest extends TestCase
         $this->assertStringNotContainsString("\x08", $result->message);
         $this->assertStringNotContainsString("\x1B", $result->message);
         $this->assertSame([
-            ['require', 'pcteckserv/cms-core:^3.0.0', '--with-all-dependencies', '--no-interaction'],
+            ['require', 'pcteckserv/cms-core:^3.0.0', '--with-dependencies', '--minimal-changes', '--no-interaction'],
         ], $updater->commands);
     }
 

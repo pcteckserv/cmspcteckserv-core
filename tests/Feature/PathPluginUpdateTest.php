@@ -163,7 +163,7 @@ class PathPluginUpdateTest extends TestCase
             $this->app->setBasePath($directory);
             $result = $updater->update($plugin->package);
             $this->assertTrue($result->successful);
-            $this->assertSame(['composer', 'require', 'tests/plugin:^1.1', '--with-dependencies', '--no-interaction'], $commands[1]);
+            $this->assertSame(['composer', 'require', 'tests/plugin:^1.1', '--with-dependencies', '--minimal-changes', '--no-interaction'], $commands[1]);
             $this->assertSame('path', $plugin->fresh()->metadata['repository_type']);
             $this->assertSame('1.1.0', $plugin->fresh()->installed_version);
             $this->assertSame('^1.1', $plugin->fresh()->metadata['version_constraint']);
@@ -414,6 +414,7 @@ class PathPluginUpdateTest extends TestCase
                         'update',
                         'tests/plugin',
                         '--with-dependencies',
+                        '--minimal-changes',
                         '--no-interaction',
                     ], $command);
                 }

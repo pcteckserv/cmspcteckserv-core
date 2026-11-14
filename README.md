@@ -1,5 +1,7 @@
 # CMS PCTECKSERV — Core 3
 
+Revisão separada do módulo Atualizações, sem nova tag nem migração de sites: [âmbito, correções e validação](docs/updates-review.md).
+
 Base principal atualizada a partir de `NOVO/pcteckcms_core` (commit `5a09323`), incluindo a integração genérica validada no NextHome. Mudança major: substitui a linha 2.20 e altera os contratos de clientes/autenticação.
 
 O Core fornece administração, utilizadores, perfis, permissões, 2FA, geografia, conteúdos, SEO e gestão de plugins. Clientes pertence à package opcional `pcteckserv/cms-customers`, fora do Core. Agenda e Imobiliário declaram dependência de Clientes no respetivo manifesto. Moloni, PayPal, Easypay e restantes módulos precisam de validação e versão compatível antes de migrar sites antigos.

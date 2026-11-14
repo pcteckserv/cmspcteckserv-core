@@ -67,11 +67,11 @@ class PackageVersionRegistry
                     ->where('name', $package)
                     ->value('available_version');
 
-                $fallbackAvailableVersion = is_string($installedVersion)
+                $fallbackAvailableVersion = StarterPackage::is($package) ? null : (is_string($installedVersion)
                     && is_string($currentAvailableVersion)
                     && version_compare($this->normalizeVersion($installedVersion), $this->normalizeVersion($currentAvailableVersion), '>')
                         ? $installedVersion
-                        : $currentAvailableVersion;
+                        : $currentAvailableVersion);
 
                 DB::table('cms_installed_packages')
                     ->where('name', $package)
@@ -176,9 +176,11 @@ class PackageVersionRegistry
      */
     private function configuredPackages(): Collection
     {
+        $active = InstalledPlugin::query()->where('status', 'enabled')->whereNotNull('installed_version')->pluck('package');
         return collect(config('cms-core.updates.packages', []))
+            ->filter(fn ($package) => $package === 'pcteckserv/cms-core' || $active->contains($package))
             ->when(StarterPackage::repository() !== null, fn (Collection $packages): Collection => $packages->push(StarterPackage::NAME))
-            ->merge($this->plugins->packages())
+            ->merge($active)
             ->filter(fn (mixed $package): bool => is_string($package) && $package !== '')
             ->unique()
             ->values();

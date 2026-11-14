@@ -17,6 +17,7 @@ abstract class TestCase extends LaravelTestCase
             'cms-core.updates.bundled_versions' => [],
             'cms-core.updates.starter.version' => null,
             'cms-core.updates.packages' => ['pcteckserv/cms-core'],
+            'cms-core.updates.allow_core_updates' => true,
             'cms-core.updates.repositories' => [],
             'cms-core.updates.github_token' => null,
             'cms-core.updates.starter.repository' => null,

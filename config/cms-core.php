@@ -141,6 +141,7 @@ return [
     ],
 
     'updates' => [
+        'allow_core_updates' => true,
         'enabled' => env('CMS_UPDATER_ENABLED', true),
         'channel' => env('CMS_UPDATE_CHANNEL', 'stable'),
         'queue_connection' => env('CMS_UPDATER_QUEUE_CONNECTION'),

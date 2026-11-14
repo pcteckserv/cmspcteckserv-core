@@ -13,7 +13,7 @@ class InstalledPluginUpdatesTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_plugin_instalado_pelo_painel_entra_no_registo_de_atualizacoes(): void
+    public function test_plugin_instalado_so_entra_no_registo_de_atualizacoes_depois_de_ativado(): void
     {
         require_once dirname(__DIR__, 2).'/src/Plugins/PluginCatalog.php';
         require_once dirname(__DIR__, 2).'/src/Updates/PackageVersionRegistry.php';
@@ -27,6 +27,8 @@ class InstalledPluginUpdatesTest extends TestCase
         $this->assertContains($plugin->package, $catalog->packages());
         $checker = $this->mock(GitTagUpdateChecker::class);
         $checker->shouldReceive('latestVersion')->once()->with($plugin->package)->andReturn('v1.0.1');
+        $this->assertCount(0, (new PackageVersionRegistry($checker, $catalog))->sync());
+        $plugin->update(['status' => 'enabled']);
         $packages = (new PackageVersionRegistry($checker, $catalog))->checkRemoteUpdates();
         $this->assertSame($plugin->package, $packages->sole()->name);
         $this->assertSame('v1.0.1', $packages->sole()->availableVersion);
