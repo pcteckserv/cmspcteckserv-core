@@ -1,6 +1,6 @@
 # CMS PCTECKSERV — Core 3
 
-Core **3.1.3**: correções limitadas ao módulo Atualizações, sem migração automática dos sites. [Âmbito, correções e validação](docs/updates-review.md).
+Core **3.1.4**: inventário e verificação de versões no módulo Atualizações, sem migração automática dos sites. [Âmbito, correções e validação](docs/updates-review.md).
 
 Base principal atualizada a partir de `NOVO/pcteckcms_core` (commit `5a09323`), incluindo a integração genérica validada no NextHome. Mudança major: substitui a linha 2.20 e altera os contratos de clientes/autenticação.
 

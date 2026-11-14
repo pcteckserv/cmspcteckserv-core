@@ -295,7 +295,7 @@ class PluginsManagementTest extends TestCase
             ->get(route('admin.updates.index'))
             ->assertOk()
             ->assertSee('Core')
-            ->assertSee('Atualizações dos plugins ativos')
+            ->assertSee('Plugins ativos instalados')
             ->assertDontSee('pcteckserv/cms-blog');
     }
 

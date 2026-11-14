@@ -1,5 +1,11 @@
 # Publicação de versões do Core
 
+## v3.1.4
+
+Repõe o inventário de todos os plugins instalados e ativos em Atualizações, incluindo as versões já atuais. Só as linhas com versões novas apresentam a ação Atualizar. Acrescenta o botão Verificar atualizações e identifica a última tentativa de consulta, distinguindo versões desconhecidas e verificação desativada.
+
+Correção limitada aos templates de Atualizações, testes e documentação, mantendo as proteções de execução da 3.1.3. Sem migrations, alterações de dependências ou instalação nos sites. Validação: **243 testes e 1247 asserções**; templates também verificados em Chrome a 1440, 390 e 320 px. As tags anteriores permanecem intactas.
+
 ## v3.1.3
 
 Correção PATCH do módulo Atualizações: verifica apenas plugins instalados e ativos, apresenta as versões novas elegíveis e recusa pedidos diretos para plugins inativos ou já atualizados. Identifica o Starter pelo site e pelo repositório configurado, sem reutilizar uma versão remota antiga quando a consulta do Starter falha.

@@ -40,7 +40,7 @@ final class UpdatesSafetyTest extends TestCase
         $this->assertSame('tests/active', $packages->sole()->name);
     }
 
-    public function test_page_only_lists_active_plugins_with_a_newer_version(): void
+    public function test_page_keeps_current_active_plugins_visible_without_offering_an_update(): void
     {
         $this->plugin('active-update', 'enabled');
         $this->plugin('active-current', 'enabled');
@@ -53,7 +53,14 @@ final class UpdatesSafetyTest extends TestCase
             new InstalledPackage('tests/active-current', '1.0.0', '1.0.0', 'stable', null),
             new InstalledPackage('tests/inactive', '1.0.0', '9.9.9', 'stable', null),
         ]));
-        $this->actingAs($user)->get(route('admin.updates.index'))->assertOk()->assertSee('tests/active-update')->assertDontSee('tests/active-current')->assertDontSee('tests/inactive');
+        $response = $this->actingAs($user)->get(route('admin.updates.index'))->assertOk()->assertSee('tests/active-update')->assertSee('tests/active-current')->assertDontSee('tests/inactive')->assertSee('Verificar atualizações')->assertSee('Última tentativa de verificação');
+        $dom = new \DOMDocument();
+        @$dom->loadHTML($response->getContent(), LIBXML_NONET);
+        $xpath = new \DOMXPath($dom);
+        $current = $xpath->query('//tr[@data-update-package="tests/active-current"]')->item(0);
+        $this->assertNotNull($current);
+        $this->assertSame(0, $xpath->query('.//form', $current)->length);
+        $this->assertSame(1, $xpath->query('//tr//form[@method="POST"]')->length);
     }
 
     public function test_inactive_plugin_and_protected_core_never_reach_composer(): void
@@ -119,5 +126,14 @@ final class UpdatesSafetyTest extends TestCase
         $user->cmsRoles()->sync([$role->id]);
         $this->mock(PackageUpdater::class)->shouldNotReceive('update');
         $this->actingAs($user)->post(route('admin.updates.run', ['package'=>'tests/inactive']))->assertRedirect()->assertSessionHas('cms_update_error');
+    }
+
+    public function test_unknown_version_is_not_labelled_current_or_given_an_update_action(): void
+    {
+        $html = view('cms-core::admin.updates.partials.packages-table', ['packages'=>[new InstalledPackage('tests/unknown', '1.0.0', null, 'stable', '2026-11-14 12:00:00')], 'statuses'=>[]])->render();
+        $this->assertStringContainsString('Versão por verificar', $html);
+        $this->assertStringNotContainsString('Sem atualização conhecida', $html);
+        $this->assertStringNotContainsString('<form', $html);
+        $this->assertStringContainsString('14/11/2026', $html);
     }
 }

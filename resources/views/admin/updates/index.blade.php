@@ -4,10 +4,13 @@
     <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
         <div>
             <h1 class="h3 mb-1">Atualizações</h1>
-            <p class="text-secondary mb-0">Estado dos packages CMS instalados neste site e novas versões disponíveis no repositório.</p>
+            <p class="text-secondary mb-0">Versões instaladas, verificações e atualizações do Core, Starter e plugins ativos.</p>
         </div>
 
         <div class="d-flex align-items-start gap-2">
+            <form method="GET" action="{{ route('admin.updates.index') }}">
+                <button class="btn btn-outline-primary btn-sm" type="submit" @disabled(!$updatesEnabled)>Verificar atualizações</button>
+            </form>
             <span @class(['badge', 'text-bg-success' => $updatesEnabled, 'text-bg-secondary' => ! $updatesEnabled])>
                 {{ $updatesEnabled ? 'Ativo' : 'Desativado' }}
             </span>
@@ -29,7 +32,7 @@
         $corePackages = $packages->reject(fn ($package) => $pluginPackageNames->contains($package->name) || $package->name === $starterPackageName)->values();
         $starterPackages = $packages->filter(fn ($package) => $package->name === $starterPackageName)->values();
         $activePluginPackages = \Pcteckserv\CmsCore\Models\InstalledPlugin::query()->where('status', 'enabled')->whereNotNull('installed_version')->pluck('package');
-        $pluginPackagesList = $packages->filter(fn ($package) => $activePluginPackages->contains($package->name) && $package->hasUpdate())->values();
+        $pluginPackagesList = $packages->filter(fn ($package) => $activePluginPackages->contains($package->name))->values();
     @endphp
 
     <h2 class="h5 mb-3">Core</h2>
@@ -38,6 +41,6 @@
     <h2 class="h5 mt-4 mb-3">Starter</h2>
     @include('cms-core::admin.updates.partials.packages-table', ['packages' => $starterPackages, 'statuses' => $statuses])
 
-    <h2 class="h5 mt-4 mb-3">Atualizações dos plugins ativos</h2>
+    <h2 class="h5 mt-4 mb-3">Plugins ativos instalados</h2>
     @include('cms-core::admin.updates.partials.packages-table', ['packages' => $pluginPackagesList, 'statuses' => $statuses])
 @endsection
