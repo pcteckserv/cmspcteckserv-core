@@ -1,5 +1,13 @@
 # Publicação de versões do Core
 
+## v3.1.3
+
+Correção PATCH do módulo Atualizações: verifica apenas plugins instalados e ativos, apresenta as versões novas elegíveis e recusa pedidos diretos para plugins inativos ou já atualizados. Identifica o Starter pelo site e pelo repositório configurado, sem reutilizar uma versão remota antiga quando a consulta do Starter falha.
+
+Recusa a atualização do Core por tags remotas quando este é distribuído como snapshot `path`, evitando alterar apenas a versão declarada sem os ficheiros correspondentes. Usa Composer com `--with-dependencies --minimal-changes` para preservar os restantes requisitos de raiz. Cada site pode bloquear atualizações automáticas do Core através de `cms-core.updates.allow_core_updates`.
+
+Sem novas migrations, alterações das dependências do pacote ou instalação nos sites. A tag v3.1.2 permanece no histórico, sem ser movida. Validação completa: **242 testes, 1238 asserções**, incluindo um ensaio Composer real e sem rede que mantém o Laravel e outro pacote nas versões bloqueadas. Ver [âmbito e limites da entrega](updates-review.md).
+
 ## v3.0.0
 
 O endereço público passa a ser definido exclusivamente por `config('app.url')`,

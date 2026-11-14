@@ -1,6 +1,6 @@
-# Revisão isolada do módulo Atualizações
+# Core 3.1.3 — módulo Atualizações
 
-14/11/2026. Autorização específica para rever Atualizações, após uma entrega que não devia ter alargado o âmbito ao Core. Esta revisão não modifica autenticação, perfis, SEO, media, migrations, dependências ou contratos de outros módulos. Não é instalada em sites nem publicada uma nova tag do Core nesta entrega.
+14/11/2026. Autorização específica para rever Atualizações, após uma entrega que não devia ter alargado o âmbito ao Core. A revisão foi inicialmente isolada numa branch e a sua publicação como 3.1.3 foi posteriormente solicitada. Esta correção, relativamente a 3.1.2, não modifica autenticação, perfis, SEO, media, migrations, dependências ou contratos de outros módulos. Não é instalada automaticamente nos sites.
 
 ## Correções
 
@@ -27,7 +27,9 @@ Usados PHP 8.4, Composer 2.11.2 e o MaxiHome como host isolado dos testes. Sem i
 
 ## Distribuição
 
-A branch `fix/atualizacoes-seguras` contém esta revisão para comparação com a versão publicada. Não existe uma nova tag automática do Core nem atualização dos snapshots dos sites. O CGLimpezas 0.0.5 recebe extensões do próprio site que mantêm o seu Core 3.0.1 instalado.
+A tag `v3.1.3` publica a correção validada na branch `fix/atualizacoes-seguras`. A tag `v3.1.2` mantém-se intacta no histórico; não foi movida, substituída ou reutilizada. Não foram atualizadas as dependências instaladas nem os snapshots dos sites. O CGLimpezas 0.0.5 recebe extensões do próprio site que mantêm o seu Core 3.0.1 instalado.
+
+A publicação da tag não corrige retroativamente um registo Composer incorreto nem reinstala ficheiros num servidor. No MaxiHome diagnosticado, os ficheiros pertenciam ao snapshot 3.0.3 e o registo 3.1.2 era incorreto. Não instalar esta tag sobre esse estado como substituto de uma recuperação verificada.
 
 Um atualizador antigo em produção não recebe estas proteções por simplesmente consultar o Git. Antes de uma futura migração do Core, instalar a proteção do próprio site, verificar a origem/versão efetivamente instaladas, resolver o lock em ambiente isolado e só então preparar a entrega correspondente. Esta revisão não promete rollback automático de qualquer instalação externa interrompida.
 
