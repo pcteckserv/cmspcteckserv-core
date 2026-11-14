@@ -177,18 +177,16 @@ class UpdatesManagementTest extends TestCase
         $this->assertSame('failed', app(UpdateStatusRepository::class)->get('pcteckserv/cms-core')['state']);
     }
 
-    public function test_update_fails_when_composer_succeeds_but_final_metadata_is_missing(): void
+    public function test_core_updates_delegate_to_the_isolated_installer(): void
     {
         $reader = Mockery::mock(ComposerInstalledPackageReader::class);
-        $reader->shouldReceive('read')->twice()->andReturn(
-            ['version' => '2.3.10', 'dist' => ['type' => 'zip']], [],
-        );
+        $reader->shouldReceive('read')->once()->andReturn(['version'=>'3.0.1','dist'=>['type'=>'zip']]);
         $checker = Mockery::mock(GitTagUpdateChecker::class);
-        $checker->shouldReceive('latestVersion')->andReturn('v2.3.11');
+        $checker->shouldReceive('latestVersion')->once()->andReturn('v3.1.5');
+        $this->mock(\Pcteckserv\CmsCore\Updates\CompatibleCoreUpdater::class)->shouldReceive('update')->once()->with('v3.1.5')->andReturn(new \Pcteckserv\CmsCore\Updates\UpdateResult(true,'prepared'));
         $updater = new TestablePackageUpdater($checker, null, new TestComposerCommand(), $reader);
-
-        $this->assertFalse($updater->update('pcteckserv/cms-core')->successful);
-        $this->assertCount(1, $updater->commands);
+        $this->assertTrue($updater->update('pcteckserv/cms-core')->successful);
+        $this->assertSame([], $updater->commands);
     }
 
     public function test_verificacao_de_tags_prefere_git_remoto_a_api_do_github(): void
@@ -239,39 +237,6 @@ class UpdatesManagementTest extends TestCase
         ]);
     }
 
-    public function test_update_falha_se_versao_instalada_continuar_abaixo_da_disponivel(): void
-    {
-        config(['cms-core.updates.packages' => ['pcteckserv/cms-core']]);
-        DB::table('cms_installed_packages')->insert([
-            'name' => 'pcteckserv/cms-core',
-            'installed_version' => '2.3.3',
-            'available_version' => 'v2.3.4',
-            'channel' => 'stable',
-            'checked_at' => now(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $reader = Mockery::mock(ComposerInstalledPackageReader::class);
-        $reader->shouldReceive('read')->twice()->andReturn(
-            ['version' => '2.3.3', 'dist' => ['type' => 'zip', 'reference' => 'same']],
-            ['version' => '2.3.3', 'dist' => ['type' => 'zip', 'reference' => 'same']],
-        );
-
-        $composerCommand = new TestComposerCommand();
-
-        $updater = new TestablePackageUpdater(
-            Mockery::mock(GitTagUpdateChecker::class),
-            null,
-            $composerCommand,
-            $reader,
-        );
-
-        $result = $updater->update('pcteckserv/cms-core');
-
-        $this->assertFalse($result->successful);
-        $this->assertStringContainsString('continua em 2.3.3', $result->message);
-    }
 
     public function test_update_refuses_to_change_core_path_version_without_new_source_files(): void
     {
@@ -305,56 +270,19 @@ class UpdatesManagementTest extends TestCase
         $this->assertSame([], $updater->commands);
     }
 
-    public function test_core_major_update_changes_constraint_before_resolving_dependencies(): void
+
+    public function test_core_preparation_failure_is_returned_without_running_live_composer(): void
     {
         $reader = Mockery::mock(ComposerInstalledPackageReader::class);
-        $reader->shouldReceive('read')->twice()->andReturn(
-            ['version' => '2.14.0', 'dist' => ['type' => 'zip']],
-            ['version' => '3.0.0', 'dist' => ['type' => 'zip']],
-        );
+        $reader->shouldReceive('read')->once()->andReturn(['version'=>'3.0.1','dist'=>['type'=>'zip']]);
         $checker = Mockery::mock(GitTagUpdateChecker::class);
-        $checker->shouldReceive('latestVersion')->once()->andReturn('v3.0.0');
+        $checker->shouldReceive('latestVersion')->once()->andReturn('v3.1.5');
+        $this->mock(\Pcteckserv\CmsCore\Updates\CompatibleCoreUpdater::class)->shouldReceive('update')->once()->andReturn(new \Pcteckserv\CmsCore\Updates\UpdateResult(false,'Dependency conflict'));
         $updater = new TestablePackageUpdater($checker, null, new TestComposerCommand(), $reader);
-
-        $this->assertTrue($updater->update('pcteckserv/cms-core')->successful);
-        $this->assertSame([
-            ['require', 'pcteckserv/cms-core:^3.0.0', '--with-dependencies', '--minimal-changes', '--no-interaction'],
-            ['artisan', 'migrate', '--force'],
-            ['artisan', 'optimize:clear'],
-        ], $updater->commands);
-    }
-
-    public function test_failed_core_major_update_does_not_run_migrations(): void
-    {
-        $reader = Mockery::mock(ComposerInstalledPackageReader::class);
-        $reader->shouldReceive('read')->once()->andReturn(['version' => '2.14.0']);
-        $checker = Mockery::mock(GitTagUpdateChecker::class);
-        $checker->shouldReceive('latestVersion')->once()->andReturn('v3.0.0');
-        $updater = new class($checker, null, new TestComposerCommand(), $reader) extends TestablePackageUpdater {
-            protected function run(array $command): Process
-            {
-                $this->commands[] = $command;
-                $process = Mockery::mock(Process::class);
-                $process->shouldReceive('isSuccessful')->andReturn(false);
-                $process->shouldReceive('getOutput')->andReturn('');
-                $process->shouldReceive('getErrorOutput')->andReturn(
-                    str_repeat("Loading repositories\x08\r\n", 200)."\x1B[31mDependency conflict\x1B[0m"
-                );
-
-                return $process;
-            }
-        };
-
         $result = $updater->update('pcteckserv/cms-core');
-
         $this->assertFalse($result->successful);
-        $this->assertStringContainsString('Composer falhou', $result->message);
-        $this->assertStringEndsWith('Dependency conflict', $result->message);
-        $this->assertStringNotContainsString("\x08", $result->message);
-        $this->assertStringNotContainsString("\x1B", $result->message);
-        $this->assertSame([
-            ['require', 'pcteckserv/cms-core:^3.0.0', '--with-dependencies', '--minimal-changes', '--no-interaction'],
-        ], $updater->commands);
+        $this->assertSame('Dependency conflict',$result->message);
+        $this->assertSame([], $updater->commands);
     }
 
     public function test_update_e_executado_no_pedido_http_sem_enviar_para_queue(): void

@@ -1,5 +1,9 @@
 # Publicação de versões do Core
 
+## v3.1.5
+
+Atualizações do Core preparadas fora da instalação, com pacotes existentes congelados, verificação do provider e preservação do código anterior. O Starter mantém os manifests instalados quando as dependências continuam compatíveis. Reconhece também os perfis e idiomas já criados pela Agenda antiga, preservando os dados; esta incompatibilidade foi encontrada no ensaio desde o Core 3.0.1. [Procedimento, âmbito e limites](core-updates-3.1.5.md). Sem alterações às dependências declaradas do Core nem migração automática dos sites.
+
 ## v3.1.4
 
 Repõe o inventário de todos os plugins instalados e ativos em Atualizações, incluindo as versões já atuais. Só as linhas com versões novas apresentam a ação Atualizar. Acrescenta o botão Verificar atualizações e identifica a última tentativa de consulta, distinguindo versões desconhecidas e verificação desativada.

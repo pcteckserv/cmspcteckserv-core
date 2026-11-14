@@ -53,6 +53,9 @@ class PackageUpdater
         if ($package === 'pcteckserv/cms-core' && ($installedPackage['dist']['type'] ?? null) === 'path') {
             return new UpdateResult(false, 'O Core deste site é distribuído como snapshot pelo Starter. A versão local não pode ser alterada para uma tag remota sem os ficheiros correspondentes. Atualize a distribuição do site após validar a compatibilidade.');
         }
+        if ($package === 'pcteckserv/cms-core') {
+            return app(CompatibleCoreUpdater::class)->update($availableVersion);
+        }
         $plugin = InstalledPlugin::query()->where('package', $package)->whereNotNull('installed_version')->first();
         $isPathPlugin = $plugin !== null && app(InstalledPluginSource::class)->isPath($plugin, $installedPackage);
 

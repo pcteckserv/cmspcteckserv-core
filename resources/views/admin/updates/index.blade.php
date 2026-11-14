@@ -36,6 +36,7 @@
     @endphp
 
     <h2 class="h5 mb-3">Core</h2>
+    <p class="small text-secondary">A atualização valida a compatibilidade antes de instalar e preserva as versões do Laravel e dos plugins. Mudanças de versão principal exigem migração.</p>
     @include('cms-core::admin.updates.partials.packages-table', ['packages' => $corePackages, 'statuses' => $statuses])
 
     <h2 class="h5 mt-4 mb-3">Starter</h2>

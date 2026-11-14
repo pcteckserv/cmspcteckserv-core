@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasColumn('cms_user_profiles', 'languages')) return;
         Schema::table('cms_user_profiles', fn (Blueprint $table) => $table->json('languages')->nullable());
     }
 

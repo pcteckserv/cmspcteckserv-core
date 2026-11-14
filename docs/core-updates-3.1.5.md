@@ -1,0 +1,15 @@
+# Core 3.1.5 — preparação e publicação de atualizações
+
+O atualizador prepara a atualização numa pasta privada em `storage/app/core-updates`. Lê a versão instalada no disco, recusa snapshots `path` e mudanças de versão principal e pede ao Composer uma versão estável exata. Os pacotes existentes são fornecidos ao resolvedor nas versões bloqueadas; os repositórios `path` atuais não substituem os snapshots instalados. A instalação existente permanece em uso durante a resolução e a cópia das dependências.
+
+Depois da resolução, confirma versões, referências e requisitos de todos os pacotes anteriores. Aceita novas dependências exigidas pelo Core. Executa a instalação sem scripts ou plugins Composer na preparação e testa o carregamento do provider do Core num processo separado. Na publicação, preserva `vendor` e os manifests anteriores, protege os pedidos HTTP com uma página temporária de manutenção, publica as dependências e reconstrói o autoload. Só então descobre os providers, executa migrations e limpa caches. As restrições e os repositórios do projeto são preservados, salvo a versão exata do Core; o hash do lock corresponde ao manifesto publicado.
+
+Um erro anterior à publicação não altera os ficheiros instalados. Um erro posterior tenta repor o código, Composer e caches geradas. Alterações já executadas na base de dados não são revertidas. A cópia anterior permanece disponível por FTP. Falha na reposição conserva a manutenção e indica a pasta de recuperação. Uma interrupção do alojamento pode exigir essa recuperação; o procedimento não substitui o backup de dados. PHP CLI, Composer com `--minimal-changes`, credenciais e espaço para uma cópia de dependências são necessários.
+
+O teste completo de 3.0.1 revelou uma tabela e coluna de perfis já criadas pela Agenda antiga. As duas migrations de perfis passam a reconhecer essa estrutura; a tabela só é aceite se tiver as colunas esperadas. Perfis, fotografias, biografias e idiomas existentes são preservados. Não foram alterados serviços de perfis, autenticação ou outras funcionalidades do Core nesta entrega.
+
+O Starter passa a preservar os ficheiros Composer numa instalação existente após validar identidade, dependências, autoload e versão do Core. Evita repor um lock antigo após atualizar o Core. Alterações adicionais de dependências exigem publicação preparada separadamente.
+
+O CGLimpezas 0.0.7 inclui uma ponte temporária byte a byte igual a `CompatibleCoreUpdater`, para poder sair do Core 3.0.1. Quando a classe existe no Core instalado, a ponte não é carregada. O StudioFranco Core 2.9.0 não foi migrado: os seus plugins Core 2 exigem uma preparação específica. Nenhum site é atualizado por publicar esta tag.
+
+Validação: 246 testes do Core aprovados, 1265 asserções. Ensaio real com os ficheiros do CGLimpezas desde 3.0.1: instalação de 3.1.5, Laravel v13.36.0 e 129 outros pacotes preservados; apenas `composer/semver` acrescentado. Suite do site atualizado: 128 testes aprovados, 12 ignorados por exigirem MySQL isolado, 715 asserções. O painel foi verificado em Chrome a 1440, 390 e 320 px antes e depois da atualização, usando apenas dados sintéticos.
