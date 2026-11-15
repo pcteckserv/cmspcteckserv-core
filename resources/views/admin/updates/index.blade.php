@@ -5,9 +5,11 @@
         <div>
             <h1 class="h3 mb-1">Atualizações</h1>
             <p class="text-secondary mb-0">Estado dos packages CMS instalados neste site e novas versões disponíveis no repositório.</p>
+            <p class="small text-secondary mb-0">Core 2: apenas correções da linha instalada. Core 3 exige uma migração do site e dos plugins.</p>
         </div>
 
         <div class="d-flex align-items-start gap-2">
+            <a class="btn btn-outline-primary btn-sm" href="{{ route('admin.updates.index') }}">Verificar atualizações</a>
             <span @class(['badge', 'text-bg-success' => $updatesEnabled, 'text-bg-secondary' => ! $updatesEnabled])>
                 {{ $updatesEnabled ? 'Ativo' : 'Desativado' }}
             </span>

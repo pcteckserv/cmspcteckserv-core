@@ -8,10 +8,27 @@ use Pcteckserv\CmsCore\Plugins\PluginRepository;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
+if (!class_exists(CoreReleasePolicy::class,false)) require_once __DIR__.'/CoreReleasePolicy.php';
+
 class GitTagUpdateChecker
 {
+    private ?string $coreInstalledVersion = null;
+
+    public function __construct(private readonly ?ComposerInstalledPackageReader $installedPackageReader = null) {}
+
     public function latestVersion(string $package): ?string
     {
+        if ($package === 'pcteckserv/cms-core') {
+            $version = ($this->installedPackageReader ?? new ComposerInstalledPackageReader())->read($package)['version'] ?? null;
+            if (!is_string($version) || !CoreReleasePolicy::allows($version,$version)) return null;
+            $repository = config('cms-core.updates.repositories.'.$package);
+            if (!is_string($repository) || $repository === '') return null;
+            $previous=$this->coreInstalledVersion;$this->coreInstalledVersion=$version;
+            try {
+                $candidate=$this->latestVersionFromRepository(CoreReleasePolicy::repository($repository),config('cms-core.updates.github_token'));
+                return CoreReleasePolicy::allows($version,$candidate) ? $candidate : null;
+            } finally { $this->coreInstalledVersion=$previous; }
+        }
         if (StarterPackage::is($package)) {
             $repository = StarterPackage::repository();
 
@@ -73,7 +90,7 @@ class GitTagUpdateChecker
 
         return collect(explode("\n", trim($process->getOutput())))
             ->map(fn (string $line): ?string => $this->versionFromLine($line))
-            ->filter()
+            ->filter(fn (?string $version): bool => $version !== null && ($this->coreInstalledVersion === null || CoreReleasePolicy::allows($this->coreInstalledVersion,$version)))
             ->sort(fn (string $a, string $b): int => version_compare($a, $b))
             ->last();
     }
@@ -125,7 +142,7 @@ class GitTagUpdateChecker
             ->map(fn (mixed $tag): ?string => is_array($tag) && isset($tag['name']) && is_string($tag['name'])
                 ? $this->versionFromTag($tag['name'])
                 : null)
-            ->filter()
+            ->filter(fn (?string $version): bool => $version !== null && ($this->coreInstalledVersion === null || CoreReleasePolicy::allows($this->coreInstalledVersion,$version)))
             ->sort(fn (string $a, string $b): int => version_compare($a, $b))
             ->last();
     }

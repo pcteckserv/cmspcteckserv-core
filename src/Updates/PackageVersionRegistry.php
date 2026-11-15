@@ -9,6 +9,8 @@ use Pcteckserv\CmsCore\Plugins\PluginCatalog;
 use Pcteckserv\CmsCore\Plugins\InstalledPluginVersionReader;
 use Pcteckserv\CmsCore\Models\InstalledPlugin;
 
+if (!class_exists(CoreReleasePolicy::class,false)) require_once __DIR__.'/CoreReleasePolicy.php';
+
 class PackageVersionRegistry
 {
     public function __construct(
@@ -30,11 +32,13 @@ class PackageVersionRegistry
 
         return $packages->map(function (string $package) use ($channel): InstalledPackage {
             $installedVersion = $this->installedVersion($package);
+            $candidate = DB::table('cms_installed_packages')->where('name',$package)->value('available_version');
 
             DB::table('cms_installed_packages')->updateOrInsert(
                 ['name' => $package],
                 [
                     'installed_version' => $installedVersion,
+                    'available_version' => $package === 'pcteckserv/cms-core' && !CoreReleasePolicy::allows($installedVersion,is_string($candidate)?$candidate:null) ? null : $candidate,
                     'channel' => $channel,
                     'checked_at' => now(),
                     'updated_at' => now(),
@@ -58,6 +62,7 @@ class PackageVersionRegistry
         foreach ($packages as $package) {
             $availableVersion = $this->updateChecker->latestVersion($package);
             $installedVersion = $this->installedVersion($package);
+            if ($package === 'pcteckserv/cms-core' && !CoreReleasePolicy::allows($installedVersion,$availableVersion)) $availableVersion=null;
 
             if ($availableVersion === null) {
                 $currentAvailableVersion = DB::table('cms_installed_packages')
@@ -116,7 +121,7 @@ class PackageVersionRegistry
             ->map(fn (object $package): InstalledPackage => new InstalledPackage(
                 $package->name,
                 $package->installed_version,
-                $package->available_version,
+                $package->name === 'pcteckserv/cms-core' && !CoreReleasePolicy::allows($package->installed_version,$package->available_version) ? null : $package->available_version,
                 $package->channel,
                 $package->checked_at,
                 $appliedReleases->get($package->name),

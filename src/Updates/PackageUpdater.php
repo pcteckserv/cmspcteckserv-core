@@ -11,6 +11,8 @@ use Pcteckserv\CmsCore\Plugins\InstalledPluginVersionReader;
 use Pcteckserv\CmsCore\Support\ComposerCommand;
 use Throwable;
 
+if (!class_exists(CoreReleasePolicy::class,false)) require_once __DIR__.'/CoreReleasePolicy.php';
+
 class PackageUpdater
 {
     private readonly ComposerCommand $composerCommand;
@@ -38,9 +40,17 @@ class PackageUpdater
         }
 
         $availableVersion = $this->availableVersion($package);
-        if ($package === 'pcteckserv/cms-core' && is_string($availableVersion)
-            && explode('.', $this->normalizeVersion($availableVersion))[0] !== explode('.', $this->normalizeVersion($previousVersion))[0]) {
-            return new UpdateResult(false, 'A mudança de versão principal do Core exige uma migração do Starter e dos plugins. Os ficheiros instalados foram preservados.');
+        if ($package === 'pcteckserv/cms-core') {
+            if (!CoreReleasePolicy::allows($previousVersion,$availableVersion)) {
+                return new UpdateResult(false, 'A versão pedida não pertence à linha estável deste Core. É necessária uma migração do Starter e dos plugins. Os ficheiros instalados foram preservados.');
+            }
+            // Ficheiros novos têm de funcionar também numa passagem FTP com autoload autoritativo antigo.
+            foreach ([
+                ComposerDeploymentTransaction::class=>__DIR__.'/ComposerDeploymentTransaction.php',
+                InstalledComposerSnapshot::class=>__DIR__.'/InstalledComposerSnapshot.php',
+                \Pcteckserv\CmsCore\Support\ReleaseIntegrity::class=>__DIR__.'/../Support/ReleaseIntegrity.php',
+            ] as $class=>$file) if (!class_exists($class,false)) require_once $file;
+            return app(ComposerDeploymentTransaction::class)->update($availableVersion);
         }
         $plugin = InstalledPlugin::query()->where('package', $package)->whereNotNull('installed_version')->first();
         $isPathPlugin = $plugin !== null && ($plugin->metadata['repository_type'] ?? null) === 'path';
@@ -256,9 +266,7 @@ class PackageUpdater
     /** @return array<int, string> */
     private function dependencyUpdateOption(string $package): array
     {
-        return $package === 'pcteckserv/cms-core'
-            ? ['--with-all-dependencies']
-            : ['--with-dependencies'];
+        return ['--with-dependencies'];
     }
 
     protected function updateComposerPathRepositoryVersion(string $package, string $availableVersion): bool

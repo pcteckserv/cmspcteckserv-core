@@ -4,6 +4,8 @@ namespace Pcteckserv\CmsCore\Updates;
 
 use Carbon\CarbonImmutable;
 
+if (!class_exists(CoreReleasePolicy::class,false)) require_once __DIR__.'/CoreReleasePolicy.php';
+
 final readonly class InstalledPackage
 {
     public function __construct(
@@ -18,6 +20,7 @@ final readonly class InstalledPackage
 
     public function hasUpdate(): bool
     {
+        if ($this->name === 'pcteckserv/cms-core' && !CoreReleasePolicy::allows($this->installedVersion,$this->availableVersion)) return false;
         if (StarterPackage::is($this->name) && $this->installedVersion === null && $this->availableVersion !== null) {
             return true;
         }

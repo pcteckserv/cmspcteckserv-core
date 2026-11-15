@@ -100,7 +100,7 @@ class UpdatesManagementTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_http_update_reads_real_metadata_and_updates_path_manifest(): void
+    public function test_http_update_refuses_relabelling_a_core_snapshot(): void
     {
         $admin = $this->superAdmin();
         $originalBase = base_path();
@@ -109,6 +109,7 @@ class UpdatesManagementTest extends TestCase
         $files->makeDirectory($directory.'/vendor/composer', 0755, true);
         $package = ['name' => 'pcteckserv/cms-core', 'version' => '2.3.10', 'dist' => ['type' => 'path']];
         $files->put($directory.'/vendor/composer/installed.json', json_encode(['packages' => [$package]]));
+        $files->put($directory.'/composer.lock',json_encode(['packages'=>[$package]]));
         $files->put($directory.'/composer.json', json_encode(['repositories' => [[
             'type' => 'path', 'url' => '../core',
             'options' => ['versions' => ['pcteckserv/cms-core' => '2.3.10']],
@@ -145,13 +146,13 @@ class UpdatesManagementTest extends TestCase
             $this->app->setBasePath($directory);
             $this->actingAs($admin)
                 ->post(route('admin.updates.run', ['package' => 'pcteckserv/cms-core']))
-                ->assertSessionHas('cms_update_success')
-                ->assertSessionMissing('cms_update_error');
-            $this->assertCount(3, $updater->commands);
+                ->assertSessionHas('cms_update_error')
+                ->assertSessionMissing('cms_update_success');
+            $this->assertSame([], $updater->commands);
             $this->assertDatabaseHas('cms_installed_packages', [
-                'name' => 'pcteckserv/cms-core', 'installed_version' => '2.3.11',
+                'name' => 'pcteckserv/cms-core', 'installed_version' => '2.3.10',
             ]);
-            $this->assertSame('2.3.11', (new ComposerInstalledPackageReader())->read('pcteckserv/cms-core')['version']);
+            $this->assertSame('2.3.10', (new ComposerInstalledPackageReader())->read('pcteckserv/cms-core')['version']);
         } finally {
             $this->app->setBasePath($originalBase);
             $files->deleteDirectory($directory);
@@ -177,18 +178,17 @@ class UpdatesManagementTest extends TestCase
         $this->assertSame('failed', app(UpdateStatusRepository::class)->get('pcteckserv/cms-core')['state']);
     }
 
-    public function test_update_fails_when_composer_succeeds_but_final_metadata_is_missing(): void
+    public function test_core_update_delegates_failure_without_running_legacy_composer(): void
     {
         $reader = Mockery::mock(ComposerInstalledPackageReader::class);
-        $reader->shouldReceive('read')->twice()->andReturn(
-            ['version' => '2.3.10', 'dist' => ['type' => 'zip']], [],
-        );
+        $reader->shouldReceive('read')->once()->andReturn(['version'=>'2.3.10','dist'=>['type'=>'zip']]);
         $checker = Mockery::mock(GitTagUpdateChecker::class);
         $checker->shouldReceive('latestVersion')->andReturn('v2.3.11');
         $updater = new TestablePackageUpdater($checker, null, new TestComposerCommand(), $reader);
+        $this->mock(\Pcteckserv\CmsCore\Updates\ComposerDeploymentTransaction::class)->shouldReceive('update')->once()->with('v2.3.11')->andReturn(new UpdateResult(false,'Preparação recusada.'));
 
         $this->assertFalse($updater->update('pcteckserv/cms-core')->successful);
-        $this->assertCount(1, $updater->commands);
+        $this->assertSame([], $updater->commands);
     }
 
     public function test_verificacao_de_tags_prefere_git_remoto_a_api_do_github(): void
@@ -198,7 +198,9 @@ class UpdatesManagementTest extends TestCase
             'cms-core.updates.github_token' => 'token-de-teste',
         ]);
 
-        $checker = new TestGitTagUpdateChecker();
+        $reader=Mockery::mock(ComposerInstalledPackageReader::class);
+        $reader->shouldReceive('read')->with('pcteckserv/cms-core')->andReturn(['version'=>'v2.3.0']);
+        $checker = new TestGitTagUpdateChecker($reader);
 
         $this->assertSame('v2.3.9', $checker->latestVersion('pcteckserv/cms-core'));
         $this->assertSame(['git'], $checker->sources);
@@ -241,9 +243,9 @@ class UpdatesManagementTest extends TestCase
 
     public function test_update_falha_se_versao_instalada_continuar_abaixo_da_disponivel(): void
     {
-        config(['cms-core.updates.packages' => ['pcteckserv/cms-core']]);
+        config(['cms-core.updates.packages' => ['tests/plugin']]);
         DB::table('cms_installed_packages')->insert([
-            'name' => 'pcteckserv/cms-core',
+            'name' => 'tests/plugin',
             'installed_version' => '2.3.3',
             'available_version' => 'v2.3.4',
             'channel' => 'stable',
@@ -268,7 +270,7 @@ class UpdatesManagementTest extends TestCase
             $reader,
         );
 
-        $result = $updater->update('pcteckserv/cms-core');
+        $result = $updater->update('tests/plugin');
 
         $this->assertFalse($result->successful);
         $this->assertStringContainsString('continua em 2.3.3', $result->message);
@@ -277,7 +279,7 @@ class UpdatesManagementTest extends TestCase
     public function test_update_prepara_versao_do_repositorio_path_antes_de_executar_composer(): void
     {
         DB::table('cms_installed_packages')->insert([
-            'name' => 'pcteckserv/cms-core',
+            'name' => 'tests/plugin',
             'installed_version' => '2.3.6',
             'available_version' => 'v2.3.7',
             'channel' => 'stable',
@@ -299,12 +301,12 @@ class UpdatesManagementTest extends TestCase
             $reader,
         );
 
-        $result = $updater->update('pcteckserv/cms-core');
+        $result = $updater->update('tests/plugin');
 
         $this->assertTrue($result->successful);
         $this->assertTrue($updater->pathRepositoryPreparedBeforeFirstCommand);
-        $this->assertSame(['pcteckserv/cms-core' => 'v2.3.7'], $updater->pathRepositoryVersions);
-        $this->assertSame(['update', 'pcteckserv/cms-core', '--with-all-dependencies'], $updater->commands[0]);
+        $this->assertSame(['tests/plugin' => 'v2.3.7'], $updater->pathRepositoryVersions);
+        $this->assertSame(['update', 'tests/plugin', '--with-dependencies'], $updater->commands[0]);
     }
 
     public function test_update_e_executado_no_pedido_http_sem_enviar_para_queue(): void

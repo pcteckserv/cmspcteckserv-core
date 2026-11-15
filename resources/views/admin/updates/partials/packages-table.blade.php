@@ -30,13 +30,15 @@
                                 <span class="badge text-bg-success">Concluída</span>
                             @elseif ($package->hasUpdate())
                                 <span class="badge text-bg-warning">Update disponível</span>
+                            @elseif ($package->availableVersion === null)
+                                <span class="badge text-bg-secondary">Sem versão compatível confirmada</span>
                             @else
                                 <span class="badge text-bg-success">Atualizado</span>
                             @endif
 
                             @if ($status)
                                 <div class="small text-secondary mt-1">
-                                    {{ $status['message'] }}
+                                    {{ preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $status['message'] ?? '') }}
                                 </div>
                             @endif
                         </td>
