@@ -126,6 +126,11 @@ Os testes locais não certificam todos os alojamentos nem dependências futuras.
   A falha foi reproduzida antes da correção com um teste adicional. Os 28 testes
   afetados de comandos e instalação de plugins passaram nos três PHP locais;
   o novo CI tem 293 testes por combinação e é confirmado antes da tag.
+- MySQL 8.4 revelou cinco expectativas de testes que dependiam da ordem das
+  chaves ou dos espaços de colunas JSON. As comparações passaram a preservar
+  tipos e ordem de listas, ignorando apenas a ordem das chaves de objetos, ou a
+  comparar os valores efetivamente persistidos antes/depois da migração.
+  Não foram alteradas migrações nem dados para contornar estas diferenças.
 - Atualização integral de uma cópia da tag real 3.0.1, sem `.git`, para o arquivo
   candidato 3.1.9: Laravel v13.42.0 e as outras 107 versões instaladas preservadas,
   migrações e descoberta reais, dados sintéticos e ambiente preservados, backup do

@@ -97,9 +97,10 @@ class GeographyCatalogTest extends TestCase
         });
         $row = ['country' => 'PT', 'name' => 'Nome anterior', 'regions' => json_encode([['code' => 'PT-11', 'name' => 'Lisboa', 'aliases' => ['Lisbon']]]), 'source' => 'local', 'revision' => 7, 'created_at' => now()->toDateTimeString(), 'updated_at' => now()->toDateTimeString()];
         DB::table('cms_shop_geography')->insert($row);
+        $persisted = DB::table('cms_shop_geography')->sole();
         $migration = require dirname(__DIR__, 2).'/database/migrations/2026_11_06_000001_create_cms_geography.php';
         $migration->up();
-        $this->assertEquals((object) $row, DB::table('cms_geography')->sole());
+        $this->assertEquals($persisted, DB::table('cms_geography')->sole());
         DB::table('cms_geography')->where('country', 'PT')->update(['name' => 'Nome atualizado', 'revision' => 8]);
         $migration->down();
         $this->assertFalse(Schema::hasTable('cms_geography'));

@@ -50,8 +50,8 @@ class ConsentInstallationTest extends TestCase
         $this->categoryMigration()->up();
 
         $this->assertDatabaseCount('cms_consent_categories', 4);
-        $this->assertSame($published, $manager->publishedConfig());
-        $this->assertSame($published, $settings->fresh()->published_config);
+        $this->assertJsonValueSame($published, $manager->publishedConfig());
+        $this->assertJsonValueSame($published, $settings->fresh()->published_config);
         $this->assertSame(['banner_title' => 'Texto ainda em revisão'], $settings->fresh()->texts);
 
         $config = $manager->publish();
@@ -105,7 +105,7 @@ class ConsentInstallationTest extends TestCase
 
         $this->assertDatabaseCount('cms_consent_categories', 4);
         $this->assertSame($category->id, $service->fresh()->category_id);
-        $this->assertSame($published, $manager->publishedConfig());
+        $this->assertJsonValueSame($published, $manager->publishedConfig());
     }
 
     public function test_seeder_mantem_compatibilidade_com_carregamento_direto(): void
@@ -130,7 +130,7 @@ class ConsentInstallationTest extends TestCase
         $this->categoryMigration()->up();
 
         $this->assertFalse($manager->settings()->banner_enabled);
-        $this->assertSame($published, $manager->publishedConfig());
+        $this->assertJsonValueSame($published, $manager->publishedConfig());
         $this->assertFalse($manager->publish()['enabled']);
     }
 
