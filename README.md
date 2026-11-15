@@ -1,6 +1,6 @@
 # CMS PCTECKSERV — Core 3
 
-Core **3.1.7**: verificação de integridade das distribuições, instalação de plugins com alterações mínimas e correções de compatibilidade. [Auditoria dos quatro projetos, testes e limites](docs/compatibility-audit-2026-11-15.md). O StudioFranco permanece na linha de manutenção **2.9**, com migração obrigatória antes de Core 3.
+Core **3.1.8**: corrige a atualização e remoção quando os plugins estão em `packages` e os metadados ainda apontam para `vendor`. [Correção e ponte FTP para o atualizador antigo](docs/core-updates-3.1.8.md). Mantém as verificações de integridade e compatibilidade da [auditoria dos quatro projetos](docs/compatibility-audit-2026-11-15.md). O StudioFranco permanece na linha de manutenção **2.9**, com migração obrigatória antes de Core 3.
 
 [Verificação HTTP em localhost dos quatro sites](docs/localhost-verification-2026-11-15.md): 149 pedidos e 49 assets com resultado esperado, em cópias isoladas. Mantêm-se as versões estáveis; o marco de testes tem a tag `audit-localhost-2026-11-15`.
 

@@ -10,7 +10,7 @@ use ZipArchive;
 
 final class CompatibleCoreUpdaterTest extends TestCase
 {
-    private function fixture(callable $check, string $require = '^1.0', bool $deployment = false, ?string $releaseMode = null): void
+    private function fixture(callable $check, string $require = '^1.0', bool $deployment = false, ?string $releaseMode = null, bool $packaged = false): void
     {
         $original = base_path(); $storage = storage_path();
         $directory = $original.'/tests/.runtime/core-stage-'.bin2hex(random_bytes(6));
@@ -34,6 +34,7 @@ final class CompatibleCoreUpdaterTest extends TestCase
         $packages[] = ['name'=>'tests/other','version'=>'1.0.0','type'=>'metapackage'];
         $packages[] = ['name'=>'tests/other','version'=>'2.0.0','type'=>'metapackage'];
         $packages[] = ['name'=>'laravel/framework','version'=>'13.36.0','type'=>'metapackage'];
+        if ($packaged) $packages[] = ['name'=>'tests/removable-plugin','version'=>'1.0.0','type'=>'metapackage'];
         if ($deployment) {
             File::ensureDirectoryExists($directory.'/development/plugin');
             File::put($directory.'/development/plugin/composer.json', '{"name":"tests/path-plugin","type":"library","require":{"pcteckserv/cms-core":"^3.0"}}');
@@ -43,6 +44,7 @@ final class CompatibleCoreUpdaterTest extends TestCase
         if ($deployment) {
             $manifest = json_decode(File::get($directory.'/composer.json'), true);
             $manifest['require']['tests/path-plugin'] = '1.0.0';
+            if ($packaged) $manifest['require']['tests/removable-plugin'] = '1.0.0';
             array_unshift($manifest['repositories'], ['type'=>'path','url'=>'development/plugin','options'=>['symlink'=>false,'versions'=>['tests/path-plugin'=>'1.0.0']]]);
             File::put($directory.'/composer.json', json_encode($manifest));
         }
@@ -62,6 +64,10 @@ final class CompatibleCoreUpdaterTest extends TestCase
                 if ($package['name'] === 'tests/path-plugin') $package['transport-options'] = ['relative'=>true];
             }
             unset($package);
+            if ($packaged) {
+                File::ensureDirectoryExists($directory.'/packages/tests');
+                File::moveDirectory($directory.'/vendor/tests/path-plugin',$directory.'/packages/tests/path-plugin');
+            }
             File::put($directory.'/vendor/composer/installed.json', json_encode($installed));
         }
         config(['cms-core.updates.composer_binary'=>$composer,'cms-core.updates.allow_core_updates'=>true,'cms-core.updates.github_token'=>null]);
@@ -161,6 +167,52 @@ final class CompatibleCoreUpdaterTest extends TestCase
             $install->setTimeout(60)->mustRun();
             $this->assertStringContainsString('Nothing to install', $install->getOutput().$install->getErrorOutput());
         }, deployment: true);
+    }
+
+    public function test_core_update_preserves_plugin_in_packages_with_obsolete_vendor_install_path(): void
+    {
+        $this->fixture(function ($directory,$updater) {
+            $this->assertDirectoryDoesNotExist($directory.'/vendor/tests/path-plugin');
+            $result=$updater->update('3.1.5');
+            $this->assertTrue($result->successful,$result->message);
+            $this->assertSame('actual-installed-code',File::get($directory.'/vendor/tests/path-plugin/installed-marker.txt'));
+            $this->assertSame('actual-installed-code',File::get($directory.'/packages/tests/path-plugin/installed-marker.txt'));
+            $versions=array_column(json_decode(File::get($directory.'/composer.lock'),true)['packages'],'version','name');
+            $this->assertSame('13.42.0',$versions['laravel/framework']);
+            $this->assertSame('1.0.0',$versions['tests/path-plugin']);
+        },deployment:true,packaged:true);
+    }
+
+    public function test_removing_another_plugin_preserves_the_packaged_plugin_and_core_versions(): void
+    {
+        $this->fixture(function ($directory,$updater) {
+            $result=$updater->remove('tests/removable-plugin');
+            $this->assertTrue($result->successful,$result->message);
+            $this->assertSame('actual-installed-code',File::get($directory.'/vendor/tests/path-plugin/installed-marker.txt'));
+            $versions=array_column(json_decode(File::get($directory.'/composer.lock'),true)['packages'],'version','name');
+            $this->assertArrayNotHasKey('tests/removable-plugin',$versions);
+            $this->assertSame('3.0.1',$versions['pcteckserv/cms-core']);
+            $this->assertSame('13.42.0',$versions['laravel/framework']);
+        },deployment:true,packaged:true);
+    }
+
+    public function test_316_transaction_with_fixed_snapshot_supports_the_ftp_bridge(): void
+    {
+        class_alias(\Pcteckserv\CmsCore\Updates\InstalledComposerSnapshot::class,'Tests\\LegacyBridge\\InstalledComposerSnapshot');
+        class_alias(\Pcteckserv\CmsCore\Updates\UpdateResult::class,'Tests\\LegacyBridge\\UpdateResult');
+        require_once dirname(__DIR__).'/fixtures/updates/ComposerDeploymentTransaction316.php';
+        $this->fixture(function ($directory) {
+            $updater=new \Tests\LegacyBridge\ComposerDeploymentTransaction();
+            $result=$updater->update('3.1.5');
+            $this->assertTrue($result->successful,$result->message);
+            $result=$updater->remove('tests/removable-plugin');
+            $this->assertTrue($result->successful,$result->message);
+            $this->assertSame('actual-installed-code',File::get($directory.'/vendor/tests/path-plugin/installed-marker.txt'));
+            $versions=array_column(json_decode(File::get($directory.'/composer.lock'),true)['packages'],'version','name');
+            $this->assertSame('3.1.5',$versions['pcteckserv/cms-core']);
+            $this->assertSame('13.42.0',$versions['laravel/framework']);
+            $this->assertArrayNotHasKey('tests/removable-plugin',$versions);
+        },deployment:true,packaged:true);
     }
 
     public function test_deployment_removes_a_plugin_without_development_sources_or_other_version_changes(): void

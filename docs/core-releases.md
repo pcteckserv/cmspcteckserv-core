@@ -1,5 +1,13 @@
 # Publicação de versões do Core
 
+## v3.1.8
+
+Corrige a preparação do Core e a remoção de plugins quando os ficheiros instalados
+estão em `packages`, apesar de os metadados ainda indicarem `vendor`. Confirma a
+identidade e a localização dos ficheiros, recusa ambiguidades e preserva as outras
+versões. Inclui uma exportação do helper genérico para a ponte antiga 3.1.6, sem
+alterar os Starters. [Procedimento e testes](core-updates-3.1.8.md).
+
 ## v3.1.7
 
 Auditoria de compatibilidade em aplicações independentes e cópias privadas dos
