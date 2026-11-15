@@ -101,11 +101,13 @@ class ComposerCommand
     /** @return array<int, string> */
     private function commandFor(string $configured): array
     {
-        $path = str_ends_with(strtolower($configured), '.phar')
+        $isPhar = str_ends_with(strtolower($configured), '.phar');
+        $path = $isPhar || is_file($configured)
             ? $configured
             : (new ExecutableFinder())->find($configured);
 
-        if ($path === null || ! is_file($path) || ! is_readable($path)) {
+        if ($path === null || ! is_file($path) || ! is_readable($path)
+            || (! $isPhar && PHP_OS_FAMILY !== 'Windows' && ! is_executable($path))) {
             throw new RuntimeException('O executável Composer configurado não existe ou não pode ser lido.');
         }
 

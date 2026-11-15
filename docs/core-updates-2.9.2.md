@@ -42,6 +42,9 @@ Os testes do atualizador usam Composer real, distribuições ZIP e Git locais,
 Core 2.9.0 para 2.9.2, uma segunda atualização de manutenção, Laravel congelado,
 plugins em `packages`, conflitos, remoção e reposição de ficheiros. Há testes
 de seleção de tags, cache incompatível e passagem FTP com autoload antigo.
+O caminho completo de um Composer executável é resolvido diretamente, sem o
+procurar como nome em PATH; a validação de leitura e execução é preservada.
+O caso foi reproduzido antes da correção e os seis testes de comandos passaram.
 
 A suite histórica executada no host StudioFranco tem cinco falhas de referência:
 três expectativas de formulários em `AdminAccessRulesTest`, uma versão instalada

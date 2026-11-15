@@ -44,6 +44,17 @@ class ComposerCommandTest extends TestCase
         (new ComposerCommand())->build(['show']);
     }
 
+    public function test_aceita_caminho_completo_de_executavel_sem_extensao_phar(): void
+    {
+        // Um caminho como /usr/local/bin/composer não é um nome a procurar em PATH.
+        config(['cms-core.updates.composer_binary' => PHP_BINARY]);
+
+        $this->assertSame(
+            [PHP_BINARY, '--version'],
+            (new ComposerCommand())->build(['--version']),
+        );
+    }
+
     public function test_recupera_repositorios_nas_atualizacoes_do_core_e_dos_plugins(): void
     {
         $composerPhar = sys_get_temp_dir().'/cms-composer-'.bin2hex(random_bytes(8)).'.phar';

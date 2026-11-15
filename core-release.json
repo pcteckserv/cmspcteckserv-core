@@ -282,7 +282,7 @@
         "src/Services/PermissionSynchronizer.php": "2100f1004b1ea937cd78aac467382543b623d04b1b8e58c449062c5af3c9484b",
         "src/Services/Queues/QueueMonitor.php": "2a9cb645db65b07a589518238da71fd53ea918ad99944a49d59a038e0976515c",
         "src/Services/UserModelResolver.php": "83e4fb192cb13ef3235e851e4eb25555d753929da1063f2b2444b48b4e281f86",
-        "src/Support/ComposerCommand.php": "c2c900898bea130582f614f9e4024324e1917454d474e5215395c5c2e53f46a0",
+        "src/Support/ComposerCommand.php": "10dc2c6596c76536f77d299c65271c75510fd03a2ef0bf27b7aa7f04f540e968",
         "src/Support/ComposerRepositoryCleaner.php": "d3a92e670d36104d009610c70dd65a77a7c05465c8770540739380ba8c62b9a4",
         "src/Support/CssLength.php": "5578523955d0a9e9288f413af7e6bcd7c905487b3fd17cf43dbb0c8c0bb549c1",
         "src/Support/Facades/ActivityLogger.php": "a94a9966da4b0c83a939c81085af1ce3f20f519ceba99105fda6f4a9d1676903",
