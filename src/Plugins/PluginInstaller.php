@@ -77,7 +77,7 @@ class PluginInstaller
             }
         }
 
-        $composer = $this->run($this->composerCommand()->build(['require', $package.':'.$versionConstraint, '--with-all-dependencies']));
+        $composer = $this->run($this->composerCommand()->build(['require', $package.':'.$versionConstraint, '--with-dependencies', '--minimal-changes', '--no-interaction']));
 
         if (! $composer->isSuccessful()) {
             return new PluginInstallResult(false, 'Composer falhou: '.$this->processOutput($composer));

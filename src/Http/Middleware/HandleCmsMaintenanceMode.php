@@ -113,7 +113,9 @@ class HandleCmsMaintenanceMode
                 $content = $bar.$content;
             }
 
+            $original = $response->getOriginalContent();
             $response->setContent($content);
+            $response->original = $original;
         }
 
         return $response;

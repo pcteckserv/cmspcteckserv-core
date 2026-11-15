@@ -191,7 +191,7 @@ class PluginsManagementTest extends TestCase
             ->assertSessionHas('cms_plugin_success', 'Plugin instalado com sucesso.');
     }
 
-    public function test_instalacao_de_plugin_permite_atualizar_dependencias_principais_do_projeto(): void
+    public function test_instalacao_de_plugin_preserva_dependencias_principais_do_projeto(): void
     {
         $composerCommand = new class extends \Pcteckserv\CmsCore\Support\ComposerCommand
         {
@@ -234,7 +234,9 @@ class PluginsManagementTest extends TestCase
             'composer',
             'require',
             'pcteckserv/test-plugin:^1.0',
-            '--with-all-dependencies',
+            '--with-dependencies',
+            '--minimal-changes',
+            '--no-interaction',
         ], $installer->commands[0]);
     }
 

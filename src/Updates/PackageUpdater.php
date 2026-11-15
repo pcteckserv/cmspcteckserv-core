@@ -38,6 +38,10 @@ class PackageUpdater
         }
 
         $availableVersion = $this->availableVersion($package);
+        if ($package === 'pcteckserv/cms-core' && is_string($availableVersion)
+            && explode('.', $this->normalizeVersion($availableVersion))[0] !== explode('.', $this->normalizeVersion($previousVersion))[0]) {
+            return new UpdateResult(false, 'A mudança de versão principal do Core exige uma migração do Starter e dos plugins. Os ficheiros instalados foram preservados.');
+        }
         $plugin = InstalledPlugin::query()->where('package', $package)->whereNotNull('installed_version')->first();
         $isPathPlugin = $plugin !== null && ($plugin->metadata['repository_type'] ?? null) === 'path';
 
