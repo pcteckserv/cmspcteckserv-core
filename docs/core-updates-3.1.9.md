@@ -29,6 +29,9 @@ plugins em `packages` não resolvia este segundo caso.
   do repositório Core é mapeado para o oficial; repositórios personalizados mantêm-se.
 - As mensagens Composer preservam o fim do erro, retiram caracteres de terminal
   e ocultam credenciais. O aviso de Composer antigo não é tratado como a causa.
+- O caminho completo de um Composer executável é aceite diretamente. Antes era
+  procurado como nome dentro de PATH e falhava, por exemplo, com
+  `/usr/local/bin/composer`. Mantêm-se as verificações de leitura e execução.
 - O CI anterior falhava antes dos testes: o hash de `resources/icons/build-catalog.py`
   variava com CRLF no Windows e LF no Linux. Python passa a ter hash canónico LF
   e atributo Git `eol=lf`. Os manifestos históricos 3.1.7/3.1.8 e 2.9.1 podem ser
@@ -119,6 +122,10 @@ Os testes locais não certificam todos os alojamentos nem dependências futuras.
 - Core 3: suite completa de 292 testes, 1455 asserções por execução, aprovada nas
   seis combinações PHP 8.3/8.4/8.5 e SQLite/MariaDB, em hosts e schemas independentes.
   Os testes de integridade também passaram nos três PHP (8 testes, 17 asserções).
+- O primeiro CI Linux expôs a resolução incorreta do caminho Composer completo.
+  A falha foi reproduzida antes da correção com um teste adicional. Os 28 testes
+  afetados de comandos e instalação de plugins passaram nos três PHP locais;
+  o novo CI tem 293 testes por combinação e é confirmado antes da tag.
 - Atualização integral de uma cópia da tag real 3.0.1, sem `.git`, para o arquivo
   candidato 3.1.9: Laravel v13.42.0 e as outras 107 versões instaladas preservadas,
   migrações e descoberta reais, dados sintéticos e ambiente preservados, backup do
