@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
+use Composer\InstalledVersions;
 use Pcteckserv\CmsCore\Plugins\PluginManager;
 use Tests\TestCase;
 
@@ -14,9 +15,14 @@ final class PluginDependenciesTest extends TestCase
     public function test_dependencies_must_be_enabled_and_cannot_be_disabled_while_in_use(): void
     {
         config(['cms-plugins.plugins'=>[
-            'dependency'=>['package'=>'pcteckserv/cms-customers','label'=>'Dependência'],
-            'dependent'=>['package'=>'pcteckserv/cms-agenda','label'=>'Dependente','requires'=>['dependency']],
+            'dependency'=>['package'=>'tests/dependency','label'=>'Dependência'],
+            'dependent'=>['package'=>'tests/dependent','label'=>'Dependente','requires'=>['dependency']],
         ]]);
+        $original = InstalledVersions::getRawData();
+        $fixture = $original;
+        foreach (['tests/dependency', 'tests/dependent'] as $name) $fixture['versions'][$name] = ['pretty_version'=>'1.0.0', 'version'=>'1.0.0.0', 'aliases'=>[], 'reference'=>'test-fixture', 'install_path'=>null, 'dev_requirement'=>false];
+        InstalledVersions::reload($fixture);
+        try {
         $manager=app(PluginManager::class);
         try {
             $manager->enable('dependent');
@@ -36,5 +42,6 @@ final class PluginDependenciesTest extends TestCase
         $manager->disable('dependent');
         $manager->disable('dependency');
         $this->assertFalse($manager->isEnabled('dependency'));
+        } finally { InstalledVersions::reload($original); }
     }
 }

@@ -49,6 +49,9 @@ class ComposerDeploymentTransaction
             if ($removing === null && (!preg_match('/^\d+\.\d+\.\d+$/', $current) || !preg_match('/^\d+\.\d+\.\d+$/', $target) || !version_compare($target, $current, '>'))) throw new RuntimeException('Não existe uma nova versão estável do Core confirmada para instalar.');
             if ($removing === null && explode('.', $target)[0] !== explode('.', $current)[0]) throw new RuntimeException('Esta versão muda a versão principal do Core. É necessária uma migração do Starter e dos plugins antes de atualizar.');
             if (!is_file($root.'/vendor/pcteckserv/cms-core/src/CmsCoreServiceProvider.php')) throw new RuntimeException('A instalação atual do Core está incompleta. Reponha os ficheiros antes de atualizar.');
+            if (is_file($root.'/vendor/pcteckserv/cms-core/core-release.json')) {
+                (new \Pcteckserv\CmsCore\Support\ReleaseIntegrity())->assertValid($root.'/vendor/pcteckserv/cms-core', $current);
+            }
             if (is_link($root.'/vendor') || isset($manifest['config']['vendor-dir'])) throw new RuntimeException('A localização de vendor exige uma publicação própria.');
             File::ensureDirectoryExists($run.'/stage', 0700);
             if ((stat($root.'/vendor')['dev'] ?? -1) !== (stat($run)['dev'] ?? -2)) throw new RuntimeException('A preparação e a instalação têm de estar no mesmo disco.');
@@ -81,6 +84,11 @@ class ComposerDeploymentTransaction
             if (!File::copyDirectory($root.'/vendor', $run.'/stage/vendor')) throw new RuntimeException('Não foi possível preparar uma cópia das dependências.');
             $noDev = ($installed['dev'] ?? true) === false;
             $this->composer(['install', ...($noDev ? ['--no-dev'] : []), '--no-scripts', '--no-plugins', '--no-interaction', '--prefer-dist'], $run.'/stage');
+            $preparedCore = $run.'/stage/vendor/pcteckserv/cms-core';
+            // As distribuições novas têm de trazer todos os ficheiros da versão anunciada.
+            if ($removing === null && (version_compare($target, '3.1.7', '>=') || is_file($preparedCore.'/core-release.json'))) {
+                (new \Pcteckserv\CmsCore\Support\ReleaseIntegrity())->assertValid($preparedCore, $target);
+            }
             $this->process([(new ComposerCommand())->phpBinary(), '-r', 'require $argv[1]."/vendor/autoload.php"; if (!class_exists("Pcteckserv\\CmsCore\\CmsCoreServiceProvider")) exit(2);', $run.'/stage'], $root);
             (new InstalledComposerSnapshot())->publishArchives($run.'/stage');
             $finalJson = $this->encode($finalManifest);

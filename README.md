@@ -1,6 +1,6 @@
 # CMS PCTECKSERV — Core 3
 
-Core **3.1.6**: atualização e remoção de plugins em distribuições sem pastas de desenvolvimento, usando as versões e os ficheiros efetivamente instalados. [Procedimento e limites](docs/core-updates-3.1.6.md).
+Core **3.1.7**: verificação de integridade das distribuições, instalação de plugins com alterações mínimas e correções de compatibilidade. [Auditoria dos quatro projetos, testes e limites](docs/compatibility-audit-2026-11-15.md). O StudioFranco permanece na linha de manutenção **2.9**, com migração obrigatória antes de Core 3.
 
 Base principal atualizada a partir de `NOVO/pcteckcms_core` (commit `5a09323`), incluindo a integração genérica validada no NextHome. Mudança major: substitui a linha 2.20 e altera os contratos de clientes/autenticação.
 
@@ -16,7 +16,7 @@ As classes antigas `CmsCore\Customers` e `CmsCore\Security\TwoFactor` foram subs
 
 ## Validação
 
-Definir `CMS_CORE_TEST_APP` para uma aplicação Laravel de teste com esta package e `CMS_COMPOSER_BINARY` para Composer. Executar `php <app>/vendor/phpunit/phpunit/phpunit -c phpunit.xml` e `node --test tests/Js/*.test.mjs`. Usar SQLite em memória nos testes, sem browser.
+Preparar uma aplicação independente com `php tools/prepare-test-host.php <pasta-nova>` e instalar as dependências nessa pasta com Composer. Definir `CMS_CORE_TEST_APP` para essa aplicação e `CMS_COMPOSER_BINARY` para Composer. Executar `php <app>/vendor/phpunit/phpunit/phpunit -c phpunit.xml` e `node --test tests/Js/*.test.mjs`. Por omissão usa SQLite em memória. Para MySQL descartável, definir `CMS_CORE_TEST_MYSQL_DATABASE` com prefixo `cms_core_test_` e as variáveis de teste de porta/utilizador/palavra-passe documentadas no bootstrap; nunca apontar para dados reais.
 
 Ver `docs/migracao-novo-core3.md` para origem, impacto e procedimento. Versão **3.0.0**, distribuída pela tag `v3.0.0` do repositório principal. Instalações com plugins da linha Core 2 exigem migração antes de atualizar.
 

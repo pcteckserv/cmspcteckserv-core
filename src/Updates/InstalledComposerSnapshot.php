@@ -35,7 +35,8 @@ class InstalledComposerSnapshot
                 $package['extra']['cms-original-dist-type'] = 'path';
                 $reference = $package['dist']['reference'] ?? null;
                 $package['dist'] = ['type'=>'zip', 'url'=>$this->archive($name, $stage), 'reference'=>$reference];
-                unset($package['source']);
+                // Opções de transporte de path (relative/symlink) não são opções HTTP de um ZIP.
+                unset($package['source'], $package['transport-options']);
             }
             $lock[in_array($name, $devNames, true) ? 'packages-dev' : 'packages'][] = $package;
         }

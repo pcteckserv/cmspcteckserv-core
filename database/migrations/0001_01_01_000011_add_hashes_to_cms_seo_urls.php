@@ -56,14 +56,17 @@ return new class extends Migration {
     public function down(): void
     {
         if (Schema::hasColumn('seo_audits', 'url_hash')) {
+            if (Schema::hasIndex('seo_audits', 'seo_audits_url_hash_index')) Schema::table('seo_audits', fn (Blueprint $table) => $table->dropIndex('seo_audits_url_hash_index'));
             Schema::table('seo_audits', fn (Blueprint $table) => $table->dropColumn('url_hash'));
         }
 
         if (Schema::hasColumn('seo_not_found_errors', 'url_hash')) {
+            if (Schema::hasIndex('seo_not_found_errors', 'seo_not_found_errors_url_hash_method_unique')) Schema::table('seo_not_found_errors', fn (Blueprint $table) => $table->dropUnique('seo_not_found_errors_url_hash_method_unique'));
             Schema::table('seo_not_found_errors', fn (Blueprint $table) => $table->dropColumn('url_hash'));
         }
 
         if (Schema::hasColumn('seo_redirects', 'source_hash')) {
+            if (Schema::hasIndex('seo_redirects', 'seo_redirects_source_hash_unique')) Schema::table('seo_redirects', fn (Blueprint $table) => $table->dropUnique('seo_redirects_source_hash_unique'));
             Schema::table('seo_redirects', fn (Blueprint $table) => $table->dropColumn('source_hash'));
         }
     }

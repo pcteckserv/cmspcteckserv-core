@@ -19,9 +19,9 @@ class MaintenanceBannerTest extends TestCase
         $previousContainer = Container::getInstance();
         $previousFacadeApplication = Facade::getFacadeApplication();
         $container = new Container();
-        $urls = $this->createMock(UrlGenerator::class);
+        $urls = $this->createStub(UrlGenerator::class);
         $urls->method('route')->willReturn('/admin/maintenance');
-        $gate = $this->createMock(GateContract::class);
+        $gate = $this->createStub(GateContract::class);
         $gate->method('allows')->willReturn(false);
         $container->instance('url', $urls);
         $container->instance(GateContract::class, $gate);

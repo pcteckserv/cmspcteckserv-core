@@ -33,6 +33,13 @@ class ConsentManagerTest extends TestCase
             ->assertSee('Utilização de cookies');
     }
 
+    public function test_injetar_banner_preserva_a_view_original_do_laravel(): void
+    {
+        Route::middleware('web')->get('/consent-view-test', fn () => view()->file(dirname(__DIR__).'/fixtures/public-page.blade.php'));
+        $response=$this->get('/consent-view-test')->assertOk()->assertSee('Página de teste')->assertSee('cms-consent',false);
+        $this->assertInstanceOf(\Illuminate\Contracts\View\View::class,$response->baseResponse->getOriginalContent());
+    }
+
     public function test_banner_nao_aparece_no_admin(): void
     {
         $this->get('/admin')

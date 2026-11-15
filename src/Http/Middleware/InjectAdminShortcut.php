@@ -31,7 +31,9 @@ class InjectAdminShortcut
             $content = $shortcut.$content;
         }
 
+        $original = $response->getOriginalContent();
         $response->setContent($content);
+        $response->original = $original;
         $response->setPrivate();
         $response->headers->set('Vary', 'Cookie', false);
 

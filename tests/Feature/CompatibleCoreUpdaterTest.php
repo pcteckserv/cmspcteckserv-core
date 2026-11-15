@@ -10,7 +10,7 @@ use ZipArchive;
 
 final class CompatibleCoreUpdaterTest extends TestCase
 {
-    private function fixture(callable $check, string $require = '^1.0', bool $deployment = false): void
+    private function fixture(callable $check, string $require = '^1.0', bool $deployment = false, ?string $releaseMode = null): void
     {
         $original = base_path(); $storage = storage_path();
         $directory = $original.'/tests/.runtime/core-stage-'.bin2hex(random_bytes(6));
@@ -19,10 +19,16 @@ final class CompatibleCoreUpdaterTest extends TestCase
         $composer = getenv('CMS_COMPOSER_BINARY');
         $this->assertTrue(is_string($composer) && is_file($composer));
         $core = static fn ($version, $requirements) => ['name'=>'pcteckserv/cms-core', 'version'=>$version, 'type'=>'library', 'require'=>$requirements, 'autoload'=>['psr-4'=>['Pcteckserv\\CmsCore\\'=>'src/']]];
-        foreach (['3.0.1', '3.1.5'] as $version) {
+        foreach (['3.0.1', '3.1.5', ...($releaseMode !== null ? ['3.1.7'] : [])] as $version) {
             $zip = new ZipArchive(); $zip->open($directory.'/'.$version.'.zip', ZipArchive::CREATE);
-            $zip->addFromString('composer.json', json_encode($core($version, ['tests/other'=>$version === '3.0.1' ? '^1.0' : $require])));
-            $zip->addFromString('src/CmsCoreServiceProvider.php', '<?php namespace Pcteckserv\\CmsCore; class CmsCoreServiceProvider {}'); $zip->close();
+            $contents = ['composer.json'=>json_encode($core($version, ['tests/other'=>$version === '3.0.1' ? '^1.0' : $require])), 'src/CmsCoreServiceProvider.php'=>'<?php namespace Pcteckserv\\CmsCore; class CmsCoreServiceProvider {}'];
+            foreach ($contents as $file=>$bytes) $zip->addFromString($file,$bytes);
+            if ($version === '3.1.7' && $releaseMode !== 'missing') {
+                $hashes = array_map(static fn ($bytes)=>hash('sha256',$bytes),$contents);
+                if ($releaseMode === 'changed') $hashes['composer.json'] = str_repeat('a',64);
+                $zip->addFromString('core-release.json',json_encode(['schema'=>1,'version'=>$version,'files'=>$hashes]));
+            }
+            $zip->close();
             $packages[] = $core($version, ['tests/other'=>$version === '3.0.1' ? '^1.0' : $require]) + ['dist'=>['type'=>'zip', 'url'=>str_replace('\\', '/', $directory.'/'.$version.'.zip'), 'reference'=>$version]];
         }
         $packages[] = ['name'=>'tests/other','version'=>'1.0.0','type'=>'metapackage'];
@@ -53,6 +59,7 @@ final class CompatibleCoreUpdaterTest extends TestCase
             foreach ($installed['packages'] as &$package) {
                 if ($package['name'] === 'laravel/framework') $package['version'] = '13.42.0';
                 if ($package['name'] === 'tests/path-plugin') $package['dist']['url'] = 'packages/tests/path-plugin';
+                if ($package['name'] === 'tests/path-plugin') $package['transport-options'] = ['relative'=>true];
             }
             unset($package);
             File::put($directory.'/vendor/composer/installed.json', json_encode($installed));
@@ -80,6 +87,29 @@ final class CompatibleCoreUpdaterTest extends TestCase
             $this->assertStringNotContainsString('"type": "package"', File::get($directory.'/composer.lock'));
             $this->assertSame('3.1.5', json_decode(File::get($directory.'/composer.json'), true)['require']['pcteckserv/cms-core']);
         });
+    }
+
+    public function test_verified_release_is_installed_with_real_composer(): void
+    {
+        $this->fixture(function ($directory,$updater) {
+            $result=$updater->update('3.1.7');
+            $this->assertTrue($result->successful,$result->message);
+            $this->assertTrue((new \Pcteckserv\CmsCore\Support\ReleaseIntegrity())->verify($directory.'/vendor/pcteckserv/cms-core','3.1.7')['valid']);
+        },releaseMode:'valid');
+    }
+
+    public function test_incomplete_or_changed_new_release_never_replaces_live_vendor(): void
+    {
+        foreach (['missing','changed'] as $mode) {
+            $this->fixture(function ($directory,$updater) {
+                $before=[File::get($directory.'/composer.json'),File::get($directory.'/composer.lock'),File::get($directory.'/vendor/composer/installed.json')];
+                $result=$updater->update('3.1.7');
+                $this->assertFalse($result->successful);
+                $this->assertStringContainsString('íntegra',$result->message);
+                $this->assertSame($before,[File::get($directory.'/composer.json'),File::get($directory.'/composer.lock'),File::get($directory.'/vendor/composer/installed.json')]);
+                $this->assertFileDoesNotExist($directory.'/storage/framework/maintenance.php');
+            },releaseMode:$mode);
+        }
     }
 
     public function test_dependency_conflict_preserves_live_files_before_installation(): void

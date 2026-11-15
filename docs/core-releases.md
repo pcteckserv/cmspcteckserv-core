@@ -1,5 +1,17 @@
 # Publicação de versões do Core
 
+## v3.1.7
+
+Auditoria de compatibilidade em aplicações independentes e cópias privadas dos
+quatro projetos. Corrige opções Composer `path` conservadas em ZIP, restringe a
+instalação de plugins, valida a integridade das novas distribuições e corrige
+catálogo vazio, preservação das views e reversão dos índices SEO. Acrescenta
+diagnóstico só de leitura e CI para PHP 8.3/8.4/8.5, SQLite e MySQL.
+
+O StudioFranco conserva Core 2.9 numa linha separada. Os limites de reconstrução
+do Turkesa, os testes antigos dos projetos e a passagem dos atualizadores já
+instalados estão descritos na [auditoria](compatibility-audit-2026-11-15.md).
+
 ## v3.1.6
 
 Corrige a atualização em distribuições sem origens de desenvolvimento e com lock diferente da instalação. A preparação usa as versões e o código efetivamente instalados, cria origens ZIP portáveis para os packages locais e preserva o modo de produção. A remoção de plugins usa o mesmo procedimento, recusa dependências ainda necessárias e conserva os dados. Mantém a verificação apenas dos plugins instalados e ativos. Sem alterações às migrations nem às dependências declaradas do Core. [Procedimento e limites](core-updates-3.1.6.md).

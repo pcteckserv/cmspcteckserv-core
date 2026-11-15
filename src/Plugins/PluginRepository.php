@@ -88,6 +88,7 @@ class PluginRepository
         $target = storage_path('framework/cache/cms-plugin-repository');
 
         if ($repositoryUrl === '') {
+            File::ensureDirectoryExists($target);
             return $target;
         }
 

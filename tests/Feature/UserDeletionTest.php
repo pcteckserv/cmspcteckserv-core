@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
@@ -18,13 +18,21 @@ use Tests\TestCase;
 
 class UserDeletionTest extends TestCase
 {
-    use RefreshDatabase;
+    // Este teste cria uma FK com DDL: MySQL faz commit implícito, incompatível com a transação de RefreshDatabase.
+    use DatabaseMigrations;
 
     protected function setUp(): void
     {
         parent::setUp();
 
         app('view')->replaceNamespace('cms-core', [realpath(__DIR__.'/../../resources/views')]);
+    }
+
+    protected function tearDown(): void
+    {
+        // Retirar a FK criada pelo teste antes de reverter a migration de users.
+        if ($this->app !== null) Schema::dropIfExists('test_user_references');
+        parent::tearDown();
     }
 
     public function test_super_admin_elimina_utilizador_e_associacoes_com_auditoria(): void

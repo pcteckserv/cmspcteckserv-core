@@ -1,0 +1,66 @@
+name: Core compatibility
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3', '8.4', '8.5']
+        database: [sqlite, mysql]
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: test-only-password
+          MYSQL_DATABASE: cms_core_test_ci
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -ptest-only-password"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, fileinfo, gd, intl, mbstring, pdo_sqlite, pdo_mysql, xmlwriter, zip
+          coverage: none
+          tools: composer:v2
+      - name: Verify release files
+        run: php tools/verify-release.php .
+      - name: Lint PHP
+        run: find src config database routes tests tools -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Prepare independent Laravel host
+        run: |
+          php tools/prepare-test-host.php "$RUNNER_TEMP/core-host"
+          composer install --working-dir="$RUNNER_TEMP/core-host" --no-interaction --no-scripts --prefer-dist
+      - name: Test Core and Composer transactions
+        env:
+          CMS_CORE_TEST_MYSQL_DATABASE: ${{ matrix.database == 'mysql' && 'cms_core_test_ci' || '' }}
+          CMS_CORE_TEST_MYSQL_PASSWORD: test-only-password
+        run: |
+          export CMS_CORE_TEST_APP="$RUNNER_TEMP/core-host"
+          export CMS_COMPOSER_BINARY="$(command -v composer)"
+          php "$CMS_CORE_TEST_APP/vendor/phpunit/phpunit/phpunit" -c phpunit.xml --no-coverage --fail-on-warning --fail-on-notice --fail-on-deprecation --log-junit core-junit.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: core-php${{ matrix.php }}-${{ matrix.database }}
+          path: core-junit.xml
+  javascript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node --test tests/Js/*.test.mjs
