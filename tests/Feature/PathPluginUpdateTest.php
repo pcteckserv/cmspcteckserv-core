@@ -351,6 +351,25 @@ class PathPluginUpdateTest extends TestCase
         ]);
     }
 
+    public function test_plugin_requiring_newer_core_is_refused_before_changing_composer(): void
+    {
+        $plugin=$this->plugin();
+        $this->mock(PluginRepository::class)->shouldReceive('find')->once()->with('test-plugin')
+            ->andReturn(new AvailablePlugin('test-plugin','test-plugin','tests/plugin','Teste',null,null,'^2.0','/source','2.0.0','^3.1.0'));
+        $reader=Mockery::mock(ComposerInstalledPackageReader::class);
+        $reader->shouldReceive('read')->once()->with('tests/plugin')->andReturn(['version'=>'dev-main','dist'=>['type'=>'path']]);
+        $reader->shouldReceive('read')->once()->with('pcteckserv/cms-core')->andReturn(['version'=>'v3.0.1']);
+        $composer=Mockery::mock(ComposerCommand::class);
+        $composer->shouldNotReceive('build'); $composer->shouldNotReceive('php');
+        $updater=Mockery::mock(PackageUpdater::class,[app(GitTagUpdateChecker::class),null,$composer,$reader])->makePartial()->shouldAllowMockingProtectedMethods();
+        $updater->shouldNotReceive('run');
+        $result=$updater->update($plugin->package);
+        $this->assertFalse($result->successful);
+        $this->assertStringContainsString('exige Core ^3.1.0; instalado: v3.0.1',$result->message);
+        $this->assertStringContainsString('Atualize primeiro o Core',$result->message);
+        $this->assertSame('dev-main',$plugin->fresh()->installed_version);
+    }
+
     private function repository(): void
     {
         $source = new AvailablePlugin('test-plugin', 'test-plugin', 'tests/plugin', 'Teste', null, null, '*@dev', '/source', '1.0.1');

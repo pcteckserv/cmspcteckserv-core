@@ -63,4 +63,38 @@ class ReleaseIntegrityTest extends TestCase
         unlink($this->root.'/core-release.json');
         $this->assertFalse((new ReleaseIntegrity())->verify($this->root)['valid']);
     }
+
+    public function test_python_hash_is_canonical_on_windows_and_linux(): void
+    {
+        file_put_contents($this->root.'/catalog.py',"print('catalog')\r\n");
+        $this->assertSame(hash('sha256',"print('catalog')\n"),ReleaseIntegrity::hash($this->root.'/catalog.py'));
+        $manifest=json_decode(file_get_contents($this->root.'/core-release.json'),true);
+        $manifest['version']='3.1.9';$manifest['files']['catalog.py']=ReleaseIntegrity::hash($this->root.'/catalog.py');
+        file_put_contents($this->root.'/core-release.json',json_encode($manifest));
+        file_put_contents($this->root.'/catalog.py',"print('catalog')\n");
+        $this->assertTrue((new ReleaseIntegrity())->verify($this->root,'3.1.9')['valid']);
+    }
+
+    public function test_historical_python_crlf_hash_accepts_only_equal_content(): void
+    {
+        foreach (['2.9.1','3.1.7','3.1.8'] as $version) {
+            $this->manifest(['version'=>$version]);
+            $manifest=json_decode(file_get_contents($this->root.'/core-release.json'),true);
+            $manifest['files']['catalog.py']=hash('sha256',"print('catalog')\r\n");
+            file_put_contents($this->root.'/core-release.json',json_encode($manifest));
+            file_put_contents($this->root.'/catalog.py',"print('catalog')\n");
+            $this->assertTrue((new ReleaseIntegrity())->verify($this->root,$version)['valid']);
+            file_put_contents($this->root.'/catalog.py',"print('changed')\n");
+            $this->assertFalse((new ReleaseIntegrity())->verify($this->root,$version)['valid']);
+        }
+    }
+
+    public function test_new_manifests_do_not_accept_old_raw_python_hashes(): void
+    {
+        $manifest=json_decode(file_get_contents($this->root.'/core-release.json'),true);
+        $manifest['version']='3.1.9';$manifest['files']['catalog.py']=hash('sha256',"print('catalog')\r\n");
+        file_put_contents($this->root.'/core-release.json',json_encode($manifest));
+        file_put_contents($this->root.'/catalog.py',"print('catalog')\n");
+        $this->assertFalse((new ReleaseIntegrity())->verify($this->root,'3.1.9')['valid']);
+    }
 }

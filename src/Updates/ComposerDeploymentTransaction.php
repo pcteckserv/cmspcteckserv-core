@@ -9,6 +9,11 @@ use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process;
 use Throwable;
 
+if (!class_exists(CoreReleasePolicy::class,false)) require_once __DIR__.'/CoreReleasePolicy.php';
+if (!class_exists(\Pcteckserv\CmsCore\Support\ReleaseIntegrity::class,false)) {
+    require_once is_file(__DIR__.'/../Support/ReleaseIntegrity.php') ? __DIR__.'/../Support/ReleaseIntegrity.php' : __DIR__.'/ReleaseIntegrity.php';
+}
+
 /** Prepara o Core fora da instalação, sem atualizar os restantes pacotes existentes. */
 class ComposerDeploymentTransaction
 {
@@ -48,6 +53,7 @@ class ComposerDeploymentTransaction
             if ($removing === null && (($core['dist']['type'] ?? null) === 'path' || ($core['extra']['cms-original-dist-type'] ?? null) === 'path')) throw new RuntimeException('O Core é um snapshot do Starter. É necessária uma distribuição com os ficheiros da versão pretendida; a versão não será apenas renomeada.');
             if ($removing === null && (!preg_match('/^\d+\.\d+\.\d+$/', $current) || !preg_match('/^\d+\.\d+\.\d+$/', $target) || !version_compare($target, $current, '>'))) throw new RuntimeException('Não existe uma nova versão estável do Core confirmada para instalar.');
             if ($removing === null && explode('.', $target)[0] !== explode('.', $current)[0]) throw new RuntimeException('Esta versão muda a versão principal do Core. É necessária uma migração do Starter e dos plugins antes de atualizar.');
+            if ($removing === null && !CoreReleasePolicy::allows($current,$target)) throw new RuntimeException('A versão pedida não pertence à linha estável deste Core. É necessária uma migração própria.');
             if (!is_file($root.'/vendor/pcteckserv/cms-core/src/CmsCoreServiceProvider.php')) throw new RuntimeException('A instalação atual do Core está incompleta. Reponha os ficheiros antes de atualizar.');
             if (is_file($root.'/vendor/pcteckserv/cms-core/core-release.json')) {
                 (new \Pcteckserv\CmsCore\Support\ReleaseIntegrity())->assertValid($root.'/vendor/pcteckserv/cms-core', $current);
@@ -57,7 +63,7 @@ class ComposerDeploymentTransaction
             if ((stat($root.'/vendor')['dev'] ?? -1) !== (stat($run)['dev'] ?? -2)) throw new RuntimeException('A preparação e a instalação têm de estar no mesmo disco.');
             if ($removing !== null && ($removing === self::PACKAGE || !preg_match('~^[a-z0-9_.-]+/[a-z0-9_.-]+$~D', $removing) || !isset($this->packages($installed['packages'] ?? $installed)[$removing]))) throw new RuntimeException('O pacote indicado não pode ser removido.');
             $baseline = (new InstalledComposerSnapshot())->baseline($lock, $installed, $run.'/stage', $removing);
-            $finalManifest = (new InstalledComposerSnapshot())->portableManifest($manifest);
+            $finalManifest = CoreReleasePolicy::portableRepositories((new InstalledComposerSnapshot())->portableManifest($manifest));
             if ($removing === null) $finalManifest['require'][self::PACKAGE] = $target;
             else {
                 unset($finalManifest['require'][$removing], $finalManifest['require-dev'][$removing]);
@@ -81,12 +87,13 @@ class ComposerDeploymentTransaction
             $planned = json_decode(File::get($run.'/stage/composer.lock'), true, flags: JSON_THROW_ON_ERROR);
             $this->validatePlan($baseline, $planned, $removing === null ? $target : $current, $removing);
             // Nenhum script do site é executado durante a preparação.
-            if (!File::copyDirectory($root.'/vendor', $run.'/stage/vendor')) throw new RuntimeException('Não foi possível preparar uma cópia das dependências.');
+            $this->copyVendor($root.'/vendor',$run.'/stage/vendor',PHP_OS_FAMILY === 'Windows');
+            $this->prepareChangedPackages($run.'/stage', $installed, $planned);
             $noDev = ($installed['dev'] ?? true) === false;
             $this->composer(['install', ...($noDev ? ['--no-dev'] : []), '--no-scripts', '--no-plugins', '--no-interaction', '--prefer-dist'], $run.'/stage');
             $preparedCore = $run.'/stage/vendor/pcteckserv/cms-core';
             // As distribuições novas têm de trazer todos os ficheiros da versão anunciada.
-            if ($removing === null && (version_compare($target, '3.1.7', '>=') || is_file($preparedCore.'/core-release.json'))) {
+            if ($removing === null && (CoreReleasePolicy::requiresIntegrity($target) || is_file($preparedCore.'/core-release.json'))) {
                 (new \Pcteckserv\CmsCore\Support\ReleaseIntegrity())->assertValid($preparedCore, $target);
             }
             $this->process([(new ComposerCommand())->phpBinary(), '-r', 'require $argv[1]."/vendor/autoload.php"; if (!class_exists("Pcteckserv\\CmsCore\\CmsCoreServiceProvider")) exit(2);', $run.'/stage'], $root);
@@ -97,6 +104,11 @@ class ComposerDeploymentTransaction
             // Validar também o manifesto final, sem as restrições temporárias da preparação.
             $this->json($run.'/stage/composer.json', $finalManifest);
             $this->composer(['install', '--dry-run', ...($noDev ? ['--no-dev'] : []), '--no-scripts', '--no-plugins', '--no-interaction'], $run.'/stage');
+            $publishingVendor=$this->runtimeVendor($run.'/stage/vendor',$run.'/runtime/vendor');
+            if ($publishingVendor !== $run.'/stage/vendor') {
+                if ($removing === null && CoreReleasePolicy::requiresIntegrity($target)) (new \Pcteckserv\CmsCore\Support\ReleaseIntegrity())->assertValid($publishingVendor.'/pcteckserv/cms-core',$target);
+                $this->process([(new ComposerCommand())->phpBinary(),'-r','require $argv[1]."/autoload.php"; if (!class_exists("Pcteckserv\\CmsCore\\CmsCoreServiceProvider")) exit(2);',$publishingVendor],$root);
+            }
             File::put($run.'/composer.json.before', $manifestBytes);
             File::put($run.'/composer.lock.before', $lockBytes);
             // Não publicar se outro processo alterou a instalação durante a preparação.
@@ -107,7 +119,7 @@ class ComposerDeploymentTransaction
             }
             if (!$this->moveDirectory($root.'/vendor', $run.'/previous-vendor')) throw new RuntimeException('Não foi possível preservar as dependências atuais.');
             $swapped = true;
-            if (!$this->moveDirectory($run.'/stage/vendor', $root.'/vendor')) throw new RuntimeException('Não foi possível publicar as dependências preparadas.');
+            if (!$this->moveDirectory($publishingVendor, $root.'/vendor')) throw new RuntimeException('Não foi possível publicar as dependências preparadas.');
             $this->atomicWrite($root.'/composer.json', $finalJson);
             $this->atomicWrite($root.'/composer.lock', File::get($run.'/stage/composer.lock'));
             $this->clearBootstrapCache($root);
@@ -139,6 +151,7 @@ class ComposerDeploymentTransaction
             if ($maintenanceCreated) @unlink($maintenance);
             // A cópia anterior fica disponível por FTP. A preparação falhada não é publicada.
             if (is_dir($run.'/stage')) File::deleteDirectory($run.'/stage');
+            if (is_dir($run.'/runtime')) File::deleteDirectory($run.'/runtime');
             flock($mutex, LOCK_UN);
             fclose($mutex);
         }
@@ -171,11 +184,77 @@ class ComposerDeploymentTransaction
         return [$package['version'] ?? null, $package['source'] ?? null, $package['dist'] ?? null, $package['require'] ?? []];
     }
 
+    /** Instala novamente apenas os pacotes alterados, na cópia privada.
+     * Deploys por FTP podem conservar installation-source=source sem conservar .git.
+     * O GitDownloader não consegue atualizar essas cópias; os ficheiros reais ficam intactos.
+     */
+    private function prepareChangedPackages(string $stage, array $installed, array $planned): void
+    {
+        $new=$this->packages([...($planned['packages'] ?? []),...($planned['packages-dev'] ?? [])]);
+        $kept=[];
+        $vendor=realpath($stage.'/vendor');
+        if ($vendor === false) throw new RuntimeException('A cópia das dependências não está disponível.');
+        foreach ($installed['packages'] ?? $installed as $package) {
+            $name=$package['name'] ?? '';
+            if (isset($new[$name]) && $this->identity($new[$name]) === $this->identity($package)) {
+                $kept[]=$package;
+                continue;
+            }
+            if (!preg_match('~^[a-z0-9_.-]+/[a-z0-9_.-]+$~D',$name)) throw new RuntimeException('Identidade inválida na cópia Composer.');
+            $directory=$stage.'/vendor/'.$name;
+            if (is_link($directory)) throw new RuntimeException('O pacote preparado contém uma ligação simbólica: '.$name.'.');
+            if (is_dir($directory)) {
+                $resolved=realpath($directory);
+                $normalize=static fn ($path)=>PHP_OS_FAMILY === 'Windows' ? strtolower(str_replace('\\','/',$path)) : str_replace('\\','/',$path);
+                if ($resolved === false || !str_starts_with($normalize($resolved).'/', $normalize($vendor).'/')) throw new RuntimeException('O pacote preparado está fora da cópia vendor.');
+                $iterator=new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory,\FilesystemIterator::SKIP_DOTS),\RecursiveIteratorIterator::SELF_FIRST);
+                foreach ($iterator as $file) {
+                    if ($file->isLink()) throw new RuntimeException('O pacote preparado contém uma ligação simbólica: '.$name.'.');
+                    if (PHP_OS_FAMILY === 'Windows' && $file->isFile() && !is_writable($file->getPathname())) chmod($file->getPathname(),0666);
+                }
+                unset($iterator,$file);
+                File::deleteDirectory($directory);
+                clearstatcache();
+                if (is_dir($directory)) throw new RuntimeException('Não foi possível preparar a reinstalação de '.$name.'.');
+            }
+        }
+        if (isset($installed['packages'])) $installed['packages']=$kept;
+        else $installed=$kept;
+        $this->json($stage.'/vendor/composer/installed.json',$installed);
+    }
+
     private function packages(array $packages): array
     {
         $result = [];
         foreach ($packages as $package) $result[$package['name']] = $package;
         return $result;
+    }
+
+    /** A pasta usada pelo Composer pode ficar aberta por ferramentas no Windows.
+     * Publicar uma cópia dos ficheiros de execução, sem transportar a pasta .git.
+     * O próximo update reinstala os pacotes alterados na preparação, também sem .git.
+     */
+    private function runtimeVendor(string $source,string $target): string
+    {
+        if (PHP_OS_FAMILY !== 'Windows') return $source;
+        $this->copyVendor($source,$target,true);
+        return $target;
+    }
+
+    private function copyVendor(string $source,string $target,bool $withoutGit): void
+    {
+        File::ensureDirectoryExists($target,0700);
+        $iterator=new \RecursiveIteratorIterator(new \RecursiveCallbackFilterIterator(new \RecursiveDirectoryIterator($source,\FilesystemIterator::SKIP_DOTS),static function($file) use($source,$withoutGit) {
+            $relative=str_replace('\\','/',substr($file->getPathname(),strlen($source)+1));
+            // Downloads incompletos do Composer não são ficheiros da instalação.
+            return !($withoutGit && $file->getFilename() === '.git') && !preg_match('~^composer/tmp-[a-f0-9]+(?:\.[a-z0-9]+)?(?:/|$)~i',$relative);
+        }),\RecursiveIteratorIterator::SELF_FIRST);
+        foreach ($iterator as $file) {
+            $destination=$target.'/'.substr($file->getPathname(),strlen($source)+1);
+            if ($file->isLink() && $file->isDir()) throw new RuntimeException('A preparação contém uma ligação de pastas que exige uma publicação própria.');
+            if ($file->isDir()) File::ensureDirectoryExists($destination);
+            elseif (!File::copy($file->getPathname(),$destination)) throw new RuntimeException('Não foi possível preparar os ficheiros de execução.');
+        }
     }
 
     protected function composer(array $arguments, string $directory): void
@@ -197,6 +276,8 @@ class ComposerDeploymentTransaction
         if (!$process->isSuccessful()) {
             $output = trim($process->getErrorOutput()."\n".$process->getOutput());
             if (is_string($token) && $token !== '') $output = str_replace([$token, rawurlencode($token), base64_encode('x-access-token:'.$token)], '[credencial ocultada]', $output);
+            $output = preg_replace('/\x1B\[[0-?]*[ -\/]*[@-~]/', '', $output) ?? '';
+            $output = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $output) ?? '';
             $output = preg_replace('~(https?://)[^\s/@]+(?::[^\s/@]*)?@~i', '$1[credencial ocultada]@', $output) ?? '';
             $output = preg_replace('/\s+/u', ' ', $output) ?? '';
             throw new RuntimeException('A validação ou instalação falhou: '.mb_substr($output, -2400));

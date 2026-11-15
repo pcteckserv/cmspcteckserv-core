@@ -196,7 +196,9 @@ class UpdatesManagementTest extends TestCase
             'cms-core.updates.github_token' => 'token-de-teste',
         ]);
 
-        $checker = new TestGitTagUpdateChecker();
+        $reader = Mockery::mock(ComposerInstalledPackageReader::class);
+        $reader->shouldReceive('read')->with('pcteckserv/cms-core')->andReturn(['version'=>'v2.3.0']);
+        $checker = new TestGitTagUpdateChecker($reader);
 
         $this->assertSame('v2.3.9', $checker->latestVersion('pcteckserv/cms-core'));
         $this->assertSame(['git'], $checker->sources);

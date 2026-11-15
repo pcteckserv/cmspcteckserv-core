@@ -12,7 +12,7 @@ class ReleaseIntegrity
     public static function hash(string $file): string
     {
         $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-        if (in_array($extension, ['php','json','js','mjs','scss','css','svg','xml','html','md','txt','yml','yaml','csv'], true)) {
+        if (in_array($extension, ['php','json','js','mjs','scss','css','svg','xml','html','md','txt','yml','yaml','csv','py'], true)) {
             return hash('sha256', str_replace("\r\n", "\n", (string) file_get_contents($file)));
         }
         return hash_file('sha256', $file);
@@ -45,7 +45,15 @@ class ReleaseIntegrity
                 $result['errors'][] = 'Ficheiro ausente ou fora da distribuição: '.$relative.'.';
                 continue;
             }
-            if (!hash_equals($hash, self::hash($file))) $result['errors'][] = 'Ficheiro diferente da distribuição: '.$relative.'.';
+            $matches=hash_equals($hash,self::hash($file));
+            // Estes manifestos anteriores guardaram Python com CRLF no Windows.
+            // Aceitar apenas a mesma sequência de texto; uma alteração de conteúdo continua inválida.
+            if (!$matches && strtolower(pathinfo($file,PATHINFO_EXTENSION)) === 'py'
+                && in_array($manifest['version'],['2.9.1','3.1.7','3.1.8'],true)) {
+                $canonical=str_replace("\r\n","\n",(string)file_get_contents($file));
+                $matches=hash_equals($hash,hash('sha256',str_replace("\n","\r\n",$canonical)));
+            }
+            if (!$matches) $result['errors'][] = 'Ficheiro diferente da distribuição: '.$relative.'.';
         }
         $result['valid'] = $result['errors'] === [];
         return $result;

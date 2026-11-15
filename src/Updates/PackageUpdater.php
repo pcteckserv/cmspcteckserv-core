@@ -79,6 +79,17 @@ class PackageUpdater
                 return new UpdateResult(false, 'O plugin não tem uma versão válida no ficheiro cms-plugin.json.');
             }
 
+            if ($source->coreConstraint !== null && $source->coreConstraint !== '') {
+                $coreVersion=$this->installedComposerPackage('pcteckserv/cms-core')['version'] ?? null;
+                try {
+                    $compatible=is_string($coreVersion) && \Composer\Semver\Semver::satisfies($coreVersion,$source->coreConstraint);
+                } catch (Throwable) { $compatible=false; }
+                if (!$compatible) {
+                    return new UpdateResult(false,'O plugin '.$source->version.' exige Core '.$source->coreConstraint
+                        .'; instalado: '.($coreVersion ?? 'não confirmado').'. Atualize primeiro o Core para uma versão compatível. A atualização do plugin não foi iniciada.');
+                }
+            }
+
             $availableVersion = $source->version;
         }
 

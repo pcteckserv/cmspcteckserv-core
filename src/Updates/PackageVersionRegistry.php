@@ -10,6 +10,8 @@ use Pcteckserv\CmsCore\Plugins\InstalledPluginVersionReader;
 use Pcteckserv\CmsCore\Plugins\InstalledPluginSource;
 use Pcteckserv\CmsCore\Models\InstalledPlugin;
 
+if (!class_exists(CoreReleasePolicy::class,false)) require_once __DIR__.'/CoreReleasePolicy.php';
+
 class PackageVersionRegistry
 {
     public function __construct(
@@ -32,12 +34,17 @@ class PackageVersionRegistry
         return $packages->map(function (string $package) use ($channel): InstalledPackage {
             $installedVersion = $this->installedVersion($package);
             $bundledVersion = config('cms-core.updates.bundled_versions.'.$package);
+            if ($package === 'pcteckserv/cms-core') {
+                // A versão incluída num Starter antigo não é uma consulta de atualizações do Core.
+                $candidate=DB::table('cms_installed_packages')->where('name',$package)->value('available_version');
+                $bundledVersion=CoreReleasePolicy::allows($installedVersion,is_string($candidate)?$candidate:null)?$candidate:null;
+            }
 
             DB::table('cms_installed_packages')->updateOrInsert(
                 ['name' => $package],
                 [
                     'installed_version' => $installedVersion,
-                    'available_version' => $bundledVersion ?: DB::table('cms_installed_packages')->where('name', $package)->value('available_version'),
+                    'available_version' => $package === 'pcteckserv/cms-core' ? $bundledVersion : ($bundledVersion ?: DB::table('cms_installed_packages')->where('name', $package)->value('available_version')),
                     'channel' => $channel,
                     'checked_at' => now(),
                     'updated_at' => now(),
@@ -61,6 +68,7 @@ class PackageVersionRegistry
         foreach ($packages as $package) {
             $availableVersion = $this->updateChecker->latestVersion($package);
             $installedVersion = $this->installedVersion($package);
+            if ($package === 'pcteckserv/cms-core' && !CoreReleasePolicy::allows($installedVersion,$availableVersion)) $availableVersion=null;
 
             if ($availableVersion === null) {
                 $currentAvailableVersion = DB::table('cms_installed_packages')
@@ -119,7 +127,7 @@ class PackageVersionRegistry
             ->map(fn (object $package): InstalledPackage => new InstalledPackage(
                 $package->name,
                 $package->installed_version,
-                $package->available_version,
+                $package->name === 'pcteckserv/cms-core' && !CoreReleasePolicy::allows($package->installed_version,$package->available_version) ? null : $package->available_version,
                 $package->channel,
                 $package->checked_at,
                 $appliedReleases->get($package->name),

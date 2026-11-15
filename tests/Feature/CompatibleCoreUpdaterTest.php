@@ -10,7 +10,7 @@ use ZipArchive;
 
 final class CompatibleCoreUpdaterTest extends TestCase
 {
-    private function fixture(callable $check, string $require = '^1.0', bool $deployment = false, ?string $releaseMode = null, bool $packaged = false): void
+    private function fixture(callable $check, string $require = '^1.0', bool $deployment = false, ?string $releaseMode = null, bool $packaged = false, bool $gitDeployment = false): void
     {
         $original = base_path(); $storage = storage_path();
         $directory = $original.'/tests/.runtime/core-stage-'.bin2hex(random_bytes(6));
@@ -32,6 +32,29 @@ final class CompatibleCoreUpdaterTest extends TestCase
             $packages[] = $core($version, ['tests/other'=>$version === '3.0.1' ? '^1.0' : $require]) + ['dist'=>['type'=>'zip', 'url'=>str_replace('\\', '/', $directory.'/'.$version.'.zip'), 'reference'=>$version]];
         }
         $packages[] = ['name'=>'tests/other','version'=>'1.0.0','type'=>'metapackage'];
+        if ($gitDeployment) {
+            $repository = $directory.'/core-repository';
+            File::ensureDirectoryExists($repository.'/src');
+            $git = static function (array $arguments) use ($repository): string {
+                return trim((new Process(['git', ...$arguments], $repository))->mustRun()->getOutput());
+            };
+            $git(['init']);
+            $git(['config','user.name','Isolated updater test']);
+            $git(['config','user.email','test@example.invalid']);
+            foreach ($packages as &$candidate) {
+                if ($candidate['name'] !== 'pcteckserv/cms-core') continue;
+                File::put($repository.'/composer.json',json_encode($core($candidate['version'],$candidate['require'])));
+                File::put($repository.'/src/CmsCoreServiceProvider.php','<?php namespace Pcteckserv\\CmsCore; class CmsCoreServiceProvider {}');
+                $archive=new ZipArchive(); $archive->open($directory.'/'.$candidate['version'].'.zip');
+                $release=$archive->getFromName('core-release.json'); $archive->close();
+                if ($release !== false) File::put($repository.'/core-release.json',$release);
+                else File::delete($repository.'/core-release.json');
+                $git(['add','.']); $git(['commit','-m',$candidate['version']]);
+                unset($candidate['dist']);
+                $candidate['source']=['type'=>'git','url'=>str_replace('\\','/',$repository),'reference'=>$git(['rev-parse','HEAD'])];
+            }
+            unset($candidate);
+        }
         $packages[] = ['name'=>'tests/other','version'=>'2.0.0','type'=>'metapackage'];
         $packages[] = ['name'=>'laravel/framework','version'=>'13.36.0','type'=>'metapackage'];
         if ($packaged) $packages[] = ['name'=>'tests/removable-plugin','version'=>'1.0.0','type'=>'metapackage'];
@@ -49,8 +72,23 @@ final class CompatibleCoreUpdaterTest extends TestCase
             File::put($directory.'/composer.json', json_encode($manifest));
         }
         File::put($directory.'/artisan', '<?php if(file_exists(__DIR__."/fail-migration") && in_array("migrate",$argv,true)){fwrite(STDERR,"migration test failure");exit(1);} exit(0);');
-        $seed = new Process([PHP_BINARY,$composer,'update','--no-scripts','--no-plugins','--no-interaction','--no-audit'], $directory, ['COMPOSER_DISABLE_NETWORK'=>'1','COMPOSER_HOME'=>$directory.'/composer-home']);
+        $seed = new Process([PHP_BINARY,$composer,'update','--no-scripts','--no-plugins','--no-interaction','--no-audit'], $directory, ['COMPOSER_DISABLE_NETWORK'=>$gitDeployment ? '0' : '1','COMPOSER_HOME'=>$directory.'/composer-home']);
         $seed->setTimeout(60)->mustRun();
+        if ($gitDeployment) {
+            $checkout=$directory.'/vendor/pcteckserv/cms-core/.git';
+            $this->assertDirectoryExists($checkout);
+            foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($checkout,\FilesystemIterator::SKIP_DOTS)) as $file) {
+                // Objetos temporários Git podem desaparecer entre a enumeração e a remoção.
+                // A ausência completa de .git é confirmada abaixo.
+                if ($file->isFile()) @chmod($file->getPathname(),0666);
+            }
+            for ($attempt=0;$attempt<20;$attempt++) {
+                File::deleteDirectory($checkout); clearstatcache();
+                if (!is_dir($checkout)) break;
+                usleep(100000);
+            }
+            $this->assertDirectoryDoesNotExist($checkout);
+        }
         $manifest = json_decode(File::get($directory.'/composer.json'), true);
         foreach ($manifest['repositories'] as &$repository) if (($repository['type'] ?? '') === 'package') $repository['package'][] = ['name'=>'laravel/framework','version'=>'13.42.0','type'=>'metapackage'];
         unset($repository);
@@ -80,6 +118,7 @@ final class CompatibleCoreUpdaterTest extends TestCase
     {
         $this->fixture(function ($directory, $updater) {
             File::put($directory.'/.env', 'test-only-sentinel');
+            File::put($directory.'/vendor/composer/tmp-abcdef123456.zip','incomplete-composer-download');
             $result = $updater->update('3.1.5');
             $this->assertTrue($result->successful, $result->message);
             $lock = json_decode(File::get($directory.'/composer.lock'), true);
@@ -90,9 +129,58 @@ final class CompatibleCoreUpdaterTest extends TestCase
             $this->assertSame('test-only-sentinel', File::get($directory.'/.env'));
             $this->assertFileDoesNotExist($directory.'/storage/framework/maintenance.php');
             $this->assertCount(1, glob($directory.'/storage/app/core-updates/*/previous-vendor'));
+            $this->assertFileDoesNotExist($directory.'/vendor/composer/tmp-abcdef123456.zip');
+            $this->assertSame('incomplete-composer-download',File::get(glob($directory.'/storage/app/core-updates/*/previous-vendor')[0].'/composer/tmp-abcdef123456.zip'));
             $this->assertStringNotContainsString('"type": "package"', File::get($directory.'/composer.lock'));
             $this->assertSame('3.1.5', json_decode(File::get($directory.'/composer.json'), true)['require']['pcteckserv/cms-core']);
         });
+    }
+
+    public function test_ftp_deployment_without_git_is_reinstalled_only_in_stage(): void
+    {
+        $this->fixture(function ($directory,$updater) {
+            $this->assertDirectoryDoesNotExist($directory.'/vendor/pcteckserv/cms-core/.git');
+            $result=$updater->update('3.1.5');
+            $this->assertTrue($result->successful,$result->message);
+            $versions=array_column(json_decode(File::get($directory.'/vendor/composer/installed.json'),true)['packages'],'version','name');
+            $this->assertSame('3.1.5',$versions['pcteckserv/cms-core']);
+            $this->assertSame('13.36.0',$versions['laravel/framework']);
+            $this->assertSame('1.0.0',$versions['tests/other']);
+            $backup=glob($directory.'/storage/app/core-updates/*/previous-vendor')[0];
+            $this->assertSame('3.0.1',json_decode(File::get($backup.'/pcteckserv/cms-core/composer.json'),true)['version']);
+            $this->assertDirectoryDoesNotExist($backup.'/pcteckserv/cms-core/.git');
+            $next=$updater->update('3.1.7');
+            $this->assertTrue($next->successful,$next->message);
+            $this->assertTrue((new \Pcteckserv\CmsCore\Support\ReleaseIntegrity())->verify($directory.'/vendor/pcteckserv/cms-core','3.1.7')['valid']);
+            $this->assertSame('13.36.0',array_column(json_decode(File::get($directory.'/vendor/composer/installed.json'),true)['packages'],'version','name')['laravel/framework']);
+        },releaseMode:'valid',gitDeployment:true);
+    }
+
+    public function test_source_deployment_conflict_preserves_code_and_metadata(): void
+    {
+        $this->fixture(function ($directory,$updater) {
+            $files=['composer.json','composer.lock','vendor/composer/installed.json','vendor/pcteckserv/cms-core/src/CmsCoreServiceProvider.php'];
+            $before=array_map(fn($file)=>File::get($directory.'/'.$file),$files);
+            $result=$updater->update('3.1.5');
+            $this->assertFalse($result->successful);
+            $this->assertSame($before,array_map(fn($file)=>File::get($directory.'/'.$file),$files));
+            $this->assertDirectoryDoesNotExist($directory.'/vendor/pcteckserv/cms-core/.git');
+            $this->assertFileDoesNotExist($directory.'/storage/framework/maintenance.php');
+        },require:'^2.0',gitDeployment:true);
+    }
+
+    public function test_plugin_removal_keeps_unchanged_source_core_without_git(): void
+    {
+        $this->fixture(function ($directory,$updater) {
+            $result=$updater->remove('tests/removable-plugin');
+            $this->assertTrue($result->successful,$result->message);
+            $versions=array_column(json_decode(File::get($directory.'/vendor/composer/installed.json'),true)['packages'],'version','name');
+            $this->assertSame('3.0.1',$versions['pcteckserv/cms-core']);
+            $this->assertSame('13.42.0',$versions['laravel/framework']);
+            $this->assertArrayNotHasKey('tests/removable-plugin',$versions);
+            $this->assertDirectoryDoesNotExist($directory.'/vendor/pcteckserv/cms-core/.git');
+            $this->assertSame('actual-installed-code',File::get($directory.'/packages/tests/path-plugin/installed-marker.txt'));
+        },deployment:true,packaged:true,gitDeployment:true);
     }
 
     public function test_verified_release_is_installed_with_real_composer(): void
@@ -173,6 +261,14 @@ final class CompatibleCoreUpdaterTest extends TestCase
     {
         $this->fixture(function ($directory,$updater) {
             $this->assertDirectoryDoesNotExist($directory.'/vendor/tests/path-plugin');
+            // Estado reportado: o plugin já exige Core novo, mas o Core antigo ficou instalado.
+            $installed=json_decode(File::get($directory.'/vendor/composer/installed.json'),true);
+            foreach ($installed['packages'] as &$package) if ($package['name'] === 'tests/path-plugin') $package['require']['pcteckserv/cms-core']='^3.1.0';
+            unset($package);
+            File::put($directory.'/vendor/composer/installed.json',json_encode($installed));
+            $pluginManifest=$directory.'/packages/tests/path-plugin/composer.json';
+            $plugin=json_decode(File::get($pluginManifest),true); $plugin['require']['pcteckserv/cms-core']='^3.1.0';
+            File::put($pluginManifest,json_encode($plugin));
             $result=$updater->update('3.1.5');
             $this->assertTrue($result->successful,$result->message);
             $this->assertSame('actual-installed-code',File::get($directory.'/vendor/tests/path-plugin/installed-marker.txt'));

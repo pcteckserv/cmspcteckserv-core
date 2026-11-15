@@ -1,5 +1,8 @@
 # Core 3.1.8 — preservar plugins distribuídos em packages
 
+> A ponte de um ficheiro desta versão não corrige instalações Git sem `.git`.
+> Para esse caso, consultar [a verificação 3.1.9](core-updates-3.1.9.md).
+
 Corrige a preparação das atualizações e remoções em distribuições que executam
 plugins a partir de `app/packages`, com `install-path` antigo ainda a apontar
 para `app/vendor`. A falha foi reportada no CGLimpezas: o Core permaneceu antigo
