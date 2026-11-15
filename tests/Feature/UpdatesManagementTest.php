@@ -183,7 +183,7 @@ class UpdatesManagementTest extends TestCase
         $reader->shouldReceive('read')->once()->andReturn(['version'=>'3.0.1','dist'=>['type'=>'zip']]);
         $checker = Mockery::mock(GitTagUpdateChecker::class);
         $checker->shouldReceive('latestVersion')->once()->andReturn('v3.1.5');
-        $this->mock(\Pcteckserv\CmsCore\Updates\CompatibleCoreUpdater::class)->shouldReceive('update')->once()->with('v3.1.5')->andReturn(new \Pcteckserv\CmsCore\Updates\UpdateResult(true,'prepared'));
+        $this->mock(\Pcteckserv\CmsCore\Updates\ComposerDeploymentTransaction::class)->shouldReceive('update')->once()->with('v3.1.5')->andReturn(new \Pcteckserv\CmsCore\Updates\UpdateResult(true,'prepared'));
         $updater = new TestablePackageUpdater($checker, null, new TestComposerCommand(), $reader);
         $this->assertTrue($updater->update('pcteckserv/cms-core')->successful);
         $this->assertSame([], $updater->commands);
@@ -277,7 +277,7 @@ class UpdatesManagementTest extends TestCase
         $reader->shouldReceive('read')->once()->andReturn(['version'=>'3.0.1','dist'=>['type'=>'zip']]);
         $checker = Mockery::mock(GitTagUpdateChecker::class);
         $checker->shouldReceive('latestVersion')->once()->andReturn('v3.1.5');
-        $this->mock(\Pcteckserv\CmsCore\Updates\CompatibleCoreUpdater::class)->shouldReceive('update')->once()->andReturn(new \Pcteckserv\CmsCore\Updates\UpdateResult(false,'Dependency conflict'));
+        $this->mock(\Pcteckserv\CmsCore\Updates\ComposerDeploymentTransaction::class)->shouldReceive('update')->once()->andReturn(new \Pcteckserv\CmsCore\Updates\UpdateResult(false,'Dependency conflict'));
         $updater = new TestablePackageUpdater($checker, null, new TestComposerCommand(), $reader);
         $result = $updater->update('pcteckserv/cms-core');
         $this->assertFalse($result->successful);

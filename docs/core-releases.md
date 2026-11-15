@@ -1,5 +1,9 @@
 # Publicação de versões do Core
 
+## v3.1.6
+
+Corrige a atualização em distribuições sem origens de desenvolvimento e com lock diferente da instalação. A preparação usa as versões e o código efetivamente instalados, cria origens ZIP portáveis para os packages locais e preserva o modo de produção. A remoção de plugins usa o mesmo procedimento, recusa dependências ainda necessárias e conserva os dados. Mantém a verificação apenas dos plugins instalados e ativos. Sem alterações às migrations nem às dependências declaradas do Core. [Procedimento e limites](core-updates-3.1.6.md).
+
 ## v3.1.5
 
 Atualizações do Core preparadas fora da instalação, com pacotes existentes congelados, verificação do provider e preservação do código anterior. O Starter mantém os manifests instalados quando as dependências continuam compatíveis. Reconhece também os perfis e idiomas já criados pela Agenda antiga, preservando os dados; esta incompatibilidade foi encontrada no ensaio desde o Core 3.0.1. [Procedimento, âmbito e limites](core-updates-3.1.5.md). Sem alterações às dependências declaradas do Core nem migração automática dos sites.

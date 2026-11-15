@@ -21,6 +21,7 @@ class InstalledPluginSource
         // Instalações antigas podem não ter guardado os metadados da origem.
         $installedPackage ??= $this->packages->read($plugin->package);
 
-        return ($installedPackage['dist']['type'] ?? null) === 'path';
+        return ($installedPackage['dist']['type'] ?? null) === 'path'
+            || ($installedPackage['extra']['cms-original-dist-type'] ?? null) === 'path';
     }
 }

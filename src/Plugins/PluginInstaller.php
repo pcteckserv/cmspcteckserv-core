@@ -30,18 +30,9 @@ class PluginInstaller
             return new PluginInstallResult(false, 'Este package não pode ser eliminado.');
         }
 
-        $process = $this->run($this->composerCommand()->build(['remove', $plugin->package, '--no-interaction']));
-
-        if (! $process->isSuccessful()) {
-            return new PluginInstallResult(false, 'Não foi possível desinstalar o plugin. Verifique as dependências e as permissões do Composer.');
-        }
-
-        $plugin->delete();
-        $cache = $this->run($this->composerCommand()->php(['artisan', 'optimize:clear']));
-
-        return new PluginInstallResult($cache->isSuccessful(), $cache->isSuccessful()
-            ? 'Plugin eliminado com sucesso. Os dados existentes foram preservados.'
-            : 'O plugin foi desinstalado, mas não foi possível limpar a cache.');
+        $result = app(\Pcteckserv\CmsCore\Updates\ComposerDeploymentTransaction::class)->remove($plugin->package);
+        if ($result->successful) $plugin->delete();
+        return new PluginInstallResult($result->successful, $result->message);
     }
 
     /**
