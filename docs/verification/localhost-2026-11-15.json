@@ -1,0 +1,58 @@
+{
+  "date": "2026-11-15",
+  "scope": "HTTP and local assets; no visual browser validation; isolated synthetic data",
+  "http_total": 149,
+  "assets_total": 49,
+  "unexpected_http": [],
+  "unexpected_assets": [],
+  "sites": [
+    {
+      "site": "cglimpezas",
+      "url": "http://127.0.0.1:8311",
+      "core": "3.1.7",
+      "http_requests": 36,
+      "http_statuses": {
+        "200": 33,
+        "302": 2,
+        "419": 1
+      },
+      "local_assets": 6
+    },
+    {
+      "site": "maxihome",
+      "url": "http://127.0.0.1:8312",
+      "core": "3.1.7",
+      "http_requests": 41,
+      "http_statuses": {
+        "200": 38,
+        "302": 2,
+        "419": 1
+      },
+      "local_assets": 14
+    },
+    {
+      "site": "studioranco",
+      "url": "http://127.0.0.1:8313",
+      "core": "2.9.1",
+      "http_requests": 35,
+      "http_statuses": {
+        "200": 32,
+        "302": 2,
+        "419": 1
+      },
+      "local_assets": 18
+    },
+    {
+      "site": "turkesa",
+      "url": "http://127.0.0.1:8314",
+      "core": "3.1.7",
+      "http_requests": 37,
+      "http_statuses": {
+        "200": 34,
+        "302": 2,
+        "419": 1
+      },
+      "local_assets": 11
+    }
+  ]
+}

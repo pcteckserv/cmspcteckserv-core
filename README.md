@@ -2,6 +2,8 @@
 
 Core **3.1.7**: verificação de integridade das distribuições, instalação de plugins com alterações mínimas e correções de compatibilidade. [Auditoria dos quatro projetos, testes e limites](docs/compatibility-audit-2026-11-15.md). O StudioFranco permanece na linha de manutenção **2.9**, com migração obrigatória antes de Core 3.
 
+[Verificação HTTP em localhost dos quatro sites](docs/localhost-verification-2026-11-15.md): 149 pedidos e 49 assets com resultado esperado, em cópias isoladas. Mantêm-se as versões estáveis; o marco de testes tem a tag `audit-localhost-2026-11-15`.
+
 Base principal atualizada a partir de `NOVO/pcteckcms_core` (commit `5a09323`), incluindo a integração genérica validada no NextHome. Mudança major: substitui a linha 2.20 e altera os contratos de clientes/autenticação.
 
 O Core fornece administração, utilizadores, perfis, permissões, 2FA, geografia, conteúdos, SEO e gestão de plugins. Clientes pertence à package opcional `pcteckserv/cms-customers`, fora do Core. Agenda e Imobiliário declaram dependência de Clientes no respetivo manifesto. Moloni, PayPal, Easypay e restantes módulos precisam de validação e versão compatível antes de migrar sites antigos.
