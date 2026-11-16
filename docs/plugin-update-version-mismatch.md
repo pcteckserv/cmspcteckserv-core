@@ -110,3 +110,9 @@ na cópia antiga. Também são mantidos os testes de cópia normal, ZIP e juncti
 A publicação de seguimento mantém o âmbito autorizado de teste online e os
 limites da matriz de compatibilidade documentados acima. O site online não é
 alterado diretamente por este trabalho.
+
+Validação final 3.1.12: suite completa aprovada em PHP 8.4.27/SQLite, com
+298 testes e 1501 asserções, incluindo o novo caso com versão/referência iguais
+e origens ZIP/path divergentes. Relatório: `output/contact-updater-3.1.12-tests.xml`.
+Lint, diff e integridade da distribuição e do ZIP Git canónico aprovados.
+Mantêm-se os limites de ambientes não testados referidos acima.
