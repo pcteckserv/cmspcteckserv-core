@@ -1,6 +1,6 @@
 {
     "schema": 1,
-    "version": "3.1.10",
+    "version": "3.1.11",
     "files": {
         "composer.json": "ee340446e4cb4b59fcc69d7ad0fda0e32b67fce1a3d444a9c7974096b0e49efc",
         "config/cms-backups.php": "3f9e5e65aa0cc01ee4d2baf45a76b31cc9920fa5b5560e041c33d22d69d178be",
@@ -259,7 +259,7 @@
         "src/Plugins/DTOs/AvailablePlugin.php": "187ad32afcc9e46236389a00f5a738418ba5864bfd4d642c2e3638e4fdb0201a",
         "src/Plugins/DTOs/PluginDefinition.php": "194f5501c3c08395a7194e5bbe0d1e1f5978f4a0de26ec6e6d713c1a23e45eba",
         "src/Plugins/InstalledPluginSource.php": "a1de14eebdd4e2df7d2a7eead05134dbc2a532b1b5ff5a90a7c1d86f9e2f7f88",
-        "src/Plugins/InstalledPluginVersionReader.php": "6ce47ea267a768aa8d85c566ba191ba3ca76ae77cbcbee072e248536603c5224",
+        "src/Plugins/InstalledPluginVersionReader.php": "042bddc5048142c6aae77ece6471859e561640aa6fc1fabe6669d4f172b6b807",
         "src/Plugins/PluginCatalog.php": "a095e803926abc0ad75b5b97e30a87ef70dc8f63dd28c78a210dd70cb48ef4f1",
         "src/Plugins/PluginInstallResult.php": "ad437e2d2c8522abcae24eb715cee680bb0d7319143c25ee80eac2b6d74618c3",
         "src/Plugins/PluginInstaller.php": "346fdfa11aa9d5a42fac34ac5970a1ddbcca4ec16ab4bcba911272eacd4068c4",

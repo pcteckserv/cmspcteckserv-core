@@ -10,6 +10,9 @@ class InstalledPluginVersionReader
             return null;
         }
 
+        // O Composer pode substituir uma ligação path durante o mesmo pedido.
+        // Limpar também realpath impede a leitura do destino antigo após reinstalar.
+        clearstatcache(true);
         $manifestPath = base_path('vendor/'.$package.'/cms-plugin.json');
 
         if (! is_file($manifestPath) || ! is_readable($manifestPath)) {

@@ -45,3 +45,24 @@ por ter uma versão Composer de desenvolvimento antiga.
 
 Formulários de contacto 2.0.0 exige Core ^3.1.0. A disponibilidade depende ainda
 de o plugin estar instalado e ativo e de a origem configurada estar acessível.
+
+## Seguimento: destino antigo em cache após reinstalação
+
+Após instalar Core 3.1.10, foi reportada a mensagem «A reinstalação terminou,
+mas os ficheiros instalados não correspondem à versão disponível (instalada:
+1.3.4; disponível: 2.0.0).».
+
+Um novo teste com Composer real reproduziu exatamente esta mensagem quando a
+instalação inicial é uma ligação simbólica/junction. A reinstalação altera o
+destino físico, mas o processo PHP do pedido conserva o destino antigo na cache
+realpath. Ler novamente o JSON sem limpar essa cache consulta ainda a origem
+1.3.4, embora Composer já tenha trocado a ligação.
+
+A correção limpa a cache de stat e realpath antes de consultar o manifesto
+instalado. Não substitui a versão lida por metadados da origem e não suprime a
+verificação de ficheiros. Mantém a recusa quando a versão física continua antiga.
+
+Os novos testes de integração cobrem instalação por cópia, snapshot ZIP preservado
+pelo Core e ligação simbólica. Todos usam Composer real em pastas descartáveis,
+confirmam o ficheiro marcador 2.0.0 instalado e preservam o marcador 1.3.4 da cópia
+antiga. Nenhum dado ou ficheiro do site online foi consultado ou alterado.
