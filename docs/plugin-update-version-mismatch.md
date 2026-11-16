@@ -66,3 +66,18 @@ Os novos testes de integração cobrem instalação por cópia, snapshot ZIP pre
 pelo Core e ligação simbólica. Todos usam Composer real em pastas descartáveis,
 confirmam o ficheiro marcador 2.0.0 instalado e preservam o marcador 1.3.4 da cópia
 antiga. Nenhum dado ou ficheiro do site online foi consultado ou alterado.
+
+### Core 3.1.11 — resultados
+
+- Antes da correção, o teste de ligação simbólica falhou com a mensagem reportada
+  (1.3.4 instalada, 2.0.0 disponível); os dois cenários sem ligação passaram.
+- Após a correção: 23 testes específicos e 143 asserções aprovados.
+- Suite completa: 297 testes e 1482 asserções aprovados em PHP 8.4.27/SQLite,
+  incluindo os três novos percursos com Composer real. Relatório no workspace:
+  `output/contact-updater-3.1.11-tests.xml`.
+- Lint dos PHP alterados, diff e integridade 3.1.11 aprovados, tanto na cópia de
+  trabalho como no arquivo Git canónico exportado.
+- Publicação para o seguimento do teste online já solicitado pelo utilizador;
+  mantêm-se os limites da matriz ainda não validada em PHP 8.3/8.5, MySQL e
+  cópias de todos os sites. Não se apresenta como aprovação desses ambientes.
+- Atualizar o Core para 3.1.11 e voltar a atualizar o plugin pelo painel.
