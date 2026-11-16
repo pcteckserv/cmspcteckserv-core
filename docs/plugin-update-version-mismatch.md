@@ -33,10 +33,15 @@ por ter uma versão Composer de desenvolvimento antiga.
 - Suite completa aprovada em PHP 8.4.27/SQLite: 294 testes, 1464 asserções,
   incluindo transações com Composer real; relatório em
   `output/contact-updater-tests.xml` no workspace.
-- Permanecem as restantes verificações obrigatórias de publicação: matriz de
-  runtimes/bases de dados, integridade da futura versão e cópias dos sites.
-  Não criar versão, tag ou push antes de as concluir.
-- Esta alteração ainda não constitui uma versão publicada.
+- Integridade do manifesto 3.1.10 e do ZIP Git canónico LF aprovada.
+- Permanecem por validar a restante matriz de runtimes/bases de dados e as
+  cópias dos sites. Estes resultados não certificam PHP 8.3/8.5 ou MySQL.
+- Após ser informado de que faltavam validações, o utilizador pediu
+  expressamente «tagar e enviar para testar online». A publicação 3.1.10
+  avança nesse âmbito de teste por instrução do utilizador, com estes limites
+  documentados; não é apresentada como aprovação da matriz completa.
+- Atualizar primeiro o Core pelo painel e depois voltar a verificar e atualizar
+  o plugin. Não se alteraram os ficheiros nem os dados do site online.
 
 Formulários de contacto 2.0.0 exige Core ^3.1.0. A disponibilidade depende ainda
 de o plugin estar instalado e ativo e de a origem configurada estar acessível.
