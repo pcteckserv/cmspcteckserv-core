@@ -433,7 +433,7 @@ class PathPluginUpdateTest extends TestCase
                         [
                             'type' => 'path',
                             'url' => '/source',
-                            'options' => ['versions' => ['tests/plugin' => '1.0.1']],
+                            'options' => ['versions' => ['tests/plugin' => '1.0.1'], 'symlink' => false, 'reference' => 'config'],
                         ],
                         json_decode($command[3], true, 512, JSON_THROW_ON_ERROR),
                     );

@@ -81,3 +81,32 @@ antiga. Nenhum dado ou ficheiro do site online foi consultado ou alterado.
   mantêm-se os limites da matriz ainda não validada em PHP 8.3/8.5, MySQL e
   cópias de todos os sites. Não se apresenta como aprovação desses ambientes.
 - Atualizar o Core para 3.1.11 e voltar a atualizar o plugin pelo painel.
+
+## Diagnóstico efetivo do alojamento e Core 3.1.12
+
+O relatório fornecido pelo utilizador após Core 3.1.11 confirmou outro estado:
+Composer instalado declara 2.0.0 num ZIP preservado; o lock declara 2.0.0 por
+path; ambos têm a mesma referência. Os manifestos em vendor e packages contêm
+efetivamente 1.3.4, enquanto a origem em cache contém 2.0.0. Portanto, neste
+alojamento a divergência é física, não apenas cache realpath.
+
+O novo teste de regressão reproduz esta combinação com Composer real: instala
+um ZIP com manifesto 1.3.4 e metadados 2.0.0, prepara um lock para path sem
+instalar e iguala a referência dos metadados à do lock. Antes da correção,
+a atualização e a reinstalação terminam com a mesma mensagem 1.3.4/2.0.0.
+
+A configuração da origem path passa a usar `reference: config` e `symlink:
+false`. A referência é calculada pelo Composer a partir do manifesto/configuração
+da origem, distinguindo-a do ZIP preservado com referência coincidente. Os
+ficheiros são instalados por cópia e a verificação física posterior continua
+obrigatória. Não se altera apenas a versão declarada nem se elimina a cópia
+antiga em packages.
+
+O teste confirma explicitamente os tipos ZIP/path e a referência coincidente
+antes da atualização; depois verifica o marcador e versão física 2.0.0, a origem
+path instalada, ausência de ligação simbólica e preservação do marcador 1.3.4
+na cópia antiga. Também são mantidos os testes de cópia normal, ZIP e junction.
+
+A publicação de seguimento mantém o âmbito autorizado de teste online e os
+limites da matriz de compatibilidade documentados acima. O site online não é
+alterado diretamente por este trabalho.

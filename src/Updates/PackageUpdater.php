@@ -121,6 +121,9 @@ class PackageUpdater
                     'url' => $source->repositoryPath,
                     'options' => [
                         'versions' => [$package => $availableVersion],
+                        // Distinguir esta origem de ZIPs preservados com a mesma versão/referência.
+                        'symlink' => false,
+                        'reference' => 'config',
                     ],
                 ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),
             ]));

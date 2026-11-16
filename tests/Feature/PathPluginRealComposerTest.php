@@ -30,7 +30,12 @@ class PathPluginRealComposerTest extends TestCase
         $this->updateFixture(false, true);
     }
 
-    private function updateFixture(bool $frozen, bool $symlink = false): void
+    public function test_updates_when_lock_is_new_path_but_installed_zip_has_same_version_and_reference(): void
+    {
+        $this->updateFixture(true, false, true);
+    }
+
+    private function updateFixture(bool $frozen, bool $symlink = false, bool $drifted = false): void
     {
         $original = base_path();
         $root = $original.'/tests/.runtime/plugin-real-'.bin2hex(random_bytes(6));
@@ -50,6 +55,7 @@ class PathPluginRealComposerTest extends TestCase
             foreach (['composer.json','cms-plugin.json','marker.txt'] as $file) $zip->addFile($root.'/packages/tests/plugin/'.$file, 'plugin/'.$file);
             $zip->close();
             $repository = ['type'=>'package','package'=>['name'=>'tests/plugin','version'=>'dev-main','type'=>'library','extra'=>['cms-original-dist-type'=>'path'],'dist'=>['type'=>'zip','url'=>$root.'/old-plugin.zip','reference'=>'frozen']]];
+            if ($drifted) $repository['package']['version'] = '2.0.0';
         }
         File::put($root.'/composer.json', $json([
             'name'=>'tests/host', 'require'=>['tests/plugin'=>'*@dev'],
@@ -61,6 +67,20 @@ class PathPluginRealComposerTest extends TestCase
         File::put($root.'/artisan', '<?php exit(0);');
         try {
             (new Process([PHP_BINARY,$composer,'install','--no-interaction','--no-scripts'], $root))->setTimeout(120)->mustRun();
+            if ($drifted) {
+                $newRepository = ['type'=>'path','url'=>$root.'/upstream/plugin','options'=>['versions'=>['tests/plugin'=>'2.0.0']]];
+                (new Process([PHP_BINARY,$composer,'config','repositories.cms-plugin-test-plugin',$json($newRepository)],$root))->setTimeout(120)->mustRun();
+                (new Process([PHP_BINARY,$composer,'update','tests/plugin','--no-install','--no-scripts','--no-interaction'],$root))->setTimeout(120)->mustRun();
+                $locked = json_decode(File::get($root.'/composer.lock'),true);
+                $installed = json_decode(File::get($root.'/vendor/composer/installed.json'),true);
+                $installed['packages'][0]['dist']['reference'] = $locked['packages'][0]['dist']['reference'];
+                File::put($root.'/vendor/composer/installed.json',$json($installed));
+                $this->assertSame('2.0.0', $installed['packages'][0]['version']);
+                $this->assertSame('zip', $installed['packages'][0]['dist']['type']);
+                $this->assertSame('path', $locked['packages'][0]['dist']['type']);
+                $this->assertSame($locked['packages'][0]['dist']['reference'], $installed['packages'][0]['dist']['reference']);
+                $this->assertSame('1.3.4', json_decode(File::get($root.'/vendor/tests/plugin/cms-plugin.json'),true)['version']);
+            }
             $plugin = InstalledPlugin::query()->create([
                 'slug'=>'test-plugin','name'=>'tests/plugin','package'=>'tests/plugin','label'=>'Teste',
                 'status'=>'enabled','installed_version'=>'1.3.4','metadata'=>['repository_type'=>'path','version'=>'1.3.4'],
@@ -75,6 +95,9 @@ class PathPluginRealComposerTest extends TestCase
             $this->assertSame('2.0.0', File::get($root.'/vendor/tests/plugin/marker.txt'));
             $this->assertSame('2.0.0', $plugin->fresh()->installed_version);
             $this->assertSame('1.3.4', File::get($root.'/packages/tests/plugin/marker.txt'));
+            $updated = json_decode(File::get($root.'/vendor/composer/installed.json'),true)['packages'][0];
+            $this->assertSame('path', $updated['dist']['type']);
+            $this->assertFalse(is_link($root.'/vendor/tests/plugin'));
         } finally {
             $this->app->setBasePath($original);
             File::deleteDirectory($root);

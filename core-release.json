@@ -1,6 +1,6 @@
 {
     "schema": 1,
-    "version": "3.1.11",
+    "version": "3.1.12",
     "files": {
         "composer.json": "ee340446e4cb4b59fcc69d7ad0fda0e32b67fce1a3d444a9c7974096b0e49efc",
         "config/cms-backups.php": "3f9e5e65aa0cc01ee4d2baf45a76b31cc9920fa5b5560e041c33d22d69d178be",
@@ -360,7 +360,7 @@
         "src/Updates/GitTagUpdateChecker.php": "dbf816253b0a88c12a58233d0072b9bae80780eac0f7b563b09a38de02637793",
         "src/Updates/InstalledComposerSnapshot.php": "867ffec8cdbcc2b85106b1f030c38f4374d091bf14bb7506dfae3cc54d7e7dea",
         "src/Updates/InstalledPackage.php": "5cf75195d9bd8261697b41aba1a56da9d44eaf36004c7867afffff117fc0d688",
-        "src/Updates/PackageUpdater.php": "e4776e28fba96c6c03b3a214a348530462dcfd380e58921f70435a318583ed32",
+        "src/Updates/PackageUpdater.php": "d4fe4ca873154abd0fa1597461b3434dbe087f73d10a0f99a9e348e729c3b87c",
         "src/Updates/PackageVersionRegistry.php": "cf7aca2e705c4779c50bcc24b8d4186a870f4b16f2529314522858f85ce38ad5",
         "src/Updates/StarterPackage.php": "07770dcd305b339532b53270af68001c52f4903a860f8eab5ac8e54256691c67",
         "src/Updates/StarterUpdater.php": "09d1af0e564e008587ea3d52d29124f704a1d17439e7b5e9192224255a683e65",
