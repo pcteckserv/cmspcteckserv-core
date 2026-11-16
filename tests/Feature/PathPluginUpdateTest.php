@@ -55,14 +55,24 @@ class PathPluginUpdateTest extends TestCase
         $this->assertTrue($next->hasUpdate());
     }
 
+    public function test_atualiza_quando_composer_ja_anuncia_release_mas_manifesto_instalado_ainda_e_antigo(): void
+    {
+        $plugin = $this->plugin();
+        $this->repository();
+        $result = $this->updater(true, '1.0.1', '1.0.0', '1.0.1')->update($plugin->package);
+
+        $this->assertTrue($result->successful, $result->message);
+        $this->assertSame('1.0.1', $plugin->fresh()->installed_version);
+    }
+
     public function test_nao_reinstala_plugin_path_quando_junction_ja_reflete_nova_versao(): void
     {
         $plugin = $this->plugin();
         $this->repository();
         $result = $this->updater(true, '1.0.1', '1.0.1')->update($plugin->package);
 
-        $this->assertTrue($result->successful);
-        $this->assertSame('1.0.1', $plugin->fresh()->installed_version);
+        $this->assertFalse($result->successful);
+        $this->assertSame('Não existe uma atualização disponível para este plugin.', $result->message);
     }
 
     public function test_falha_de_reinstalacao_nao_marca_release_como_aplicada(): void
@@ -140,7 +150,7 @@ class PathPluginUpdateTest extends TestCase
             ['version' => '1.1.0', 'dist' => ['type' => 'path']],
         );
         $versionReader = Mockery::mock(InstalledPluginVersionReader::class);
-        $versionReader->shouldReceive('read')->once()->with($plugin->package)->andReturn('1.1.0');
+        $versionReader->shouldReceive('read')->twice()->with($plugin->package)->andReturn('1.0.0', '1.1.0');
         $composer = Mockery::mock(ComposerCommand::class);
         $composer->shouldReceive('build')->andReturnUsing(fn (array $args) => ['composer', ...$args]);
         $composer->shouldReceive('php')->andReturnUsing(fn (array $args) => ['php', ...$args]);
@@ -380,18 +390,19 @@ class PathPluginUpdateTest extends TestCase
         bool $reinstallSuccessful,
         string $manifestVersion = '1.0.1',
         string $initialManifestVersion = '1.0.0',
+        string $composerVersion = 'dev-main',
     ): PackageUpdater
     {
         $reader = Mockery::mock(ComposerInstalledPackageReader::class);
-        $reader->shouldReceive('read')->times($reinstallSuccessful && $manifestVersion === '1.0.1' ? 2 : 1)
-            ->with('tests/plugin')->andReturn(['version' => 'dev-main', 'dist' => ['type' => 'path']]);
+        $reader->shouldReceive('read')->times($initialManifestVersion === '1.0.1' ? 1 : ($reinstallSuccessful && $manifestVersion === '1.0.1' ? 2 : 1))
+            ->with('tests/plugin')->andReturn(['version' => $composerVersion, 'dist' => ['type' => 'path']]);
         $composer = Mockery::mock(ComposerCommand::class);
         $composer->shouldReceive('build')->andReturnUsing(fn (array $arguments) => ['composer', ...$arguments]);
         $composer->shouldReceive('php')->andReturnUsing(fn (array $arguments) => ['php', ...$arguments]);
         $versionReader = Mockery::mock(InstalledPluginVersionReader::class);
-        $manifestVersions = $initialManifestVersion === '1.0.1' || ! $reinstallSuccessful
+        $manifestVersions = $initialManifestVersion === '1.0.1'
             ? [$initialManifestVersion]
-            : [$initialManifestVersion, $manifestVersion];
+            : [$initialManifestVersion, $initialManifestVersion, ...($reinstallSuccessful ? [$manifestVersion] : [])];
         $versionReader->shouldReceive('read')->times(count($manifestVersions))
             ->with('tests/plugin')->andReturnValues($manifestVersions);
         $updater = Mockery::mock(PackageUpdater::class, [
@@ -411,6 +422,7 @@ class PathPluginUpdateTest extends TestCase
         if ($reinstallSuccessful && $manifestVersion === '1.0.1') {
             $expectedCommands = [...$expectedCommands, 'artisan', 'artisan'];
         }
+        if ($initialManifestVersion === '1.0.1') $expectedCommands = [];
         $updater->shouldReceive('run')->times(count($expectedCommands))
             ->andReturnUsing(function (array $command) use (&$commands, $expectedCommands, $reinstallSuccessful): Process {
                 $commands[] = $command[1];

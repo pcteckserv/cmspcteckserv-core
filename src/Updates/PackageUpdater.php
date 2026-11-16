@@ -95,7 +95,12 @@ class PackageUpdater
 
         if ($plugin !== null) {
             $release = $plugin->metadata['last_applied_release'] ?? $plugin->metadata['version'] ?? null;
-            $state = new InstalledPackage($package, $previousVersion, $availableVersion, 'stable', null, is_string($release) ? $release : null);
+            // Os snapshots path podem conservar uma versão Composer diferente dos ficheiros.
+            // Use a mesma versão efetiva que o painel antes de decidir se há atualização.
+            $comparisonVersion = $isPathPlugin
+                ? (($this->installedPluginVersionReader ?? new InstalledPluginVersionReader())->read($package) ?? $previousVersion)
+                : $previousVersion;
+            $state = new InstalledPackage($package, $comparisonVersion, $availableVersion, 'stable', null, is_string($release) ? $release : null);
             if (!$state->hasUpdate()) return new UpdateResult(false, 'Não existe uma atualização disponível para este plugin.');
         }
 
