@@ -1,6 +1,6 @@
 {
     "schema": 1,
-    "version": "3.2.0",
+    "version": "3.2.1",
     "files": {
         "composer.json": "ee340446e4cb4b59fcc69d7ad0fda0e32b67fce1a3d444a9c7974096b0e49efc",
         "config/cms-backups.php": "d4cb4ceae8f5a148090a02ea9b23dd38d6bc34fd64090351dfc2511dfb7db125",
@@ -342,7 +342,7 @@
         "src/Services/Media/MediaService.php": "9efbd86b8f61192663ae04ba22a5f8530df3b5bfe7499b144ad4005a74710d64",
         "src/Services/Media/MediaValidator.php": "3303be657936b7db713a88abc02630cfb1c5978a825d4567d55433d868dea814",
         "src/Services/Media/StorageMediaUrlGenerator.php": "33555b0f33b63085489ad72bbdb8b6a0924f565ed96dab47f51be31ae09bf8c3",
-        "src/Services/PermissionSynchronizer.php": "2100f1004b1ea937cd78aac467382543b623d04b1b8e58c449062c5af3c9484b",
+        "src/Services/PermissionSynchronizer.php": "162a6e588c5dbf9b747573e45ee00525f3215b3af8c946c8954a8372b5f8bbdd",
         "src/Services/Queues/QueueMonitor.php": "2a9cb645db65b07a589518238da71fd53ea918ad99944a49d59a038e0976515c",
         "src/Services/StaffProfileUpdater.php": "a3cce516a4ec8c26e4b88401008187c84c4959b453dffe28b526671b655e982d",
         "src/Services/UserModelResolver.php": "83e4fb192cb13ef3235e851e4eb25555d753929da1063f2b2444b48b4e281f86",

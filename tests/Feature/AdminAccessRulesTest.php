@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Pcteckserv\CmsCore\Models\InstalledPlugin;
 use Pcteckserv\CmsCore\Models\Permission;
 use Pcteckserv\CmsCore\Models\Role;
 use Pcteckserv\CmsCore\Services\PermissionSynchronizer;
@@ -70,6 +71,7 @@ class AdminAccessRulesTest extends TestCase
 
     public function test_grupos_de_permissoes_de_plugins_ficam_depois_dos_grupos_do_core(): void
     {
+        InstalledPlugin::create(['slug' => 'ordering-plugin', 'name' => 'Ordering', 'label' => 'Ordering', 'package' => 'tests/ordering', 'provider' => 'Tests\\Ordering', 'status' => 'enabled']);
         app(PermissionRegistry::class)->register([
             'orderingplugin.test.view' => ['label' => 'Ver teste', 'group' => 'A plugin'],
         ], plugin: 'ordering-plugin');
@@ -79,7 +81,7 @@ class AdminAccessRulesTest extends TestCase
             ->groupBy('group')
             ->keys();
         $pluginGroups = collect(app(PermissionRegistry::class)->all())
-            ->filter(fn ($permission): bool => $permission->plugin !== null)
+            ->filter(fn ($permission): bool => $permission->plugin === 'ordering-plugin')
             ->pluck('group')
             ->unique()
             ->sort()
@@ -89,6 +91,26 @@ class AdminAccessRulesTest extends TestCase
             $pluginGroups->all(),
             array_slice($groups->all(), -$pluginGroups->count()),
         );
+    }
+
+    public function test_disabled_plugin_permissions_are_hidden_and_preserved_when_editing_roles(): void
+    {
+        $registry = app(PermissionRegistry::class);
+        $registry->register(['sample.manage' => ['label' => 'Gerir plugin de ensaio', 'group' => 'Ensaio']], plugin: 'sample');
+        $plugin = InstalledPlugin::create(['slug' => 'sample', 'name' => 'Sample', 'label' => 'Sample', 'package' => 'tests/sample', 'provider' => 'Tests\\Sample', 'status' => 'disabled']);
+        $service = app(PermissionSynchronizer::class);
+        $service->sync();
+        $permission = Permission::where('key', 'sample.manage')->firstOrFail();
+        $role = Role::create(['key' => 'core.sample_test', 'name' => 'Ensaio']);
+        $role->permissions()->sync([$permission->id]);
+        $this->actingAs($this->superAdmin())->get(route('admin.roles.edit', $role))->assertOk()->assertDontSee('Gerir plugin de ensaio');
+        $this->put(route('admin.roles.update', $role), ['name' => 'Ensaio', 'key' => 'core.sample_test', 'permissions' => []])->assertSessionHasNoErrors();
+        $this->assertSame([$permission->id], $role->fresh()->permissions()->pluck('cms_permissions.id')->all());
+        $plugin->update(['status' => 'enabled']);
+        $this->get(route('admin.roles.edit', $role))->assertOk()->assertSee('Gerir plugin de ensaio');
+        $plugin->delete();
+        $this->get(route('admin.users.create'))->assertOk()->assertDontSee('Gerir plugin de ensaio');
+        $this->assertTrue($this->superAdmin()->can('sample.manage'));
     }
 
     public function test_login_com_sessao_iniciada_redireciona_para_o_painel(): void

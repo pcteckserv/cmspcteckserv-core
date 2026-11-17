@@ -3,6 +3,7 @@
 namespace Pcteckserv\CmsCore\Services;
 
 use Illuminate\Support\Collection;
+use Pcteckserv\CmsCore\Models\InstalledPlugin;
 use Pcteckserv\CmsCore\Models\Permission;
 use Pcteckserv\CmsCore\Support\Permissions\PermissionRegistry;
 
@@ -36,12 +37,13 @@ class PermissionSynchronizer
         $this->sync();
 
         $permissions = Permission::query()
-            ->whereIn('key', array_keys($this->registry->all()))
+            ->whereIn('key', $this->visibleKeys())
             ->orderBy('group')
             ->orderBy('label')
             ->get();
 
         $pluginGroups = collect($this->registry->all())
+            ->only($permissions->pluck('key')->all())
             ->filter(fn ($definition): bool => $definition->plugin !== null)
             ->pluck('group')
             ->unique()
@@ -65,7 +67,7 @@ class PermissionSynchronizer
         }
 
         $query = Permission::query()->whereIn('id', $existingIds);
-        $registeredKeys = array_keys($this->registry->all());
+        $registeredKeys = $this->visibleKeys();
 
         if ($registeredKeys !== []) {
             $query->whereNotIn('key', $registeredKeys);
@@ -75,5 +77,16 @@ class PermissionSynchronizer
             ...$requestedIds,
             ...$query->pluck('id')->all(),
         ]));
+    }
+
+    private function visibleKeys(): array
+    {
+        $enabled = config('cms-plugins.enabled', true)
+            ? InstalledPlugin::query()->where('status', 'enabled')->pluck('slug')->flip()
+            : collect();
+
+        return collect($this->registry->all())
+            ->filter(fn ($definition) => $definition->plugin === null || $enabled->has($definition->plugin))
+            ->keys()->all();
     }
 }
