@@ -812,3 +812,6 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
         });
     }
 }
+
+// Só permitir preenchimento dos acessos de um novo utilizador após interação explícita.
+(()=>{const bind=()=>document.querySelectorAll('[data-new-user-field]').forEach(input=>{input.addEventListener('focus',()=>input.readOnly=false);});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();})();

@@ -147,6 +147,15 @@ class AdminAccessRulesTest extends TestCase
             ->assertSee('Editor');
     }
 
+    public function test_new_user_fields_do_not_offer_saved_login_credentials(): void
+    {
+        $html=$this->actingAs($this->superAdmin())->get(route('admin.users.create'))->assertOk()->getContent();
+        $this->assertStringContainsString('autocomplete="off"', $html);
+        $this->assertStringContainsString('autocomplete="new-password"', $html);
+        $this->assertSame(3,substr_count($html,'readonly data-new-user-field'));
+        $this->assertDoesNotMatchRegularExpression('/name="password"[^>]*\bvalue=/', $html);
+    }
+
     public function test_formulario_de_utilizador_permite_apenas_uma_role(): void
     {
         $admin = $this->superAdmin();

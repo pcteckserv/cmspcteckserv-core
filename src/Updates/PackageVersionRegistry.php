@@ -122,6 +122,7 @@ class PackageVersionRegistry
             ->mapWithKeys(fn (InstalledPlugin $plugin): array => [$plugin->package => $plugin->metadata['last_applied_release'] ?? null]);
 
         return DB::table('cms_installed_packages')
+            ->whereIn('name', $this->configuredPackages())
             ->orderBy('name')
             ->get()
             ->map(fn (object $package): InstalledPackage => new InstalledPackage(

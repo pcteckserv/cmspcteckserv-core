@@ -149,6 +149,20 @@ class StarterUpdater
             $before = $current[$key] ?? []; $after = $incoming[$key] ?? [];
             unset($before['pcteckserv/cms-core'], $after['pcteckserv/cms-core']);
             ksort($before); ksort($after);
+            if ($key === 'require' && array_keys($before) === array_keys($after)) {
+                $parser = new \Composer\Semver\VersionParser;
+                foreach ($before as $package => $constraint) {
+                    if ($constraint === $after[$package]) continue;
+                    // Apenas alargar versões já aceites; não instalar nem substituir dependências.
+                    try {
+                        if (\Composer\Semver\Intervals::isSubsetOf($parser->parseConstraints($constraint), $parser->parseConstraints($after[$package]))) {
+                            $after[$package] = $constraint;
+                        }
+                    } catch (\UnexpectedValueException) {
+                        // Restrições ambíguas mantêm a recusa abaixo.
+                    }
+                }
+            }
             if ($before !== $after) throw new \RuntimeException('Este Starter altera dependências ou autoload. É necessária uma publicação preparada separadamente.');
         }
         $installed = $read($destination.'/vendor/composer/installed.json'); $lock = $read($source.'/composer.lock');

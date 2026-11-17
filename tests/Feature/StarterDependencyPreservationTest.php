@@ -27,6 +27,12 @@ final class StarterDependencyPreservationTest extends TestCase
             $this->assertSame('keep-lock', File::get($root.'/destination/composer.lock'));
             $this->assertSame('new-content', File::get($root.'/destination/sentinel'));
             File::delete($root.'/destination/sentinel');
+            $manifest['require']['tests/plugin'] = '^1.0 || ^2.0';
+            File::put($root.'/source/composer.json', json_encode($manifest));
+            $updater->copy($root.'/source',$root.'/destination');
+            $this->assertSame($original, File::get($root.'/destination/composer.json'));
+            $this->assertSame('keep-lock', File::get($root.'/destination/composer.lock'));
+            File::delete($root.'/destination/sentinel');
             $manifest['require']['tests/plugin'] = '^2.0'; File::put($root.'/source/composer.json', json_encode($manifest));
             try { $updater->copy($root.'/source',$root.'/destination'); $this->fail('A alteração de dependências tinha de ser recusada.'); }
             catch (RuntimeException $error) { $this->assertStringContainsString('dependências', $error->getMessage()); }

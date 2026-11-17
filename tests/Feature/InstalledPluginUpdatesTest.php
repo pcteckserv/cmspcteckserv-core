@@ -13,6 +13,15 @@ class InstalledPluginUpdatesTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_stale_catalogue_rows_do_not_appear_in_updates(): void
+    {
+        config(['cms-core.updates.packages'=>[], 'cms-plugins.plugins'=>[]]);
+        \Illuminate\Support\Facades\DB::table('cms_installed_packages')->insert(['name'=>'tests/not-installed','available_version'=>'9.0.0','installed_version'=>null,'channel'=>'stable']);
+        $registry=app(PackageVersionRegistry::class);
+        $this->assertCount(0,$registry->all());
+        $this->assertDatabaseHas('cms_installed_packages',['name'=>'tests/not-installed']);
+    }
+
     public function test_plugin_instalado_so_entra_no_registo_de_atualizacoes_depois_de_ativado(): void
     {
         require_once dirname(__DIR__, 2).'/src/Plugins/PluginCatalog.php';
