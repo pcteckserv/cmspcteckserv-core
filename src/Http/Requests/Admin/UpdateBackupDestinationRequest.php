@@ -11,6 +11,9 @@ class UpdateBackupDestinationRequest extends FormRequest
 {
     protected function failedValidation(Validator $validator): void
     {
+        if ($this->expectsJson()) {
+            throw new ValidationException($validator);
+        }
         throw new ValidationException($validator, redirect($this->getRedirectUrl())
             ->withInput($this->except(['password', 'google_client_secret']))
             ->withErrors($validator, $this->errorBag));

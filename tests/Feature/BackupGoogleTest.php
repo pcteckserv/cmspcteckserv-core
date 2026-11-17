@@ -136,6 +136,7 @@ class BackupGoogleTest extends TestCase
     public function test_validation_does_not_flash_credentials_and_destination_selection_renders(): void
     {
         $destination = $this->destination();
+        $this->actingAs($this->admin())->putJson(route('admin.backups.destinations.update', $destination), ['protocol' => 'invalid', 'google_client_secret' => 'do-not-flash'])->assertUnprocessable();
         $this->actingAs($this->admin())->put(route('admin.backups.destinations.update', $destination), ['protocol' => 'invalid', 'google_client_secret' => 'do-not-flash', 'password' => 'do-not-flash-either'])->assertSessionHasErrors();
         $this->assertArrayNotHasKey('google_client_secret', session('_old_input', []));
         $this->assertArrayNotHasKey('password', session('_old_input', []));
