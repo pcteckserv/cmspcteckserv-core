@@ -73,7 +73,9 @@ e não há deslocamento horizontal da página. As tabelas usam scroll próprio.
 
 Lint dos PHP alterados, Composer validate e git diff --check aprovados.
 Manifesto 3.2.0 regenerado e verificado, incluindo os ficheiros instalados nas
-cópias. Verificar também os arquivos Git normalizado e habitual antes da tag.
+cópias e os arquivos Git normalizado e habitual (LF/CRLF).
+A preservação do contrato JSON 422 foi confirmada numa revisão final adicional
+(cinco testes de validação/gestão, 19 asserções), sem guardar segredos na sessão.
 O CI remoto deve ser identificado pelo seu resultado observado, separadamente
 dos ensaios locais. Os registos detalhados permanecem no workspace privado em
 `output/core-backups-*`, sem credenciais de produção.
