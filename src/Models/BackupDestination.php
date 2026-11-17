@@ -27,9 +27,12 @@ class BackupDestination extends Model
         'connection_status',
         'last_tested_at',
         'last_error',
+        'google_client_id', 'google_client_secret', 'google_tokens', 'google_folder_id',
     ];
 
     protected $casts = [
+        'google_client_secret' => 'encrypted',
+        'google_tokens' => 'encrypted:array',
         'port' => 'integer',
         'timeout' => 'integer',
         'passive' => 'boolean',
@@ -37,6 +40,20 @@ class BackupDestination extends Model
         'verify_ssl' => 'boolean',
         'last_tested_at' => 'datetime',
     ];
+
+    protected $hidden = ['password', 'google_client_secret', 'google_tokens'];
+
+    public function snapshot(): array
+    {
+        $values = $this->only(['disk', 'protocol', 'host', 'port', 'username', 'remote_path', 'timeout', 'passive', 'ssl', 'verify_ssl', 'ssh_fingerprint', 'google_client_id', 'google_folder_id']);
+        if (in_array($this->protocol, ['ftp', 'ftps'], true)) {
+            $values['password'] = $this->password_plain;
+        }
+        // O Google usa a autorização atual do destino, para que desligar a conta
+        // interrompa também o acesso aos backups históricos.
+
+        return $values;
+    }
 
     public function plans(): HasMany
     {

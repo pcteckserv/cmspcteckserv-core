@@ -17,7 +17,7 @@ class UpdateBackupPlanRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'enabled' => ['nullable', 'boolean'],
-            'type' => ['required', Rule::in(['database', 'files', 'media', 'full'])],
+            'type' => ['required', Rule::in(['database', 'files', 'media', 'images', 'full'])],
             'frequency' => ['required', Rule::in(['every_15_minutes', 'every_30_minutes', 'hourly', 'every_2_hours', 'every_3_hours', 'every_4_hours', 'every_6_hours', 'every_8_hours', 'every_12_hours', 'daily', 'weekly', 'weekdays', 'monthly'])],
             'run_at' => ['required', 'date_format:H:i'],
             'weekdays' => ['nullable', 'array'],

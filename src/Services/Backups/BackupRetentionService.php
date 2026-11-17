@@ -5,74 +5,62 @@ namespace Pcteckserv\CmsCore\Services\Backups;
 use Illuminate\Support\Facades\Storage;
 use Pcteckserv\CmsCore\Models\BackupAuditLog;
 use Pcteckserv\CmsCore\Models\BackupPlan;
+use Pcteckserv\CmsCore\Models\BackupRun;
+use Pcteckserv\CmsCore\Services\Backups\BackupException as RuntimeException;
 
 class BackupRetentionService
 {
-    public function __construct(private readonly BackupStorageService $storage)
-    {
-    }
+    public function __construct(private readonly BackupStorageService $storage) {}
 
     public function apply(?BackupPlan $plan): int
     {
-        if (! $plan) {
+        if (! $plan || (! $plan->retention_days && ! $plan->retention_count)) {
             return 0;
         }
-
-        $query = $plan->runs()
-            ->where('protected', false)
-            ->whereIn('status', ['success', 'partial'])
-            ->oldest();
-
-        if ($plan->retention_days) {
-            $query->where('created_at', '<', now()->subDays($plan->retention_days));
-        }
-
+        $runs = $plan->runs()->where('protected', false)->whereIn('status', ['success', 'partial'])->orderByDesc('created_at')->orderByDesc('id')->get();
         $deleted = 0;
-        foreach ($query->get() as $run) {
-            if ($this->deleteRunFiles($run)) {
-                $run->delete();
+        foreach ($runs as $index => $run) {
+            // Manter sempre a cópia mais recente; ficheiros protegidos não entram no limite.
+            if ($index === 0) {
+                continue;
+            }
+            $expired = $plan->retention_days && $run->created_at->lt(now()->subDays($plan->retention_days));
+            $extra = $plan->retention_count && $index >= $plan->retention_count;
+            if ($expired || $extra) {
+                $this->delete($run);
                 $deleted++;
             }
         }
-
-        if ($plan->retention_count) {
-            $extraRuns = $plan->runs()
-                ->where('protected', false)
-                ->whereIn('status', ['success', 'partial'])
-                ->latest()
-                ->skip($plan->retention_count)
-                ->take(100)
-                ->get();
-
-            foreach ($extraRuns as $run) {
-                if ($this->deleteRunFiles($run)) {
-                    $run->delete();
-                    $deleted++;
-                }
-            }
-        }
-
-        if ($deleted > 0) {
-            BackupAuditLog::query()->create([
-                'action' => 'backups.retention',
-                'result' => 'success',
-                'context' => ['plan_id' => $plan->id, 'deleted' => $deleted],
-            ]);
+        if ($deleted) {
+            BackupAuditLog::create(['action' => 'backups.retention', 'result' => 'success', 'context' => ['plan_id' => $plan->id, 'deleted' => $deleted]]);
         }
 
         return $deleted;
     }
 
-    private function deleteRunFiles($run): bool
+    public function delete(BackupRun $run): void
     {
+        if ($run->protected || in_array($run->status, ['pending', 'running'], true)) {
+            throw new RuntimeException('Este backup está protegido ou em execução.');
+        }
+        // Apagar primeiro o remoto: se falhar, manter a cópia local e o registo.
+        if ($run->remote_path) {
+            $destination = $run->storageDestination();
+            if (! $destination) {
+                throw new RuntimeException('O destino deste backup não está disponível.');
+            }
+            $this->storage->delete($destination, $run->remote_path);
+        }
         if ($run->local_path) {
-            Storage::disk(config('cms-backups.local_disk', 'local'))->delete($run->local_path);
+            $root = trim(config('cms-backups.local_path', 'cms-backups'), '/').'/';
+            if (str_contains($run->local_path, '..') || str_contains($run->local_path, '\\') || ! str_starts_with($run->local_path, $root)) {
+                throw new RuntimeException('Caminho local de backup inválido.');
+            }
+            $disk = Storage::disk(config('cms-backups.local_disk', 'local'));
+            if ($disk->exists($run->local_path) && ! $disk->delete($run->local_path)) {
+                throw new RuntimeException('Não foi possível eliminar o backup local.');
+            }
         }
-
-        if ($run->remote_path && $run->destination) {
-            $this->storage->delete($run->destination, $run->remote_path);
-        }
-
-        return true;
+        $run->delete();
     }
 }

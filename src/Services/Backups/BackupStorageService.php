@@ -5,70 +5,108 @@ namespace Pcteckserv\CmsCore\Services\Backups;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Pcteckserv\CmsCore\Models\BackupDestination;
-use RuntimeException;
-use Throwable;
+use Pcteckserv\CmsCore\Services\Backups\BackupException as RuntimeException;
 
 class BackupStorageService
 {
+    public function __construct(private readonly GoogleDriveBackupService $google, private readonly FtpBackupService $ftp) {}
+
     public function put(BackupDestination $destination, string $localFile, string $filename): string
     {
-        $remotePath = $this->join($destination->remote_path, $filename);
-        $stream = fopen($localFile, 'rb');
-
-        if ($stream === false) {
-            throw new RuntimeException('Não foi possível abrir o ficheiro local do backup.');
+        if ($destination->protocol === 'google') {
+            return $this->google->put($destination, $localFile, $filename);
+        }
+        $path = rtrim($destination->remote_path, '/').'/'.basename($filename);
+        $this->assertSafeRemotePath($destination, $path);
+        if (in_array($destination->protocol, ['ftp', 'ftps'], true)) {
+            $this->ftp->put($destination, $localFile, $path);
+        } else {
+            $stream = fopen($localFile, 'rb');
+            if ($stream === false) {
+                throw new RuntimeException('Não foi possível abrir o backup.');
+            }
+            try {
+                if (! Storage::disk($destination->disk)->put($path, $stream)) {
+                    throw new RuntimeException('Não foi possível enviar o backup.');
+                }
+            } finally {
+                fclose($stream);
+            }
+            if (! Storage::disk($destination->disk)->exists($path)) {
+                throw new RuntimeException('O destino não confirmou o backup.');
+            }
         }
 
-        try {
-            Storage::disk($destination->disk)->put($remotePath, $stream);
-        } finally {
-            fclose($stream);
-        }
-
-        if (! Storage::disk($destination->disk)->exists($remotePath)) {
-            throw new RuntimeException('O ficheiro remoto não foi encontrado após o envio.');
-        }
-
-        return $remotePath;
+        return $path;
     }
 
     public function delete(BackupDestination $destination, string $path): void
     {
+        if ($destination->protocol === 'google') {
+            $this->google->delete($destination, $path);
+
+            return;
+        }
         $this->assertSafeRemotePath($destination, $path);
-        Storage::disk($destination->disk)->delete($path);
+        if (in_array($destination->protocol, ['ftp', 'ftps'], true)) {
+            $this->ftp->delete($destination, $path);
+        } elseif (! Storage::disk($destination->disk)->delete($path)) {
+            throw new RuntimeException('Não foi possível eliminar o backup remoto.');
+        }
     }
 
-    public function test(BackupDestination $destination): void
+    public function download(BackupDestination $destination, string $path, string $target): void
     {
-        $filename = '.cms-backup-test-'.Str::uuid().'.txt';
-        $path = $this->join($destination->remote_path, $filename);
+        if ($destination->protocol === 'google') {
+            $this->google->download($destination, $path, $target);
 
+            return;
+        }
+        $this->assertSafeRemotePath($destination, $path);
+        if (in_array($destination->protocol, ['ftp', 'ftps'], true)) {
+            $this->ftp->download($destination, $path, $target);
+
+            return;
+        }
+        $input = Storage::disk($destination->disk)->readStream($path);
+        if (! is_resource($input)) {
+            throw new RuntimeException('Não foi possível ler o backup.');
+        }
+        $output = fopen($target, 'wb');
         try {
-            Storage::disk($destination->disk)->put($path, 'teste');
-
-            if (! Storage::disk($destination->disk)->exists($path)) {
-                throw new RuntimeException('Não foi possível confirmar o ficheiro de teste.');
+            if (! $output || stream_copy_to_stream($input, $output) === false) {
+                throw new RuntimeException('Não foi possível ler o backup.');
             }
         } finally {
-            try {
-                Storage::disk($destination->disk)->delete($path);
-            } catch (Throwable) {
-                //
+            fclose($input);
+            if (is_resource($output)) {
+                fclose($output);
             }
         }
     }
 
-    private function join(string $directory, string $filename): string
+    public function test(BackupDestination $destination): void
     {
-        return trim($directory, '/').'/'.basename($filename);
+        $file = tempnam(sys_get_temp_dir(), 'cms-backup-test-');
+        if ($file === false) {
+            throw new RuntimeException('Não foi possível criar o teste.');
+        }
+        file_put_contents($file, 'teste');
+        $path = null;
+        try {
+            $path = $this->put($destination, $file, '.cms-backup-test-'.Str::uuid().'.txt');
+        } finally {
+            @unlink($file);
+            if ($path !== null) {
+                $this->delete($destination, $path);
+            }
+        }
     }
 
     private function assertSafeRemotePath(BackupDestination $destination, string $path): void
     {
-        $root = trim($destination->remote_path, '/').'/';
-        $path = trim($path, '/');
-
-        if (str_contains($path, '../') || ! str_starts_with($path, $root)) {
+        $root = rtrim($destination->remote_path, '/').'/';
+        if (preg_match('~(^|/)\.\.(/|$)|[\x00-\x1f\\\\]~', $path) || ! str_starts_with($path, $root) || $path === $root) {
             throw new RuntimeException('Caminho remoto inválido.');
         }
     }

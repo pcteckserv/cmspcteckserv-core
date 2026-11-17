@@ -7,7 +7,8 @@ use Pcteckserv\CmsCore\Jobs\CreateBackupJob;
 
 class CreateBackupCommand extends Command
 {
-    protected $signature = 'cms:backup {--plan=} {--type=full : database, files, media ou full} {--sync}';
+    protected $signature = 'cms:backup {--plan=} {--type=full : database, images, files, media ou full} {--sync}';
+
     protected $description = 'Cria um backup manual através dos serviços do CMS.';
 
     public function handle(): int

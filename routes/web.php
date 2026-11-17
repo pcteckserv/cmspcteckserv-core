@@ -177,6 +177,9 @@ Route::middleware('web')->group(function (): void {
                 Route::post('/scans', [ConsentScansController::class, 'store'])->name('scans.store');
             });
             Route::get('/backups', [BackupsController::class, 'index'])->name('backups.index');
+            Route::post('/backups/destinations/{destination}/google/connect', [\Pcteckserv\CmsCore\Http\Controllers\Admin\BackupGoogleController::class, 'connect'])->middleware('throttle:backups')->name('backups.google.connect');
+            Route::get('/backups/destinations/{destination}/google/callback', [\Pcteckserv\CmsCore\Http\Controllers\Admin\BackupGoogleController::class, 'callback'])->name('backups.google.callback');
+            Route::delete('/backups/destinations/{destination}/google', [\Pcteckserv\CmsCore\Http\Controllers\Admin\BackupGoogleController::class, 'disconnect'])->name('backups.google.disconnect');
             Route::put('/backups/destinations/{destination}', [BackupsController::class, 'updateDestination'])->name('backups.destinations.update');
             Route::post('/backups/destinations/{destination}/test', [BackupsController::class, 'testDestination'])->middleware('throttle:backups')->name('backups.destinations.test');
             Route::put('/backups/plans/{plan}', [BackupsController::class, 'updatePlan'])->name('backups.plans.update');

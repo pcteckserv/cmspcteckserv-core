@@ -86,8 +86,10 @@ Executar em cópias privadas e conservar os relatórios com a versão e o commit
    autoload autoritativo antigo, chave incorreta, envio incompleto/alterado, versão
    Core errada, conclusão e eliminação do finalizador. Não enviar segredos ou URLs
    privadas de recuperação para o Git.
-8. Testar as cópias de CGLimpezas, MaxiHome, StudioFranco e Turkesa, cada uma na
-   sua linha Core. Cobrir página pública, login, autenticação, CSRF, admin/updates,
+8. Testar as cópias de CGLimpezas e MaxiHome, cada uma na
+   sua linha Core. StudioFranco e Turkesa usam outro Core e não pertencem a esta
+   matriz, por indicação do utilizador em 17/11/2026.
+   Cobrir página pública, login, autenticação, CSRF, admin/updates,
    admin/plugins e rotas dos plugins utilizados. Verificar assets e hashes/HEAD/status
    dos originais. Acrescentar novos sites a esta matriz quando forem criados.
 9. Registar resultados, falhas de referência e limites na documentação da versão.

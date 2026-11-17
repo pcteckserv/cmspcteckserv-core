@@ -11,11 +11,13 @@ use Illuminate\Support\Facades\Mail;
 use Pcteckserv\CmsCore\Http\Requests\Admin\UpdateBackupDestinationRequest;
 use Pcteckserv\CmsCore\Http\Requests\Admin\UpdateBackupPlanRequest;
 use Pcteckserv\CmsCore\Jobs\CreateBackupJob;
+use Pcteckserv\CmsCore\Mail\ThemedMail;
 use Pcteckserv\CmsCore\Models\BackupAuditLog;
 use Pcteckserv\CmsCore\Models\BackupDestination;
 use Pcteckserv\CmsCore\Models\BackupPlan;
 use Pcteckserv\CmsCore\Models\BackupRun;
 use Pcteckserv\CmsCore\Models\BackupSchedulerHeartbeat;
+use Pcteckserv\CmsCore\Services\Backups\BackupRetentionService;
 use Pcteckserv\CmsCore\Services\Backups\BackupSchedulerService;
 use Pcteckserv\CmsCore\Services\Backups\BackupStorageService;
 use Pcteckserv\CmsCore\Services\Backups\BackupVerificationService;
@@ -27,16 +29,18 @@ class BackupsController extends Controller
     {
         Gate::authorize('backups.view');
 
-        $destination = BackupDestination::query()->firstOrCreate(
+        $existingPlan = BackupPlan::query()->oldest('id')->first();
+        $destination = $existingPlan?->destination ?? BackupDestination::query()->oldest('id')->first() ?? BackupDestination::query()->firstOrCreate(
             ['name' => 'Destino principal'],
             ['disk' => config('cms-backups.local_disk', 'local'), 'protocol' => 'local', 'remote_path' => config('cms-backups.local_path', 'cms-backups')]
         );
 
-        $plan = BackupPlan::query()->firstOrCreate(
+        $plan = $existingPlan ?? BackupPlan::query()->firstOrCreate(
             ['name' => 'Backup Completo Diário'],
             [
                 'destination_id' => $destination->id,
                 'enabled' => false,
+                'retention_count' => 7,
                 'type' => 'full',
                 'frequency' => 'daily',
                 'run_at' => '02:00',
@@ -47,6 +51,9 @@ class BackupsController extends Controller
             ]
         );
 
+        if (! $plan->destination_id) {
+            $plan->forceFill(['destination_id' => $destination->id])->save();
+        }
         if (! $plan->next_run_at) {
             $plan->forceFill(['next_run_at' => $scheduler->nextRunAt($plan)])->save();
         }
@@ -62,7 +69,15 @@ class BackupsController extends Controller
 
     public function updateDestination(UpdateBackupDestinationRequest $request, BackupDestination $destination): RedirectResponse
     {
-        $destination->fill($request->validated())->save();
+        $destination->fill($request->validated());
+        if ($destination->isDirty(['google_client_id', 'google_client_secret'])) {
+            $destination->google_tokens = null;
+            $destination->google_folder_id = null;
+        }
+        if ($destination->isDirty()) {
+            $destination->forceFill(['connection_status' => 'not_tested', 'last_tested_at' => null]);
+        }
+        $destination->save();
         $this->audit('backups.destination.updated', $request);
 
         return back()->with('cms_backups_success', 'Destino de backups guardado com sucesso.');
@@ -109,7 +124,7 @@ class BackupsController extends Controller
         Gate::authorize('backups.run');
 
         $validated = $request->validate([
-            'type' => ['required', 'in:database,files,media,full'],
+            'type' => ['required', 'in:database,files,media,images,full'],
             'storage_mode' => ['required', 'in:local,remote,local_and_remote'],
         ]);
 
@@ -135,7 +150,7 @@ class BackupsController extends Controller
         }
     }
 
-    public function destroy(Request $request, BackupRun $run): RedirectResponse
+    public function destroy(Request $request, BackupRun $run, BackupRetentionService $retention): RedirectResponse
     {
         Gate::authorize('backups.delete');
 
@@ -143,10 +158,16 @@ class BackupsController extends Controller
             return back()->with('cms_backups_error', 'Backups protegidos não podem ser eliminados.');
         }
 
-        $run->delete();
+        try {
+            $retention->delete($run);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return back()->with('cms_backups_error', 'Não foi possível eliminar todos os ficheiros do backup. O registo foi mantido para nova tentativa.');
+        }
         $this->audit('backups.run.deleted', $request, $run);
 
-        return back()->with('cms_backups_success', 'Backup eliminado do histórico.');
+        return back()->with('cms_backups_success', 'Backup e respetivos ficheiros eliminados.');
     }
 
     public function testEmail(Request $request, BackupPlan $plan): RedirectResponse
@@ -159,7 +180,7 @@ class BackupsController extends Controller
         }
 
         try {
-            Mail::to($emails)->send(new \Pcteckserv\CmsCore\Mail\ThemedMail([
+            Mail::to($emails)->send(new ThemedMail([
                 'subject' => '[CMS PCTECKSERV] Teste de alertas de backup',
                 'heading' => 'Teste de alertas de backup',
                 'body' => 'Este email confirma que os alertas de backups do CMS PCTECKSERV estão configurados.',
@@ -178,7 +199,8 @@ class BackupsController extends Controller
     {
         BackupAuditLog::query()->create([
             'user_id' => $request->user()?->getAuthIdentifier(),
-            'backup_run_id' => $run?->id,
+            'backup_run_id' => $run?->exists ? $run->id : null,
+            'context' => $run && ! $run->exists ? ['deleted_run_id' => $run->id] : null,
             'action' => $action,
             'result' => 'success',
         ]);

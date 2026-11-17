@@ -30,14 +30,31 @@ class BackupRun extends Model
         'protected',
         'failure_reason',
         'manifest',
+        'destination_snapshot',
     ];
 
     protected $casts = [
+        'destination_snapshot' => 'encrypted:array',
         'manifest' => 'array',
         'protected' => 'boolean',
         'started_at' => 'datetime',
         'finished_at' => 'datetime',
     ];
+
+    protected $hidden = ['destination_snapshot'];
+
+    public function storageDestination(): ?BackupDestination
+    {
+        if (! $this->destination_snapshot) {
+            return $this->destination;
+        }
+        $snapshot = $this->destination_snapshot;
+        if (($snapshot['protocol'] ?? null) === 'google' && $this->destination?->protocol === 'google') {
+            return $this->destination;
+        }
+
+        return new BackupDestination($snapshot);
+    }
 
     public function plan(): BelongsTo
     {
