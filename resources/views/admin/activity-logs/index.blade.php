@@ -5,8 +5,8 @@
         <div>
             <h1 class="h3 mb-1">Logs de Atividade</h1>
             <p class="text-secondary mb-0">Auditoria administrativa. Por defeito, apresenta o último mês; ajuste Desde e Até para consultar outro período.</p>
-            @if (is_numeric(config('cms-core.activity_logs.retention_days')) && (int) config('cms-core.activity_logs.retention_days') > 0)
-                <p class="small text-secondary mb-0">Retenção: {{ (int) config('cms-core.activity_logs.retention_days') }} dias. A limpeza automática depende do agendador do servidor.</p>
+            @if (is_numeric(config('cms-core.activity_log.retention_days')) && (int) config('cms-core.activity_log.retention_days') > 0)
+                <p class="small text-secondary mb-0">Retenção: {{ (int) config('cms-core.activity_log.retention_days') }} dias. A limpeza automática depende do agendador do servidor.</p>
             @endif
         </div>
 
@@ -122,7 +122,7 @@
             </table>
         </div>
         <div class="card-footer bg-white">
-            {{ $logs->links('pagination::bootstrap-5') }}
+            {{ $logs->links('cms-core::admin.partials.pagination') }}
         </div>
     </div>
 @endsection

@@ -146,7 +146,7 @@
                 </tbody>
             </table>
         </div>
-        {{ $runs->links('pagination::bootstrap-5') }}
+        {{ $runs->links('cms-core::admin.partials.pagination') }}
     </div>
 
     <form id="backup-google-connect" method="POST" action="{{ route('admin.backups.google.connect', $destination) }}">@csrf</form>

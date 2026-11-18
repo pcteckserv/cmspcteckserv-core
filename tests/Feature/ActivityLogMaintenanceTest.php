@@ -38,7 +38,7 @@ class ActivityLogMaintenanceTest extends TestCase
         for ($i = 0; $i < 26; $i++) {
             ActivityLog::create(['action' => 'pagination.audit']);
         }
-        $html = $this->get(route('admin.activity-logs.index'))->assertOk()->assertSee('pagination')->getContent();
+        $html = $this->get(route('admin.activity-logs.index'))->assertOk()->assertSee('pagination')->assertSee('Retenção: 90 dias')->assertSee('Anterior')->assertSee('Seguinte')->getContent();
         $this->assertStringNotContainsString('class="w-5 h-5"', $html);
         $this->assertStringContainsString('date_from=2026-10-18', $html);
     }
