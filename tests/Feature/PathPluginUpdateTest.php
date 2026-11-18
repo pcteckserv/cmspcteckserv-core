@@ -203,7 +203,9 @@ class PathPluginUpdateTest extends TestCase
         $plugin = $this->plugin();
         $plugin->update(['package' => 'pcteckserv/cms-core', 'metadata' => [], 'status' => 'disabled']);
         config(['cms-plugins.plugins' => ['test-plugin' => ['package' => $plugin->package, 'label' => 'Teste']]]);
-        $this->mock(ComposerInstalledPackageReader::class)->shouldReceive('read')->with($plugin->package)
+        $installed = $this->mock(ComposerInstalledPackageReader::class);
+        $installed->shouldReceive('isAbsent')->with($plugin->package)->andReturnFalse();
+        $installed->shouldReceive('read')->with($plugin->package)
             ->andReturn(['dist' => ['type' => 'path']]);
         $reader = Mockery::mock(InstalledPluginVersionReader::class);
         $reader->shouldReceive('read')->once()->with($plugin->package)->andReturn('1.0.0');

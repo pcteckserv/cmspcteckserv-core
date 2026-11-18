@@ -25,4 +25,6 @@ MaxiHome necessita de uma nova passagem FTP para 3.5.1, com o exportador da tran
 
 CG Limpezas pode atualizar o Core 3.5.0 para 3.5.1 pelo painel. A ponte temporária do seu Starter deve delegar no instalador central quando esta reconciliação estiver disponível, conservando o comportamento antigo na base local 3.0.1.
 
+A pedido do operador, é também entregue um ZIP FTP próprio para a CG Limpezas como alternativa de passagem. Cada ZIP confirma a identidade do projeto. Esta passagem é excecional; depois de concluída, as atualizações compatíveis do Core, Starter e plugins usam o painel de cada site.
+
 Os diagnósticos privados não são publicados no Git e podem ser apagados do alojamento depois de recolher o JSON. Nenhum endereço privado, chave ou dados pessoais são incluídos nesta documentação.
