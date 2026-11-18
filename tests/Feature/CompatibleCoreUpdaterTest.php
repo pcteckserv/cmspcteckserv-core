@@ -460,4 +460,23 @@ final class CompatibleCoreUpdaterTest extends TestCase
             $this->assertSame('actual-installed-code', File::get($directory.'/vendor/tests/path-plugin/installed-marker.txt'));
         }, deployment: true, releaseMode: 'changed', gitDeployment: true, coreSnapshot: true);
     }
+
+    public function test_explicit_recovery_validates_the_declared_distribution_before_preparing_the_real_update(): void
+    {
+        $this->fixture(function ($directory, $updater) {
+            $first = $updater->update('3.1.7');
+            $this->assertTrue($first->successful, $first->message);
+            $canonical = $directory.'/verified-current';
+            File::copyDirectory($directory.'/vendor/pcteckserv/cms-core', $canonical);
+            File::put($directory.'/vendor/pcteckserv/cms-core/release-marker.txt', 'incomplete-old-deployment');
+            $before = File::get($directory.'/composer.json');
+            $this->assertFalse($updater->update('3.1.8')->successful);
+            $this->assertFalse($updater->updateFromVerifiedDistribution('3.1.8', $directory.'/missing-distribution')->successful);
+            $this->assertSame($before, File::get($directory.'/composer.json'));
+            $this->assertSame('incomplete-old-deployment', File::get($directory.'/vendor/pcteckserv/cms-core/release-marker.txt'));
+            $recovered = $updater->updateFromVerifiedDistribution('3.1.8', $canonical);
+            $this->assertTrue($recovered->successful, $recovered->message);
+            $this->assertSame('3.1.8', File::get($directory.'/vendor/pcteckserv/cms-core/release-marker.txt'));
+        }, deployment: true, releaseMode: 'valid', gitDeployment: true, coreSnapshot: true);
+    }
 }

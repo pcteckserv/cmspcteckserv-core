@@ -3,6 +3,7 @@ declare(strict_types=1);
 use Illuminate\Contracts\Console\Kernel;
 use Pcteckserv\CmsCore\Support\ReleaseIntegrity;
 use Pcteckserv\CmsCore\Updates\ComposerDeploymentTransaction;
+use Pcteckserv\CmsCore\Updates\CoreReleasePolicy;
 
 const BOOTSTRAP_KEY_HASH = '__KEY_HASH__';
 const BOOTSTRAP_EXPIRES = __EXPIRES__;
@@ -22,20 +23,6 @@ header('Content-Type: text/html; charset=UTF-8');
 header('Cache-Control: no-store');
 header('Referrer-Policy: no-referrer');
 header("Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'");
-
-function bootstrapMove(string $from, string $to): bool
-{
-    for ($i = 0; $i < (PHP_OS_FAMILY === 'Windows' ? 20 : 1); $i++) {
-        clearstatcache();
-        if (@rename($from, $to)) {
-            return true;
-        }if (PHP_OS_FAMILY === 'Windows') {
-            usleep(100000);
-        }
-    }
-
-    return false;
-}
 
 function bootstrapExtract(string $zipPath, string $destination): void
 {
@@ -62,7 +49,7 @@ function bootstrapExtract(string $zipPath, string $destination): void
                     mkdir($path, 0700, true);
                 }
 
-continue;
+                continue;
             }
             if (! is_dir(dirname($path))) {
                 mkdir(dirname($path), 0700, true);
@@ -83,7 +70,7 @@ $repairNeeded = false;
 $current = '';
 $work = null;
 $mutex = null;
-$maintenanceCreated = false;
+$ready = null;
 try {
     if (PHP_VERSION_ID < 80300 || ! class_exists(ZipArchive::class)) {
         throw new RuntimeException('É necessário PHP 8.3 ou superior com ZIP.');
@@ -134,6 +121,9 @@ try {
             $repairNeeded = true;
         }
     }
+    if (! is_file($core.'/core-release.json') && CoreReleasePolicy::requiresIntegrity($current)) {
+        $repairNeeded = true;
+    }
     $old = json_decode(base64_decode(BOOTSTRAP_OLD_ARCHIVES, true), true, flags: JSON_THROW_ON_ERROR);
     if ($repairNeeded && ! isset($old[$current])) {
         throw new RuntimeException('Os ficheiros atuais não correspondem à versão declarada e esta reposição específica não está incluída. Não atualize até repor a distribuição instalada.');
@@ -149,50 +139,13 @@ try {
             $ready = $work.'/ready-'.bin2hex(random_bytes(8));
             bootstrapExtract($work.'/'.$old[$current], $ready);
             (new ReleaseIntegrity)->assertValid($ready, $current);
-            $maintenance = $root.'/storage/framework/maintenance.php';
-            if (is_file($maintenance)) {
-                throw new RuntimeException('O site já está em manutenção.');
-            }
-            $updateLock = $root.'/storage/app/core-updates/update.lock';
-            if (! is_dir(dirname($updateLock))) {
-                mkdir(dirname($updateLock), 0700, true);
-            }
-            $repairLock = fopen($updateLock, 'c');
-            if (! $repairLock || ! flock($repairLock, LOCK_EX | LOCK_NB)) {
-                throw new RuntimeException('Existe outra atualização em curso.');
-            }
-            $previous = $work.'/previous-core-'.bin2hex(random_bytes(6));
-            try {
-                if (file_put_contents($maintenance, '<?php http_response_code(503); exit("Reposição do Core em curso.");', LOCK_EX) === false) {
-                    throw new RuntimeException('Não foi possível iniciar manutenção.');
-                }
-                $maintenanceCreated = true;
-                if (! bootstrapMove($core, $previous)) {
-                    throw new RuntimeException('Não foi possível preservar o Core anterior.');
-                }
-                if (! bootstrapMove($ready, $core)) {
-                    if (! bootstrapMove($previous, $core)) {
-                        throw new RuntimeException('A reposição falhou; recupere a cópia privada previous-core antes de continuar.');
-                    }
-                    throw new RuntimeException('A reposição falhou e os ficheiros anteriores foram restaurados.');
-                }
-                foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($core, FilesystemIterator::SKIP_DOTS)) as $file) {
-                    if ($file->isFile() && function_exists('opcache_invalidate')) {
-                        @opcache_invalidate($file->getPathname(), true);
-                    }
-                }
-                unlink($maintenance);
-                $maintenanceCreated = false;
-            } finally {
-                flock($repairLock, LOCK_UN);
-                fclose($repairLock);
-            }
         }
         require $root.'/vendor/autoload.php';
         $app = require $root.'/bootstrap/app.php';
         $app->make(Kernel::class)->bootstrap();
         config(['cms-core.updates.allow_core_updates' => true, 'cms-core.updates.composer_binary' => $work.'/composer.phar']);
-        $result = (new ComposerDeploymentTransaction)->update(BOOTSTRAP_TARGET);
+        $transaction = new ComposerDeploymentTransaction;
+        $result = $ready === null ? $transaction->update(BOOTSTRAP_TARGET) : $transaction->updateFromVerifiedDistribution(BOOTSTRAP_TARGET, $ready);
         if (! $result->successful) {
             throw new RuntimeException($result->message);
         }
@@ -212,8 +165,6 @@ try {
     if (is_resource($mutex)) {
         flock($mutex, LOCK_UN);
         fclose($mutex);
-    }if ($maintenanceCreated && isset($maintenance) && is_file($maintenance) && isset($core) && is_file($core.'/src/CmsCoreServiceProvider.php')) {
-        @unlink($maintenance);
     }
 }
 $escape = static fn ($value) => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -221,4 +172,4 @@ $escape = static fn ($value) => htmlspecialchars((string) $value, ENT_QUOTES | E
 <h1><?= $done ? 'Core atualizado' : 'Desbloquear atualização do Core' ?></h1>
 <?php if ($error) { ?><p class="error"><?= $escape($error) ?></p>
 <?php } elseif ($done) { ?><p>O Core foi atualizado para <?= $escape(BOOTSTRAP_TARGET) ?> com os ficheiros da versão publicada. Laravel, plugins e dados foram preservados. Volte a Sistema → Atualizações e atualize o Starter e os plugins pretendidos.</p><p>O finalizador foi eliminado. Conserve as cópias privadas até confirmar o funcionamento.</p>
-<?php } else { ?><p>Website: <?= $escape(BOOTSTRAP_PROJECT) ?>. Core instalado: <?= $escape($current) ?>. Versão a instalar: <?= $escape(BOOTSTRAP_TARGET) ?>.</p><p><?= $repairNeeded ? 'Primeiro serão repostos os ficheiros canónicos da versão já instalada, preservando a pasta anterior. ' : '' ?>A nova versão será preparada e validada fora da instalação. As outras dependências ficam congeladas; alterações incompatíveis são recusadas.</p><form method="post"><input type="hidden" name="chave" value="<?= $escape($key) ?>"><button>Preparar e atualizar o Core</button></form><?php }?></main></html>
+<?php } else { ?><p>Website: <?= $escape(BOOTSTRAP_PROJECT) ?>. Core instalado: <?= $escape($current) ?>. Versão a instalar: <?= $escape(BOOTSTRAP_TARGET) ?>.</p><p><?= $repairNeeded ? 'A versão declarada será validada a partir da distribuição canónica incluída; os ficheiros atuais só são substituídos quando a nova instalação estiver preparada. ' : '' ?>A nova versão será preparada e validada fora da instalação. As outras dependências ficam congeladas; alterações incompatíveis são recusadas.</p><form method="post"><input type="hidden" name="chave" value="<?= $escape($key) ?>"><button>Preparar e atualizar o Core</button></form><?php }?></main></html>

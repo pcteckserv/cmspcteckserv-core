@@ -27,12 +27,18 @@ class ComposerDeploymentTransaction
         return $this->execute($target, null);
     }
 
+    /** Passagem explícita de uma distribuição antiga incoerente, sem a publicar antes das dependências. */
+    public function updateFromVerifiedDistribution(?string $target, string $currentDistribution): UpdateResult
+    {
+        return $this->execute($target, null, $currentDistribution);
+    }
+
     public function remove(string $package): UpdateResult
     {
         return $this->execute(null, $package);
     }
 
-    private function execute(?string $target, ?string $removing): UpdateResult
+    private function execute(?string $target, ?string $removing, ?string $currentDistribution = null): UpdateResult
     {
         @set_time_limit(0);
         ignore_user_abort(true);
@@ -80,7 +86,9 @@ class ComposerDeploymentTransaction
             if (! is_file($root.'/vendor/pcteckserv/cms-core/src/CmsCoreServiceProvider.php')) {
                 throw new RuntimeException('A instalação atual do Core está incompleta. Reponha os ficheiros antes de atualizar.');
             }
-            if (is_file($root.'/vendor/pcteckserv/cms-core/core-release.json')) {
+            if ($currentDistribution !== null) {
+                (new ReleaseIntegrity)->assertValid($currentDistribution, $current);
+            } elseif (is_file($root.'/vendor/pcteckserv/cms-core/core-release.json')) {
                 (new ReleaseIntegrity)->assertValid($root.'/vendor/pcteckserv/cms-core', $current);
             }
             if (is_link($root.'/vendor') || isset($manifest['config']['vendor-dir'])) {
