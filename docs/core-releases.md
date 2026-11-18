@@ -1,5 +1,9 @@
 # Publicação de versões do Core
 
+## v3.3.0
+
+Simplifica a ligação Google Drive no módulo Backups: guardar e autorizar numa ação, escolha explícita da conta, aplicação configurável no alojamento e validação da pasta ao voltar a ligar. Conserva PKCE, estado, permissões e tokens cifrados. Sem novas dependências ou migrations. Matriz local: 323 testes por combinação de PHP 8.3/8.4/8.5 e SQLite/MariaDB; oito testes JavaScript. [Configuração e limites](core-3.3.0.md).
+
 ## v3.1.8
 
 Corrige a preparação do Core e a remoção de plugins quando os ficheiros instalados
