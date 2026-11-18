@@ -9,6 +9,10 @@ return [
     'allow_short_frequencies' => env('CMS_BACKUPS_ALLOW_SHORT_FREQUENCIES', false),
     'database_dump_binary' => env('CMS_BACKUPS_DATABASE_DUMP_BINARY'),
     'database_dump_options' => [],
+    'google_oauth' => [
+        'client_id' => env('CMS_BACKUPS_GOOGLE_CLIENT_ID'),
+        'client_secret' => env('CMS_BACKUPS_GOOGLE_CLIENT_SECRET'),
+    ],
     'full_included_paths' => ['.'],
     'media_paths' => ['storage/app/public', 'storage/app/private', 'public/uploads', 'public/media', 'public/images'],
     'default_included_paths' => [

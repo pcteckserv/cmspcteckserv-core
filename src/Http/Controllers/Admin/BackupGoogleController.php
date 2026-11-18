@@ -5,6 +5,7 @@ namespace Pcteckserv\CmsCore\Http\Controllers\Admin;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Pcteckserv\CmsCore\Models\BackupAuditLog;
@@ -17,7 +18,8 @@ class BackupGoogleController extends Controller
     public function connect(Request $request, BackupDestination $destination): RedirectResponse
     {
         Gate::authorize('backups.configure');
-        if ($destination->protocol !== 'google' || ! $destination->google_client_id || ! $destination->google_client_secret) {
+        $credentials = $destination->googleOAuthCredentials();
+        if ($destination->protocol !== 'google' || empty($credentials['client_id']) || empty($credentials['client_secret'])) {
             return redirect()->route('admin.backups.index')->with('cms_backups_error', 'Guarde primeiro o ID e o segredo do cliente Google.');
         }
         $state = Str::random(64);
@@ -28,9 +30,9 @@ class BackupGoogleController extends Controller
         ]);
 
         return redirect()->away('https://accounts.google.com/o/oauth2/v2/auth?'.http_build_query([
-            'client_id' => $destination->google_client_id, 'redirect_uri' => route('admin.backups.google.callback', $destination),
+            'client_id' => $credentials['client_id'], 'redirect_uri' => route('admin.backups.google.callback', $destination),
             'response_type' => 'code', 'scope' => GoogleDriveBackupService::SCOPE, 'access_type' => 'offline',
-            'prompt' => 'consent', 'state' => $state, 'code_challenge_method' => 'S256',
+            'prompt' => 'select_account consent', 'state' => $state, 'code_challenge_method' => 'S256',
             'code_challenge' => rtrim(strtr(base64_encode(hash('sha256', $verifier, true)), '+/', '-_'), '='),
         ], '', '&', PHP_QUERY_RFC3986));
     }
@@ -48,11 +50,14 @@ class BackupGoogleController extends Controller
                 return redirect()->route('admin.backups.index')->with('cms_backups_error', 'A autorização Google foi cancelada. Nenhuma ligação foi alterada.');
             }
             // Só persistir a nova ligação quando os tokens e a pasta estiverem confirmados.
-            $destination->google_tokens = $google->exchange($destination, $request->query('code'), $saved['verifier']);
-            if (! $destination->google_folder_id) {
-                $destination->google_folder_id = $google->createFolder($destination);
-            }
-            $destination->forceFill(['connection_status' => 'connected', 'last_tested_at' => now(), 'last_error' => null])->save();
+            $candidate = $destination->replicate();
+            $candidate->google_tokens = $google->exchange($destination, $request->query('code'), $saved['verifier']);
+            $folder = $google->resolveFolder($candidate);
+            DB::transaction(function () use ($destination, $candidate, $folder, $saved) {
+                $current = BackupDestination::whereKey($destination->id)->lockForUpdate()->firstOrFail();
+                abort_unless($current->protocol === 'google' && hash_equals($saved['credentials'], $this->fingerprint($current)), 403);
+                $current->forceFill(['google_tokens' => $candidate->google_tokens, 'google_folder_id' => $folder, 'connection_status' => 'connected', 'last_tested_at' => now(), 'last_error' => null])->save();
+            });
             $this->audit($request, 'backups.google.connected');
 
             return redirect()->route('admin.backups.index')->with('cms_backups_success', 'Google Drive ligado. Os backups serão guardados na pasta criada pelo CMS.');
@@ -75,7 +80,9 @@ class BackupGoogleController extends Controller
 
     private function fingerprint(BackupDestination $destination): string
     {
-        return hash('sha256', $destination->google_client_id.'|'.$destination->google_client_secret);
+        $credentials = $destination->googleOAuthCredentials();
+
+        return hash('sha256', ($credentials['client_id'] ?? '').'|'.($credentials['client_secret'] ?? ''));
     }
 
     private function audit(Request $request, string $action): void

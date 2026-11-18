@@ -43,6 +43,16 @@ class BackupDestination extends Model
 
     protected $hidden = ['password', 'google_client_secret', 'google_tokens'];
 
+    public function googleOAuthCredentials(): array
+    {
+        // Não misturar um ID próprio com o segredo de outra aplicação.
+        if ($this->google_client_id || $this->google_client_secret) {
+            return ['client_id' => $this->google_client_id, 'client_secret' => $this->google_client_secret];
+        }
+
+        return config('cms-backups.google_oauth', []);
+    }
+
     public function snapshot(): array
     {
         $values = $this->only(['disk', 'protocol', 'host', 'port', 'username', 'remote_path', 'timeout', 'passive', 'ssl', 'verify_ssl', 'ssh_fingerprint', 'google_client_id', 'google_folder_id']);

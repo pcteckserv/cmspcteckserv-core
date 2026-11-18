@@ -80,6 +80,10 @@ class BackupsController extends Controller
         $destination->save();
         $this->audit('backups.destination.updated', $request);
 
+        if ($request->boolean('_connect_google')) {
+            return app(BackupGoogleController::class)->connect($request, $destination);
+        }
+
         return back()->with('cms_backups_success', 'Destino de backups guardado com sucesso.');
     }
 

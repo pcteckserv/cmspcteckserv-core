@@ -31,6 +31,58 @@ class BackupGoogleTest extends TestCase
         return $user;
     }
 
+    public function test_server_application_saves_and_connects_in_one_action_without_storing_its_secret(): void
+    {
+        config(['cms-backups.google_oauth' => ['client_id' => 'server-client', 'client_secret' => 'server-secret']]);
+        $d = BackupDestination::create(['name' => 'Drive', 'protocol' => 'local', 'disk' => 'local', 'remote_path' => 'Backups']);
+        $response = $this->actingAs($this->admin())->put(route('admin.backups.destinations.update', $d), ['name' => 'Drive', 'protocol' => 'google', 'remote_path' => 'Backups', 'timeout' => 30, '_connect_google' => 1])->assertRedirect();
+        parse_str(parse_url($response->headers->get('Location'), PHP_URL_QUERY), $query);
+        $this->assertSame('server-client', $query['client_id']);
+        $this->assertSame('select_account consent', $query['prompt']);
+        $this->assertNull($d->fresh()->google_client_secret);
+        $this->assertStringNotContainsString('server-secret', json_encode($d->fresh()));
+        $this->get(route('admin.backups.index'))->assertOk()->assertDontSee('server-secret')->assertSee('Ligar com Google');
+    }
+
+    public function test_server_credentials_are_used_for_exchange_and_do_not_mix_with_partial_overrides(): void
+    {
+        config(['cms-backups.google_oauth' => ['client_id' => 'server-client', 'client_secret' => 'server-secret']]);
+        Http::fake(['oauth2.googleapis.com/token' => Http::response(['access_token' => 'new', 'refresh_token' => 'new-refresh', 'scope' => GoogleDriveBackupService::SCOPE])]);
+        $d = BackupDestination::create(['name' => 'Drive', 'protocol' => 'google', 'remote_path' => 'Backups']);
+        app(GoogleDriveBackupService::class)->exchange($d, 'code', 'verifier');
+        Http::assertSent(fn ($r) => $r['client_id'] === 'server-client' && $r['client_secret'] === 'server-secret');
+        $d->google_client_id = 'partial-client';
+        $d->save();
+        $this->assertNull($d->googleOAuthCredentials()['client_secret']);
+        $this->actingAs($this->admin())->post(route('admin.backups.google.connect', $d))->assertSessionHas('cms_backups_error');
+    }
+
+    public function test_reconnection_checks_that_the_old_folder_is_accessible_before_reusing_it(): void
+    {
+        Http::preventStrayRequests();
+        Http::fake(['oauth2.googleapis.com/token' => Http::response(['access_token' => 'new', 'refresh_token' => 'new-refresh', 'scope' => GoogleDriveBackupService::SCOPE]), 'www.googleapis.com/drive/v3/files/old-folder*' => Http::response([], 404), 'www.googleapis.com/drive/v3/files?*' => Http::response(['id' => 'new-folder'])]);
+        $d = $this->destination();
+        $d->update(['google_folder_id' => 'old-folder']);
+        $this->actingAs($this->admin())->post(route('admin.backups.google.connect', $d));
+        $state = session('cms-backup-google.'.$d->id)['state'];
+        $this->get(route('admin.backups.google.callback', $d).'?state='.$state.'&code=test')->assertSessionHas('cms_backups_success');
+        $this->assertSame('new-folder', $d->fresh()->google_folder_id);
+    }
+
+    public function test_credential_change_during_google_exchange_cannot_install_stale_tokens(): void
+    {
+        $d = $this->destination();
+        Http::fake(['oauth2.googleapis.com/token' => function () use ($d) {
+            $d->update(['google_client_id' => 'changed']);
+
+            return Http::response(['access_token' => 'new', 'refresh_token' => 'new-refresh', 'scope' => GoogleDriveBackupService::SCOPE]);
+        }, 'www.googleapis.com/drive/v3/files*' => Http::response(['id' => 'folder'])]);
+        $this->actingAs($this->admin())->post(route('admin.backups.google.connect', $d));
+        $state = session('cms-backup-google.'.$d->id)['state'];
+        $this->get(route('admin.backups.google.callback', $d).'?state='.$state.'&code=test')->assertSessionHas('cms_backups_error');
+        $this->assertNull($d->fresh()->google_tokens);
+    }
+
     public function test_google_connect_requires_configuration_permission_and_does_not_expose_secrets(): void
     {
         $destination = $this->destination();

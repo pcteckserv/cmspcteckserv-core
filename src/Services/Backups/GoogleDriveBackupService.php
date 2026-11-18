@@ -16,9 +16,10 @@ class GoogleDriveBackupService
 
     public function exchange(BackupDestination $destination, string $code, string $verifier): array
     {
+        $credentials = $destination->googleOAuthCredentials();
         $response = Http::asForm()->timeout(30)->withoutRedirecting()->post('https://oauth2.googleapis.com/token', [
-            'client_id' => $destination->google_client_id,
-            'client_secret' => $destination->google_client_secret,
+            'client_id' => $credentials['client_id'] ?? null,
+            'client_secret' => $credentials['client_secret'] ?? null,
             'redirect_uri' => route('admin.backups.google.callback', $destination),
             'grant_type' => 'authorization_code', 'code' => $code, 'code_verifier' => $verifier,
         ]);
@@ -102,6 +103,22 @@ class GoogleDriveBackupService
         return $id;
     }
 
+    public function resolveFolder(BackupDestination $destination): string
+    {
+        $id = $destination->google_folder_id;
+        if (is_string($id) && preg_match('/^[a-zA-Z0-9_-]+$/D', $id)) {
+            $response = $this->request($destination)->get(self::API.'/'.$id, ['fields' => 'id,mimeType,trashed,appProperties']);
+            if (! in_array($response->status(), [403, 404], true)) {
+                $this->check($response);
+                if ($response->json('id') === $id && $response->json('mimeType') === 'application/vnd.google-apps.folder' && ! $response->json('trashed') && $response->json('appProperties.cms_backup') === '1') {
+                    return $id;
+                }
+            }
+        }
+
+        return $this->createFolder($destination);
+    }
+
     public function delete(BackupDestination $destination, string $path): void
     {
         $url = $this->fileUrl($path);
@@ -133,7 +150,7 @@ class GoogleDriveBackupService
         }
         if (empty($tokens['access_token']) || ($tokens['expires_at'] ?? 0) < time() + 60) {
             $response = Http::asForm()->timeout(30)->withoutRedirecting()->post('https://oauth2.googleapis.com/token', [
-                'client_id' => $destination->google_client_id, 'client_secret' => $destination->google_client_secret,
+                'client_id' => $destination->googleOAuthCredentials()['client_id'] ?? null, 'client_secret' => $destination->googleOAuthCredentials()['client_secret'] ?? null,
                 'grant_type' => 'refresh_token', 'refresh_token' => $tokens['refresh_token'],
             ]);
             $this->check($response);

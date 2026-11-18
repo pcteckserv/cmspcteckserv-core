@@ -40,7 +40,7 @@ class UpdateBackupDestinationRequest extends FormRequest
             'ssl' => ['nullable', 'boolean'],
             'verify_ssl' => ['nullable', 'boolean'],
             'ssh_fingerprint' => ['nullable', 'string', 'max:255'],
-            'google_client_id' => ['nullable', 'required_if:protocol,google', 'string', 'max:512'],
+            'google_client_id' => ['nullable', Rule::requiredIf(fn () => $this->input('protocol') === 'google' && ! (config('cms-backups.google_oauth.client_id') && config('cms-backups.google_oauth.client_secret'))), 'string', 'max:512'],
             'google_client_secret' => ['nullable', 'string', 'max:2048'],
         ];
     }

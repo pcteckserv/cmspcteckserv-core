@@ -1,6 +1,6 @@
 <h2 class="h5 mb-2">1. Onde guardar os backups?</h2>
 @php($selectedProtocol = old('protocol', $destination->protocol === 'ftp' && $destination->ssl ? 'ftps' : $destination->protocol))
-<p class="text-secondary small">Escolha o destino e guarde a configuração antes de testar ou ligar a conta.</p>
+<p class="text-secondary small">Escolha o destino. No Google Drive, o botão Ligar com Google guarda os dados e inicia a autorização.</p>
 <div class="row g-3">
     <div class="col-12">
         <label class="form-label" for="protocol">Destino</label>
@@ -32,23 +32,29 @@
     <div class="form-text">No FTP/FTPS, os dados acima são usados diretamente. FTPS encripta o transporte; a extensão FTP do PHP não valida o certificado do servidor. SFTP, S3 e R2 usam um disco Laravel já configurado no alojamento.</div>
 </fieldset>
 <fieldset class="mt-3" data-backup-protocols="google">
-    <legend class="h6">Ligar o Google Drive</legend>
-    <div class="mb-3"><label class="form-label" for="google_client_id">ID do cliente Google</label><input id="google_client_id" name="google_client_id" class="form-control" value="{{ old('google_client_id', $destination->google_client_id) }}" maxlength="512" autocomplete="off"></div>
-    <div class="mb-3"><label class="form-label" for="google_client_secret">Segredo do cliente Google</label><input id="google_client_secret" name="google_client_secret" type="password" class="form-control" autocomplete="new-password" placeholder="{{ $destination->google_client_secret ? 'Já guardado — deixe em branco para manter' : '' }}"></div>
-    <details class="mb-3"><summary>Como obter estes dados?</summary>
-        <ol class="small mt-2 ps-3">
-            <li>No <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer">Google Cloud</a>, crie ou escolha um projeto e ative a Google Drive API.</li>
-            <li>Configure o ecrã de consentimento em Google Auth Platform e crie um cliente OAuth do tipo «Aplicação Web».</li>
-            <li>Adicione este URI de redirecionamento autorizado, exatamente como aparece: <code class="d-block text-break mt-1">{{ route('admin.backups.google.callback', $destination) }}</code></li>
-            <li>Copie o ID e o segredo para estes campos, guarde e carregue em «Ligar com Google». Escolha a conta e autorize o acesso aos ficheiros criados pelo CMS.</li>
-        </ol>
-        <p class="small text-secondary">Em modo de teste, adicione a conta aos utilizadores de teste. A Google pode fazer expirar a autorização após sete dias; para backups contínuos, prepare a aplicação para produção no Google Cloud.</p>
-    </details>
-    <div class="d-flex flex-wrap gap-2">
-        <button class="btn btn-outline-primary" type="submit" form="backup-google-connect" @disabled($destination->protocol !== 'google')>{{ $destination->google_tokens ? 'Voltar a ligar com Google' : 'Ligar com Google' }}</button>
-        @if ($destination->google_tokens)<button class="btn btn-outline-secondary" type="submit" form="backup-google-disconnect">Desligar conta</button>@endif
+    <legend class="h6">Ligar a sua conta Google Drive</legend>
+    @php($googleCredentials=$destination->googleOAuthCredentials())
+    @php($googleReady=!empty($googleCredentials['client_id'])&&!empty($googleCredentials['client_secret']))
+    <p class="small text-secondary">Escolha a conta Google e autorize o CMS. A pasta é criada automaticamente e a autorização fica guardada para os backups seguintes.</p>
+    @if($googleReady)<p class="small text-success">✓ Aplicação Google configurada.</p>@endif
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <button class="btn btn-primary" type="submit" name="_connect_google" value="1">{{ $destination->google_tokens?'Voltar a ligar com Google':'Ligar com Google' }}</button>
+        @if($destination->google_tokens)<button class="btn btn-outline-secondary" type="submit" form="backup-google-disconnect">Desligar conta</button>@endif
     </div>
-    <p class="small text-secondary mt-2 mb-0">{{ $destination->google_tokens ? 'Conta autorizada. Os tokens são guardados encriptados.' : 'Ainda sem autorização Google.' }} O CMS cria uma pasta própria e só elimina os seus ficheiros de backup.</p>
+    <details class="border rounded p-3 mb-3" @if(!$googleReady||$errors->has('google_client_id')||$errors->has('google_client_secret')) open @endif>
+        <summary>Configuração inicial da aplicação Google · administrador</summary>
+        <p class="small mt-3">Esta preparação é feita uma única vez. Se a aplicação já estiver configurada no alojamento, pode usar diretamente o botão Ligar com Google sem preencher estes campos.</p>
+        <div class="mb-3"><label class="form-label" for="google_client_id">ID do cliente Google (opcional se configurado no alojamento)</label><input id="google_client_id" name="google_client_id" class="form-control" value="{{ old('google_client_id',$destination->google_client_id) }}" maxlength="512" autocomplete="off"></div>
+        <div class="mb-3"><label class="form-label" for="google_client_secret">Segredo do cliente Google</label><input id="google_client_secret" name="google_client_secret" type="password" class="form-control" autocomplete="new-password" placeholder="{{ $destination->google_client_secret?'Já guardado — deixe em branco para manter':'' }}"></div>
+        <ol class="small ps-3">
+            <li>No <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer">Google Cloud</a>, escolha um projeto e ative a Google Drive API.</li>
+            <li>Configure o consentimento e um cliente OAuth do tipo Aplicação Web.</li>
+            <li>Adicione este endereço de retorno autorizado: <code class="d-block text-break mt-1">{{ route('admin.backups.google.callback',$destination) }}</code></li>
+            <li>Configure a aplicação no alojamento ou preencha o ID e o segredo acima. Carregue em Ligar com Google; a configuração é guardada antes de abrir a autorização.</li>
+        </ol>
+        <p class="small text-secondary mb-0">Para backups contínuos, publique a aplicação no Google Cloud. As autorizações de aplicações em modo de teste podem expirar. O acesso fica limitado aos ficheiros criados pelo CMS.</p>
+    </details>
+    <p class="small text-secondary mb-0">{{ $destination->google_tokens?'Autorização guardada e encriptada.':'Ainda sem conta Google autorizada.' }} Não precisa de copiar códigos ou tokens manualmente.</p>
 </fieldset>
 <div class="row g-3 mt-1">
     <div class="col-12"><label class="form-label" for="remote_path">Pasta de backups</label><input id="remote_path" name="remote_path" class="form-control" value="{{ old('remote_path', $destination->remote_path) }}" required maxlength="255"><div class="form-text">No Google, o nome é usado ao criar a pasta na primeira ligação. Os backups existentes conservam o destino original.</div></div>
