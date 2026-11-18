@@ -2,6 +2,8 @@
 
 Consultar também `../AGENTS.md`: inventário das capacidades e fontes de verdade do Core, Clientes e Realstate. A identidade dos clientes pertence ao plugin Clientes; não criar tabelas paralelas em Starters.
 
+O Core já fornece autenticação dos funcionários, perfis/fotografias, roles/permissões, superadmin, catálogo/ativação/atualizações de plugins, media, páginas/menus/SEO, opções, consentimento, auditoria, tarefas de sistema e backups/destinos/retenção. Reutilizar essas APIs em novos sites. As contas públicas e os contactos (nome, email, telefone, observações) pertencem ao plugin Clientes, em `cms_shop_customers`, ligados por `customer_id`; não pertencem à tabela de funcionários nem a novas tabelas por site.
+
 O Core é uma dependência estável de vários sites. Não o alterar para resolver
 pedidos visuais, conteúdos, regras de negócio ou conveniências de um único site.
 Essas alterações pertencem ao Starter ou ao plugin responsável.
