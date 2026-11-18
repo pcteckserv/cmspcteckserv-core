@@ -8,6 +8,8 @@ use Symfony\Component\Process\Process;
 
 class StarterUpdater
 {
+    public const SHARED_DEPENDENCY_POLICY = true;
+
     /**
      * @var array<int, string>
      */
@@ -105,7 +107,9 @@ class StarterUpdater
     protected function copyStarterFiles(string $source, string $destination): void
     {
         $preserveDependencies = is_file($destination.'/vendor/composer/installed.json') && is_file($source.'/composer.json');
-        if ($preserveDependencies) $this->validateStarterDependencies($source, $destination);
+        if ($preserveDependencies) {
+            $this->validateStarterDependencies($source, $destination);
+        }
         $items = new \RecursiveIteratorIterator(
             new \RecursiveDirectoryIterator($source, \FilesystemIterator::SKIP_DOTS),
             \RecursiveIteratorIterator::SELF_FIRST,
@@ -114,7 +118,9 @@ class StarterUpdater
         foreach ($items as $item) {
             $relativePath = str_replace('\\', '/', $items->getSubPathName());
 
-            if ($preserveDependencies && in_array($relativePath, ['composer.json', 'composer.lock'], true)) continue;
+            if ($preserveDependencies && in_array($relativePath, ['composer.json', 'composer.lock'], true)) {
+                continue;
+            }
 
             if ($this->isExcluded($relativePath)) {
                 continue;
@@ -142,36 +148,7 @@ class StarterUpdater
 
     private function validateStarterDependencies(string $source, string $destination): void
     {
-        $read = static fn ($file) => json_decode(File::get($file), true, flags: JSON_THROW_ON_ERROR);
-        $current = $read($destination.'/composer.json'); $incoming = $read($source.'/composer.json');
-        if (($current['name'] ?? null) !== ($incoming['name'] ?? null)) throw new \RuntimeException('O repositório não corresponde ao Starter deste site.');
-        foreach (['require', 'require-dev', 'autoload', 'autoload-dev'] as $key) {
-            $before = $current[$key] ?? []; $after = $incoming[$key] ?? [];
-            unset($before['pcteckserv/cms-core'], $after['pcteckserv/cms-core']);
-            ksort($before); ksort($after);
-            if ($key === 'require' && array_keys($before) === array_keys($after)) {
-                $parser = new \Composer\Semver\VersionParser;
-                foreach ($before as $package => $constraint) {
-                    if ($constraint === $after[$package]) continue;
-                    // Apenas alargar versões já aceites; não instalar nem substituir dependências.
-                    try {
-                        if (\Composer\Semver\Intervals::isSubsetOf($parser->parseConstraints($constraint), $parser->parseConstraints($after[$package]))) {
-                            $after[$package] = $constraint;
-                        }
-                    } catch (\UnexpectedValueException) {
-                        // Restrições ambíguas mantêm a recusa abaixo.
-                    }
-                }
-            }
-            if ($before !== $after) throw new \RuntimeException('Este Starter altera dependências ou autoload. É necessária uma publicação preparada separadamente.');
-        }
-        $installed = $read($destination.'/vendor/composer/installed.json'); $lock = $read($source.'/composer.lock');
-        $version = static function ($packages) {
-            foreach ($packages as $package) if (($package['name'] ?? '') === 'pcteckserv/cms-core') return ltrim($package['version'], 'v');
-            return null;
-        };
-        $currentCore = $version($installed['packages'] ?? $installed); $minimum = $version($lock['packages'] ?? []);
-        if ($currentCore === null || $minimum === null || explode('.', $currentCore)[0] !== explode('.', $minimum)[0] || version_compare($currentCore, $minimum, '<')) throw new \RuntimeException('O Starter exige uma versão diferente do Core. Atualize o Core compatível antes de prosseguir.');
+        (new StarterDependencyPolicy)->assertCompatible($source, $destination);
     }
 
     private function copyPublicFiles(string $source, string $destination): void
@@ -231,7 +208,7 @@ class StarterUpdater
     }
 
     /**
-     * @param array<int, string> $arguments
+     * @param  array<int, string>  $arguments
      */
     private function runArtisan(array $arguments): void
     {

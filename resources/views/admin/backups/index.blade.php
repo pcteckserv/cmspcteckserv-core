@@ -146,7 +146,7 @@
                 </tbody>
             </table>
         </div>
-        {{ $runs->links() }}
+        {{ $runs->links('pagination::bootstrap-5') }}
     </div>
 
     <form id="backup-google-connect" method="POST" action="{{ route('admin.backups.google.connect', $destination) }}">@csrf</form>
@@ -161,7 +161,11 @@
                     section.querySelectorAll('input,select,textarea,button').forEach(input => input.disabled = !active);
                 });
             };
-            protocol?.addEventListener('change', syncDestination);
+            protocol?.addEventListener('change', () => {
+                syncDestination();
+                const advanced = document.querySelector('[data-backup-advanced]');
+                if (advanced) advanced.open = protocol.value !== 'google';
+            });
             if (protocol) syncDestination();
             const frequency = document.getElementById('frequency');
             const monthlyField = document.querySelector('[data-monthly-field]');

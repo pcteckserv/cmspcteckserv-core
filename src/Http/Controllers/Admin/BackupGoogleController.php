@@ -20,21 +20,35 @@ class BackupGoogleController extends Controller
         Gate::authorize('backups.configure');
         $credentials = $destination->googleOAuthCredentials();
         if ($destination->protocol !== 'google' || empty($credentials['client_id']) || empty($credentials['client_secret'])) {
-            return redirect()->route('admin.backups.index')->with('cms_backups_error', 'Guarde primeiro o ID e o segredo do cliente Google.');
+            return redirect()->route('admin.backups.index')->with('cms_backups_error', 'A aplicação Google ainda não está configurada neste site. A administração deve concluir a configuração inicial.');
         }
         $state = Str::random(64);
         $verifier = Str::random(96);
         $request->session()->put('cms-backup-google.'.$destination->id, [
             'state' => $state, 'verifier' => $verifier, 'user' => $request->user()->getAuthIdentifier(),
             'expires' => time() + 600, 'credentials' => $this->fingerprint($destination),
+            'redirect_uri' => route('admin.backups.google.return'),
         ]);
 
         return redirect()->away('https://accounts.google.com/o/oauth2/v2/auth?'.http_build_query([
-            'client_id' => $credentials['client_id'], 'redirect_uri' => route('admin.backups.google.callback', $destination),
+            'client_id' => $credentials['client_id'], 'redirect_uri' => route('admin.backups.google.return'),
             'response_type' => 'code', 'scope' => GoogleDriveBackupService::SCOPE, 'access_type' => 'offline',
             'prompt' => 'select_account consent', 'state' => $state, 'code_challenge_method' => 'S256',
             'code_challenge' => rtrim(strtr(base64_encode(hash('sha256', $verifier, true)), '+/', '-_'), '='),
         ], '', '&', PHP_QUERY_RFC3986));
+    }
+
+    public function returnFromGoogle(Request $request, GoogleDriveBackupService $google): RedirectResponse
+    {
+        Gate::authorize('backups.configure');
+        $state = $request->query('state');
+        abort_unless(is_string($state) && strlen($state) <= 128, 403);
+        foreach ($request->session()->get('cms-backup-google', []) as $id => $saved) {
+            if (is_array($saved) && is_string($saved['state'] ?? null) && hash_equals($saved['state'], $state)) {
+                return $this->callback($request, BackupDestination::findOrFail($id), $google);
+            }
+        }
+        abort(403);
     }
 
     public function callback(Request $request, BackupDestination $destination, GoogleDriveBackupService $google): RedirectResponse
@@ -51,7 +65,7 @@ class BackupGoogleController extends Controller
             }
             // Só persistir a nova ligação quando os tokens e a pasta estiverem confirmados.
             $candidate = $destination->replicate();
-            $candidate->google_tokens = $google->exchange($destination, $request->query('code'), $saved['verifier']);
+            $candidate->google_tokens = $google->exchange($destination, $request->query('code'), $saved['verifier'], $saved['redirect_uri'] ?? route('admin.backups.google.callback', $destination));
             $folder = $google->resolveFolder($candidate);
             DB::transaction(function () use ($destination, $candidate, $folder, $saved) {
                 $current = BackupDestination::whereKey($destination->id)->lockForUpdate()->firstOrFail();

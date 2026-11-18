@@ -1,14 +1,17 @@
 @extends('cms-core::admin.layouts.app', ['title' => 'Logs de Atividade'])
 
 @section('content')
-    <div class="d-flex justify-content-between align-items-center gap-3 mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
             <h1 class="h3 mb-1">Logs de Atividade</h1>
-            <p class="text-secondary mb-0">Consulta centralizada de auditoria administrativa.</p>
+            <p class="text-secondary mb-0">Auditoria administrativa. Por defeito, apresenta o último mês; ajuste Desde e Até para consultar outro período.</p>
+            @if (is_numeric(config('cms-core.activity_logs.retention_days')) && (int) config('cms-core.activity_logs.retention_days') > 0)
+                <p class="small text-secondary mb-0">Retenção: {{ (int) config('cms-core.activity_logs.retention_days') }} dias. A limpeza automática depende do agendador do servidor.</p>
+            @endif
         </div>
 
         @can('core.activity-logs.export')
-            <a class="btn btn-outline-secondary" href="{{ route('admin.activity-logs.export', request()->query()) }}">Exportar CSV</a>
+            <a class="btn btn-outline-secondary" href="{{ route('admin.activity-logs.export', $filters) }}">Exportar CSV</a>
         @endcan
     </div>
 
@@ -119,7 +122,7 @@
             </table>
         </div>
         <div class="card-footer bg-white">
-            {{ $logs->links() }}
+            {{ $logs->links('pagination::bootstrap-5') }}
         </div>
     </div>
 @endsection

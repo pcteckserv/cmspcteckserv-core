@@ -2,6 +2,7 @@
 
 namespace Pcteckserv\CmsCore\Http\Controllers\Admin;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
@@ -14,13 +15,13 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ActivityLogController extends Controller
 {
-    public function __construct(private readonly UserModelResolver $users)
-    {
-    }
+    public function __construct(private readonly UserModelResolver $users) {}
 
     public function index(Request $request): View
     {
         Gate::authorize('core.activity-logs.view');
+
+        $filters = $this->prepareFilters($request);
 
         return view('cms-core::admin.activity-logs.index', [
             'logs' => $this->filteredQuery($request)
@@ -34,7 +35,7 @@ class ActivityLogController extends Controller
                 ->get(['id', 'name', 'email']),
             'categories' => ActivityLog::query()->whereNotNull('category')->distinct()->orderBy('category')->pluck('category'),
             'actions' => ActivityLog::query()->distinct()->orderBy('action')->pluck('action'),
-            'filters' => $request->query(),
+            'filters' => $filters,
         ]);
     }
 
@@ -51,6 +52,8 @@ class ActivityLogController extends Controller
     public function export(Request $request): StreamedResponse
     {
         Gate::authorize('core.activity-logs.export');
+
+        $this->prepareFilters($request);
 
         return response()->streamDownload(function () use ($request): void {
             $output = fopen('php://output', 'w');
@@ -74,6 +77,24 @@ class ActivityLogController extends Controller
         }, 'logs-atividade.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
+    private function prepareFilters(Request $request): array
+    {
+        if (! $request->query->has('date_from') && ! $request->query->has('date_to')) {
+            $today = CarbonImmutable::now(config('cms-core.admin_timezone', 'Europe/Lisbon'));
+            $request->query->add(['date_from' => $today->subMonthNoOverflow()->toDateString(), 'date_to' => $today->toDateString()]);
+        }
+
+        return $request->validate([
+            'search' => ['nullable', 'string', 'max:160'], 'user_id' => ['nullable', 'integer', 'min:1'],
+            'category' => ['nullable', 'string', 'max:255'], 'action' => ['nullable', 'string', 'max:255'],
+            'ip' => ['nullable', 'string', 'max:45'], 'subject_type' => ['nullable', 'string', 'max:255'],
+            'subject_id' => ['nullable', 'integer', 'min:1'], 'per_page' => ['nullable', 'in:25,50,100'],
+            'date_from' => ['nullable', 'date_format:Y-m-d'],
+            'date_to' => ['nullable', 'date_format:Y-m-d', ...($request->filled('date_from') ? ['after_or_equal:date_from'] : [])],
+            'page' => ['nullable', 'integer', 'min:1'],
+        ]);
+    }
+
     private function filteredQuery(Request $request)
     {
         return ActivityLog::query()
@@ -92,8 +113,8 @@ class ActivityLogController extends Controller
             ->when($request->query('ip'), fn ($query, $ip) => $query->where('ip_address', 'like', "%{$ip}%"))
             ->when($request->query('subject_type'), fn ($query, $type) => $query->where('subject_type', 'like', "%{$type}%"))
             ->when($request->query('subject_id'), fn ($query, $id) => $query->where('subject_id', $id))
-            ->when($request->query('date_from'), fn ($query, $date) => $query->whereDate('created_at', '>=', $date))
-            ->when($request->query('date_to'), fn ($query, $date) => $query->whereDate('created_at', '<=', $date));
+            ->when($request->query('date_from'), fn ($query, $date) => $query->where('created_at', '>=', CarbonImmutable::parse($date, config('cms-core.admin_timezone', 'Europe/Lisbon'))->startOfDay()->setTimezone(config('app.timezone', 'UTC'))))
+            ->when($request->query('date_to'), fn ($query, $date) => $query->where('created_at', '<', CarbonImmutable::parse($date, config('cms-core.admin_timezone', 'Europe/Lisbon'))->addDay()->startOfDay()->setTimezone(config('app.timezone', 'UTC'))));
     }
 
     private function withoutSuperAdminLogs($query): void
@@ -121,7 +142,7 @@ class ActivityLogController extends Controller
 
     private function isSuperAdminLog(ActivityLog $activityLog): bool
     {
-        return ! $this->filteredQuery(new Request())->whereKey($activityLog->getKey())->exists();
+        return ! $this->filteredQuery(new Request)->whereKey($activityLog->getKey())->exists();
     }
 
     private function perPage(Request $request): int

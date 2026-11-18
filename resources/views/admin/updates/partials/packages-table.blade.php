@@ -15,8 +15,9 @@
                 @forelse ($packages as $package)
                     @php($status = $statuses[$package->name] ?? null)
                     <tr data-update-package="{{ $package->name }}">
-                        <td class="fw-semibold">{{ \Pcteckserv\CmsCore\Updates\StarterPackage::is($package->name) ? \Pcteckserv\CmsCore\Updates\StarterPackage::displayName().' · Starter' : $package->name }}
-                            @if(\Pcteckserv\CmsCore\Updates\StarterPackage::is($package->name) && ($repository = \Pcteckserv\CmsCore\Updates\StarterPackage::repositoryLabel()))<div class="small text-secondary fw-normal">{{ $repository }}</div>@endif
+                        <td class="fw-semibold">{{ \Pcteckserv\CmsCore\Updates\StarterPackage::is($package->name) ? (method_exists(\Pcteckserv\CmsCore\Updates\StarterPackage::class,'displayName')?\Pcteckserv\CmsCore\Updates\StarterPackage::displayName():config('app.name')).' · Starter' : ($package->name==='pcteckserv/cms-core'?'Core do CMS':($activePluginLabels[$package->name]??$package->name)) }}
+                            <div class="small text-secondary fw-normal">{{ $package->name }}</div>
+                            @if(\Pcteckserv\CmsCore\Updates\StarterPackage::is($package->name) && method_exists(\Pcteckserv\CmsCore\Updates\StarterPackage::class,'repositoryLabel') && ($repository=\Pcteckserv\CmsCore\Updates\StarterPackage::repositoryLabel()))<div class="small text-secondary fw-normal">{{ $repository }}</div>@endif
                         </td>
                         <td>{{ $package->installedVersion ?? '-' }}</td>
                         <td>{{ $package->availableVersion ?? 'Não verificada' }}</td>

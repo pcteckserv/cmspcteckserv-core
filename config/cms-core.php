@@ -17,7 +17,7 @@ return [
 
     'activity_log' => [
         'enabled' => env('CMS_ACTIVITY_LOG_ENABLED', true),
-        'retention_days' => env('CMS_ACTIVITY_LOG_RETENTION_DAYS', 365),
+        'retention_days' => env('CMS_ACTIVITY_LOG_RETENTION_DAYS', 90),
         'sensitive_fields' => [
             'password',
             'password_confirmation',

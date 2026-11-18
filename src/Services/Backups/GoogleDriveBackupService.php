@@ -14,13 +14,13 @@ class GoogleDriveBackupService
 
     private const API = 'https://www.googleapis.com/drive/v3/files';
 
-    public function exchange(BackupDestination $destination, string $code, string $verifier): array
+    public function exchange(BackupDestination $destination, string $code, string $verifier, ?string $redirectUri = null): array
     {
         $credentials = $destination->googleOAuthCredentials();
         $response = Http::asForm()->timeout(30)->withoutRedirecting()->post('https://oauth2.googleapis.com/token', [
             'client_id' => $credentials['client_id'] ?? null,
             'client_secret' => $credentials['client_secret'] ?? null,
-            'redirect_uri' => route('admin.backups.google.callback', $destination),
+            'redirect_uri' => $redirectUri ?? route('admin.backups.google.callback', $destination),
             'grant_type' => 'authorization_code', 'code' => $code, 'code_verifier' => $verifier,
         ]);
         $this->check($response);

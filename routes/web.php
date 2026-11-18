@@ -1,10 +1,9 @@
 <?php
 
-\Illuminate\Support\Facades\Route::get('/storage/staff-avatars/{filename}', \Pcteckserv\CmsCore\Http\Controllers\PublicStaffAvatarController::class)->name('cms-core.staff-avatar.public');
-
 use Illuminate\Support\Facades\Route;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\ActivityLogController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\ArtisanCommandsController;
+use Pcteckserv\CmsCore\Http\Controllers\Admin\BackupGoogleController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\BackupsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\Consent\ConsentCategoriesController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\Consent\ConsentDashboardController;
@@ -12,7 +11,9 @@ use Pcteckserv\CmsCore\Http\Controllers\Admin\Consent\ConsentScansController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\Consent\ConsentServicesController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\Consent\ConsentSettingsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\DashboardController;
+use Pcteckserv\CmsCore\Http\Controllers\Admin\EmailThemeController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\FooterSettingsController;
+use Pcteckserv\CmsCore\Http\Controllers\Admin\GeographyController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\MaintenanceSettingsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\MediaController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\PluginsController;
@@ -21,13 +22,14 @@ use Pcteckserv\CmsCore\Http\Controllers\Admin\Queues\QueueDashboardController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\RolesController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\SiteOptionsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\SmtpSettingsController;
+use Pcteckserv\CmsCore\Http\Controllers\Admin\TwoFactorSettingsController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\UpdatesController;
 use Pcteckserv\CmsCore\Http\Controllers\Admin\UsersController;
 use Pcteckserv\CmsCore\Http\Controllers\Auth\AuthenticatedSessionController;
 use Pcteckserv\CmsCore\Http\Controllers\Auth\TwoFactorChallengeController;
-use Pcteckserv\CmsCore\Http\Controllers\Admin\TwoFactorSettingsController;
 use Pcteckserv\CmsCore\Http\Controllers\Consent\ConsentRecordController;
 use Pcteckserv\CmsCore\Http\Controllers\MaintenanceAccessController;
+use Pcteckserv\CmsCore\Http\Controllers\PublicStaffAvatarController;
 use Pcteckserv\CmsCore\Seo\Http\Controllers\RobotsTxtController;
 use Pcteckserv\CmsCore\Seo\Http\Controllers\SeoAuditController;
 use Pcteckserv\CmsCore\Seo\Http\Controllers\SeoDashboardController;
@@ -35,6 +37,8 @@ use Pcteckserv\CmsCore\Seo\Http\Controllers\SeoNotFoundController;
 use Pcteckserv\CmsCore\Seo\Http\Controllers\SeoRedirectsController;
 use Pcteckserv\CmsCore\Seo\Http\Controllers\SeoSettingsController;
 use Pcteckserv\CmsCore\Seo\Http\Controllers\SitemapController;
+
+Route::get('/storage/staff-avatars/{filename}', PublicStaffAvatarController::class)->name('cms-core.staff-avatar.public');
 
 Route::middleware('web')->group(function (): void {
     Route::get('/vendor/cms-core/geography.js', function () {
@@ -110,10 +114,10 @@ Route::middleware('web')->group(function (): void {
         ->group(function (): void {
             Route::get('/', DashboardController::class)->name('dashboard');
             Route::prefix('geography')->name('geography.')->middleware('can:core.geography.view')->group(function (): void {
-                Route::get('/', [\Pcteckserv\CmsCore\Http\Controllers\Admin\GeographyController::class, 'index'])->name('index');
-                Route::post('/', [\Pcteckserv\CmsCore\Http\Controllers\Admin\GeographyController::class, 'store'])->middleware('throttle:10,1')->name('store');
-                Route::get('/{country}', [\Pcteckserv\CmsCore\Http\Controllers\Admin\GeographyController::class, 'edit'])->where('country', '[A-Z]{2}')->name('edit');
-                Route::put('/{country}', [\Pcteckserv\CmsCore\Http\Controllers\Admin\GeographyController::class, 'update'])->where('country', '[A-Z]{2}')->middleware('throttle:30,1')->name('update');
+                Route::get('/', [GeographyController::class, 'index'])->name('index');
+                Route::post('/', [GeographyController::class, 'store'])->middleware('throttle:10,1')->name('store');
+                Route::get('/{country}', [GeographyController::class, 'edit'])->where('country', '[A-Z]{2}')->name('edit');
+                Route::put('/{country}', [GeographyController::class, 'update'])->where('country', '[A-Z]{2}')->middleware('throttle:30,1')->name('update');
             });
             Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
             Route::put('/profile', [ProfileController::class, 'update'])->middleware('throttle:10,1')->name('profile.update');
@@ -136,9 +140,9 @@ Route::middleware('web')->group(function (): void {
             Route::put('/smtp-settings', [SmtpSettingsController::class, 'update'])->name('smtp-settings.update');
             Route::post('/smtp-settings/test', [SmtpSettingsController::class, 'test'])->name('smtp-settings.test');
             Route::prefix('email-theme')->name('email-theme.')->middleware('can:core.email-theme.view')->group(function (): void {
-                Route::get('/', [\Pcteckserv\CmsCore\Http\Controllers\Admin\EmailThemeController::class, 'index'])->name('index');
-                Route::get('/preview', [\Pcteckserv\CmsCore\Http\Controllers\Admin\EmailThemeController::class, 'preview'])->name('preview');
-                Route::post('/test', [\Pcteckserv\CmsCore\Http\Controllers\Admin\EmailThemeController::class, 'test'])->middleware(['can:core.email-theme.test', 'throttle:cms-email-theme-test'])->name('test');
+                Route::get('/', [EmailThemeController::class, 'index'])->name('index');
+                Route::get('/preview', [EmailThemeController::class, 'preview'])->name('preview');
+                Route::post('/test', [EmailThemeController::class, 'test'])->middleware(['can:core.email-theme.test', 'throttle:cms-email-theme-test'])->name('test');
             });
             Route::get('/laravel-commands', [ArtisanCommandsController::class, 'index'])->name('laravel-commands.index');
             Route::post('/laravel-commands/{command}/run', [ArtisanCommandsController::class, 'run'])->name('laravel-commands.run');
@@ -177,9 +181,10 @@ Route::middleware('web')->group(function (): void {
                 Route::post('/scans', [ConsentScansController::class, 'store'])->name('scans.store');
             });
             Route::get('/backups', [BackupsController::class, 'index'])->name('backups.index');
-            Route::post('/backups/destinations/{destination}/google/connect', [\Pcteckserv\CmsCore\Http\Controllers\Admin\BackupGoogleController::class, 'connect'])->middleware('throttle:backups')->name('backups.google.connect');
-            Route::get('/backups/destinations/{destination}/google/callback', [\Pcteckserv\CmsCore\Http\Controllers\Admin\BackupGoogleController::class, 'callback'])->name('backups.google.callback');
-            Route::delete('/backups/destinations/{destination}/google', [\Pcteckserv\CmsCore\Http\Controllers\Admin\BackupGoogleController::class, 'disconnect'])->name('backups.google.disconnect');
+            Route::post('/backups/destinations/{destination}/google/connect', [BackupGoogleController::class, 'connect'])->middleware('throttle:backups')->name('backups.google.connect');
+            Route::get('/backups/google/callback', [BackupGoogleController::class, 'returnFromGoogle'])->name('backups.google.return');
+            Route::get('/backups/destinations/{destination}/google/callback', [BackupGoogleController::class, 'callback'])->name('backups.google.callback');
+            Route::delete('/backups/destinations/{destination}/google', [BackupGoogleController::class, 'disconnect'])->name('backups.google.disconnect');
             Route::put('/backups/destinations/{destination}', [BackupsController::class, 'updateDestination'])->name('backups.destinations.update');
             Route::post('/backups/destinations/{destination}/test', [BackupsController::class, 'testDestination'])->middleware('throttle:backups')->name('backups.destinations.test');
             Route::put('/backups/plans/{plan}', [BackupsController::class, 'updatePlan'])->name('backups.plans.update');
@@ -209,4 +214,4 @@ Route::middleware('web')->group(function (): void {
             Route::resource('users', UsersController::class)->except(['show']);
             Route::resource('roles', RolesController::class)->except(['show']);
         });
-    });
+});

@@ -2,15 +2,16 @@
 
 namespace Pcteckserv\CmsCore\Updates;
 
-use Symfony\Component\Process\Process;
+use Composer\Semver\Semver;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Pcteckserv\CmsCore\Models\InstalledPlugin;
-use Pcteckserv\CmsCore\Plugins\PluginRepository;
-use Pcteckserv\CmsCore\Plugins\InstalledPluginVersionReader;
 use Pcteckserv\CmsCore\Plugins\InstalledPluginSource;
+use Pcteckserv\CmsCore\Plugins\InstalledPluginVersionReader;
+use Pcteckserv\CmsCore\Plugins\PluginRepository;
 use Pcteckserv\CmsCore\Support\ComposerCommand;
 use Pcteckserv\CmsCore\Support\ProcessFailureOutput;
+use Symfony\Component\Process\Process;
 use Throwable;
 
 class PackageUpdater
@@ -24,7 +25,7 @@ class PackageUpdater
         private readonly ?ComposerInstalledPackageReader $installedPackageReader = null,
         private readonly ?InstalledPluginVersionReader $installedPluginVersionReader = null,
     ) {
-        $this->composerCommand = $composerCommand ?? new ComposerCommand();
+        $this->composerCommand = $composerCommand ?? new ComposerCommand;
     }
 
     public function update(string $package): UpdateResult
@@ -33,10 +34,10 @@ class PackageUpdater
             return ($this->starterUpdater ?? app(StarterUpdater::class))->update($this->availableVersion($package));
         }
 
-        if ($package === 'pcteckserv/cms-core' && !config('cms-core.updates.allow_core_updates', true)) {
+        if ($package === 'pcteckserv/cms-core' && ! config('cms-core.updates.allow_core_updates', true)) {
             return new UpdateResult(false, 'O Core está protegido neste site. A atualização exige validação de compatibilidade separada.');
         }
-        if ($package !== 'pcteckserv/cms-core' && !InstalledPlugin::query()->where('package', $package)->where('status', 'enabled')->whereNotNull('installed_version')->exists()) {
+        if ($package !== 'pcteckserv/cms-core' && ! InstalledPlugin::query()->where('package', $package)->where('status', 'enabled')->whereNotNull('installed_version')->exists()) {
             return new UpdateResult(false, 'Só é possível atualizar plugins instalados e ativos.');
         }
 
@@ -50,8 +51,8 @@ class PackageUpdater
         $updateCoreConstraint = $package === 'pcteckserv/cms-core'
             && is_string($availableVersion)
             && version_compare($this->normalizeVersion($availableVersion), $this->normalizeVersion($previousVersion), '>');
-        if ($package === 'pcteckserv/cms-core' && ($installedPackage['dist']['type'] ?? null) === 'path') {
-            return new UpdateResult(false, 'O Core deste site é distribuído como snapshot pelo Starter. A versão local não pode ser alterada para uma tag remota sem os ficheiros correspondentes. Atualize a distribuição do site após validar a compatibilidade.');
+        if ($package === 'pcteckserv/cms-core' && ! $updateCoreConstraint) {
+            return new UpdateResult(false, 'Não existe uma nova versão estável do Core confirmada para instalar.');
         }
         if ($package === 'pcteckserv/cms-core') {
             return app(ComposerDeploymentTransaction::class)->update($availableVersion);
@@ -80,12 +81,14 @@ class PackageUpdater
             }
 
             if ($source->coreConstraint !== null && $source->coreConstraint !== '') {
-                $coreVersion=$this->installedComposerPackage('pcteckserv/cms-core')['version'] ?? null;
+                $coreVersion = $this->installedComposerPackage('pcteckserv/cms-core')['version'] ?? null;
                 try {
-                    $compatible=is_string($coreVersion) && \Composer\Semver\Semver::satisfies($coreVersion,$source->coreConstraint);
-                } catch (Throwable) { $compatible=false; }
-                if (!$compatible) {
-                    return new UpdateResult(false,'O plugin '.$source->version.' exige Core '.$source->coreConstraint
+                    $compatible = is_string($coreVersion) && Semver::satisfies($coreVersion, $source->coreConstraint);
+                } catch (Throwable) {
+                    $compatible = false;
+                }
+                if (! $compatible) {
+                    return new UpdateResult(false, 'O plugin '.$source->version.' exige Core '.$source->coreConstraint
                         .'; instalado: '.($coreVersion ?? 'não confirmado').'. Atualize primeiro o Core para uma versão compatível. A atualização do plugin não foi iniciada.');
                 }
             }
@@ -98,10 +101,12 @@ class PackageUpdater
             // Os snapshots path podem conservar uma versão Composer diferente dos ficheiros.
             // Use a mesma versão efetiva que o painel antes de decidir se há atualização.
             $comparisonVersion = $isPathPlugin
-                ? (($this->installedPluginVersionReader ?? new InstalledPluginVersionReader())->read($package) ?? $previousVersion)
+                ? (($this->installedPluginVersionReader ?? new InstalledPluginVersionReader)->read($package) ?? $previousVersion)
                 : $previousVersion;
             $state = new InstalledPackage($package, $comparisonVersion, $availableVersion, 'stable', null, is_string($release) ? $release : null);
-            if (!$state->hasUpdate()) return new UpdateResult(false, 'Não existe uma atualização disponível para este plugin.');
+            if (! $state->hasUpdate()) {
+                return new UpdateResult(false, 'Não existe uma atualização disponível para este plugin.');
+            }
         }
 
         if (! $isPathPlugin
@@ -142,7 +147,7 @@ class PackageUpdater
                 return new UpdateResult(false, 'Composer falhou ao atualizar o plugin a partir da origem atualizada: '.$this->processOutput($composer));
             }
 
-            $versionReader = $this->installedPluginVersionReader ?? new InstalledPluginVersionReader();
+            $versionReader = $this->installedPluginVersionReader ?? new InstalledPluginVersionReader;
             $installedManifestVersion = $versionReader->read($package);
 
             if ($installedManifestVersion !== $availableVersion) {
@@ -254,7 +259,7 @@ class PackageUpdater
     }
 
     /**
-     * @param array<int, string> $command
+     * @param  array<int, string>  $command
      */
     protected function run(array $command): Process
     {
@@ -268,7 +273,7 @@ class PackageUpdater
 
     private function processOutput(Process $process): string
     {
-        return (new ProcessFailureOutput())->summarize($process);
+        return (new ProcessFailureOutput)->summarize($process);
     }
 
     private function availableVersion(string $package): ?string

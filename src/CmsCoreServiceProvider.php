@@ -2,17 +2,19 @@
 
 namespace Pcteckserv\CmsCore;
 
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Cache\RateLimiting\Limit;
-use Illuminate\Http\Request;
 use Pcteckserv\CmsCore\ActivityLog\ActivityLogger;
 use Pcteckserv\CmsCore\ActivityLog\Contracts\ActivityLoggerContract;
+use Pcteckserv\CmsCore\Consent\ConsentManager;
+use Pcteckserv\CmsCore\Consent\Contracts\ConsentManagerContract;
 use Pcteckserv\CmsCore\Console\BackupStatusCommand;
 use Pcteckserv\CmsCore\Console\CheckUpdatesCommand;
 use Pcteckserv\CmsCore\Console\CleanupBackupsCommand;
@@ -28,16 +30,18 @@ use Pcteckserv\CmsCore\Console\MaintenanceStatusCommand;
 use Pcteckserv\CmsCore\Console\OptimizeMediaCommand;
 use Pcteckserv\CmsCore\Console\PruneActivityLogsCommand;
 use Pcteckserv\CmsCore\Console\RunDueBackupsCommand;
-use Pcteckserv\CmsCore\Console\SyncPluginsCommand;
 use Pcteckserv\CmsCore\Console\SyncPermissionsCommand;
+use Pcteckserv\CmsCore\Console\SyncPluginsCommand;
 use Pcteckserv\CmsCore\Console\SyncVersionsCommand;
-use Pcteckserv\CmsCore\Consent\ConsentManager;
-use Pcteckserv\CmsCore\Consent\Contracts\ConsentManagerContract;
 use Pcteckserv\CmsCore\Contracts\CmsAccessUser;
 use Pcteckserv\CmsCore\Contracts\MediaUrlGenerator;
+use Pcteckserv\CmsCore\Geography\CountryCatalog;
+use Pcteckserv\CmsCore\Http\Middleware\EnsureAdminTwoFactorVerified;
 use Pcteckserv\CmsCore\Http\Middleware\HandleCmsMaintenanceMode;
 use Pcteckserv\CmsCore\Http\Middleware\InjectAdminShortcut;
 use Pcteckserv\CmsCore\Http\Middleware\InjectConsentManager;
+use Pcteckserv\CmsCore\Plugins\PluginCatalog;
+use Pcteckserv\CmsCore\Plugins\PluginManager;
 use Pcteckserv\CmsCore\Seo\Http\Middleware\HandleSeoRedirects;
 use Pcteckserv\CmsCore\Seo\Http\Middleware\TrackSeoNotFound;
 use Pcteckserv\CmsCore\Seo\Rules\MissingAltRule;
@@ -49,17 +53,17 @@ use Pcteckserv\CmsCore\Seo\Schema\OrganizationSchemaProvider;
 use Pcteckserv\CmsCore\Seo\Schema\WebPageSchemaProvider;
 use Pcteckserv\CmsCore\Seo\Schema\WebSiteSchemaProvider;
 use Pcteckserv\CmsCore\Seo\Support\SeoRegistry;
-use Pcteckserv\CmsCore\Plugins\PluginCatalog;
-use Pcteckserv\CmsCore\Plugins\PluginManager;
+use Pcteckserv\CmsCore\Services\Auth\PendingTwoFactorLogin;
 use Pcteckserv\CmsCore\Services\Maintenance\MaintenanceModeManager;
 use Pcteckserv\CmsCore\Services\Maintenance\MaintenanceTemplateRegistry;
 use Pcteckserv\CmsCore\Services\Media\StorageMediaUrlGenerator;
-use Pcteckserv\CmsCore\Support\Permissions\PermissionRegistry;
 use Pcteckserv\CmsCore\Services\UserModelResolver;
+use Pcteckserv\CmsCore\Support\Navigation\AdminMenuRegistry;
+use Pcteckserv\CmsCore\Support\Permissions\PermissionRegistry;
 use Pcteckserv\CmsCore\Support\SiteOptions;
 use Pcteckserv\CmsCore\View\Components\CmsFooter;
-use Pcteckserv\CmsCore\View\Components\CmsMediaPicker;
 use Pcteckserv\CmsCore\View\Components\CmsIconPicker;
+use Pcteckserv\CmsCore\View\Components\CmsMediaPicker;
 use Pcteckserv\CmsCore\View\Components\CmsSeo;
 use Pcteckserv\CmsCore\View\Components\CmsSeoEditor;
 
@@ -70,9 +74,9 @@ class CmsCoreServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/cms-core.php', 'cms-core');
         $this->mergeConfigFrom(__DIR__.'/../config/cms-backups.php', 'cms-backups');
         $this->mergeConfigFrom(__DIR__.'/../config/cms-plugins.php', 'cms-plugins');
-        $this->app->scoped(\Pcteckserv\CmsCore\Geography\CountryCatalog::class);
+        $this->app->scoped(CountryCatalog::class);
         $this->app->singleton(PermissionRegistry::class);
-        $this->app->singleton(\Pcteckserv\CmsCore\Support\Navigation\AdminMenuRegistry::class);
+        $this->app->singleton(AdminMenuRegistry::class);
         $this->app->singleton(SeoRegistry::class);
         $this->app->singleton(PluginCatalog::class);
         $this->app->singleton(PluginManager::class);
@@ -99,7 +103,7 @@ class CmsCoreServiceProvider extends ServiceProvider
         Blade::component(CmsSeo::class, 'cms-seo');
         Blade::component(CmsSeoEditor::class, 'cms-seo-editor');
         $this->callAfterResolving(Kernel::class, function (Kernel $kernel): void {
-            $kernel->appendMiddlewareToGroup('web', \Pcteckserv\CmsCore\Http\Middleware\EnsureAdminTwoFactorVerified::class);
+            $kernel->appendMiddlewareToGroup('web', EnsureAdminTwoFactorVerified::class);
             $kernel->appendMiddlewareToGroup('web', HandleCmsMaintenanceMode::class);
             $kernel->appendMiddlewareToGroup('web', InjectConsentManager::class);
             $kernel->appendMiddlewareToGroup('web', InjectAdminShortcut::class);
@@ -163,6 +167,8 @@ class CmsCoreServiceProvider extends ServiceProvider
 
             Schedule::command('cms:backup:run-due')->everyMinute()->withoutOverlapping();
             Schedule::command('cms:backup:cleanup')->dailyAt('03:30')->withoutOverlapping();
+            Schedule::command('cms-core:activity-logs:prune')->dailyAt('03:45')
+                ->timezone(config('cms-core.admin_timezone', 'Europe/Lisbon'))->withoutOverlapping();
             Schedule::call(fn () => app(MaintenanceModeManager::class)->applySchedule())
                 ->name('cms-maintenance-schedule')
                 ->everyMinute()
@@ -301,7 +307,7 @@ class CmsCoreServiceProvider extends ServiceProvider
         RateLimiter::for('cms-two-factor', function (Request $request) use ($response): array {
             return [
                 Limit::perMinute(5)->by('ip:'.$request->ip())->response($response),
-                Limit::perMinute(5)->by('account:'.$request->session()->get(\Pcteckserv\CmsCore\Services\Auth\PendingTwoFactorLogin::KEY.'.id', 'guest'))->response($response),
+                Limit::perMinute(5)->by('account:'.$request->session()->get(PendingTwoFactorLogin::KEY.'.id', 'guest'))->response($response),
             ];
         });
     }

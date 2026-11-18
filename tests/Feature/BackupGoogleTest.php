@@ -260,4 +260,38 @@ class BackupGoogleTest extends TestCase
             @unlink($file);
         }
     }
+
+    public function test_stable_return_url_is_shared_by_destinations_and_keeps_state_bound_to_the_right_destination(): void
+    {
+        Http::preventStrayRequests();
+        Http::fake(['oauth2.googleapis.com/token' => Http::response(['access_token' => 'return-access', 'refresh_token' => 'return-refresh', 'scope' => GoogleDriveBackupService::SCOPE]), 'www.googleapis.com/drive/v3/files*' => Http::response(['id' => 'return-folder'])]);
+        $first = $this->destination();
+        $second = $this->destination();
+        $this->actingAs($this->admin());
+        foreach ([$first, $second] as $destination) {
+            $response = $this->post(route('admin.backups.google.connect', $destination))->assertRedirect();
+            parse_str(parse_url($response->headers->get('Location'), PHP_URL_QUERY), $query);
+            $this->assertSame(route('admin.backups.google.return'), $query['redirect_uri']);
+        }
+        $this->get(route('admin.backups.google.return').'?state=forged&code=private-code')->assertForbidden();
+        $saved = session('cms-backup-google.'.$second->id);
+        $this->get(route('admin.backups.google.return').'?state='.$saved['state'].'&code=private-code')->assertSessionHas('cms_backups_success');
+        $this->assertNull($first->fresh()->google_tokens);
+        $this->assertSame('return-refresh', $second->fresh()->google_tokens['refresh_token']);
+        Http::assertSent(fn ($request) => str_contains($request->url(), '/token') && $request['redirect_uri'] === route('admin.backups.google.return'));
+        $this->get(route('admin.backups.google.return').'?state='.$saved['state'].'&code=private-code')->assertForbidden();
+    }
+
+    public function test_pending_legacy_callback_keeps_its_original_redirect_uri_after_upgrade(): void
+    {
+        Http::preventStrayRequests();
+        Http::fake(['oauth2.googleapis.com/token' => Http::response(['access_token' => 'legacy-access', 'refresh_token' => 'legacy-refresh', 'scope' => GoogleDriveBackupService::SCOPE]), 'www.googleapis.com/drive/v3/files*' => Http::response(['id' => 'legacy-folder'])]);
+        $destination = $this->destination();
+        $this->actingAs($this->admin())->post(route('admin.backups.google.connect', $destination));
+        $saved = session('cms-backup-google.'.$destination->id);
+        unset($saved['redirect_uri']);
+        $this->withSession(['cms-backup-google.'.$destination->id => $saved]);
+        $this->get(route('admin.backups.google.callback', $destination).'?state='.$saved['state'].'&code=legacy-code')->assertSessionHas('cms_backups_success');
+        Http::assertSent(fn ($request) => str_contains($request->url(), '/token') && $request['redirect_uri'] === route('admin.backups.google.callback', $destination));
+    }
 }
