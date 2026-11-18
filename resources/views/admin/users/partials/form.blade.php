@@ -16,17 +16,17 @@
         </div>
         <div class="col-md-6">
             <label class="form-label" for="email">Email</label>
-            <input class="form-control @error('email') is-invalid @enderror" id="email" type="email" name="email" autocomplete="off" value="{{ old('email', $user?->email) }}" @if(!$user) readonly data-new-user-field @endif required>
+            <input class="form-control @error('email') is-invalid @enderror" id="email" type="email" name="email" autocomplete="off" value="{{ old('email', $user?->email) }}" @if(!$user) readonly data-new-user-field onfocus="this.removeAttribute('readonly')" @endif required>
             @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
         </div>
         <div class="col-md-6">
             <label class="form-label" for="password">Palavra-passe</label>
-            <input class="form-control @error('password') is-invalid @enderror" id="password" type="password" name="password" autocomplete="new-password" @if (! $user) required readonly data-new-user-field @endif>
+            <input class="form-control @error('password') is-invalid @enderror" id="password" type="password" name="password" autocomplete="new-password" @if (! $user) required readonly data-new-user-field onfocus="this.removeAttribute('readonly')" @endif>
             @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
         </div>
         <div class="col-md-6">
             <label class="form-label" for="password_confirmation">Confirmar palavra-passe</label>
-            <input class="form-control" id="password_confirmation" type="password" name="password_confirmation" autocomplete="new-password" @if (! $user) required readonly data-new-user-field @endif>
+            <input class="form-control" id="password_confirmation" type="password" name="password_confirmation" autocomplete="new-password" @if (! $user) required readonly data-new-user-field onfocus="this.removeAttribute('readonly')" @endif>
         </div>
         <div class="col-md-4">
             <label class="form-label" for="state">Estado</label>

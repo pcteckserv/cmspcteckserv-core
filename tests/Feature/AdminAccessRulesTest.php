@@ -153,6 +153,7 @@ class AdminAccessRulesTest extends TestCase
         $this->assertStringContainsString('autocomplete="off"', $html);
         $this->assertStringContainsString('autocomplete="new-password"', $html);
         $this->assertSame(3,substr_count($html,'readonly data-new-user-field'));
+        $this->assertSame(3,substr_count($html,'onfocus="this.removeAttribute'));
         $this->assertDoesNotMatchRegularExpression('/name="password"[^>]*\bvalue=/', $html);
     }
 
