@@ -16,4 +16,8 @@ Runtime `fb252e9`, instalado por Composer real em seis hosts novos a partir do a
 
 Os testes cobrem ligação numa ação com credenciais do alojamento, ausência de segredos na página, prioridade de credenciais, troca de conta com pasta inacessível e alteração de credenciais durante a autorização. As integrações externas usam respostas simuladas; não foi autorizada uma conta Google de produção.
 
+A MaxiHome passou a suite completa de 536 testes e 5601 asserções. A cópia da CG Limpezas passou 143 testes (131 aprovados, 12 ignorados), com 738 asserções. As bases e dependências da CG Limpezas original foram preservadas. No primeiro ensaio da cópia faltava indicar o Composer de distribuição; a suite foi repetida com esse caminho configurado. Na MaxiHome, os assets foram recompilados após instalar os snapshots e a suite completa foi repetida com sucesso.
+
+O navegador confirmou os cabeçalhos e ações dos seis menus em 1440 e 390 px, os filtros recolhidos e as prioridades diárias apenas no Centro de trabalho. Confirmou também a submissão única da ligação Google, o redirecionamento OAuth com PKCE e estado e a ausência do segredo no HTML; a autorização externa foi intercetada. Página pública, login, CSRF, acesso administrativo e assets foram verificados nas cópias dos sites. A conta Google real continua a exigir a configuração e autorização do administrador.
+
 Referências: [OAuth Web Server](https://developers.google.com/identity/protocols/oauth2/web-server) e [âmbitos Drive](https://developers.google.com/workspace/drive/api/guides/api-specific-auth).
