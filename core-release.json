@@ -1,6 +1,6 @@
 {
     "schema": 1,
-    "version": "3.3.0",
+    "version": "3.4.0",
     "files": {
         "composer.json": "ee340446e4cb4b59fcc69d7ad0fda0e32b67fce1a3d444a9c7974096b0e49efc",
         "config/cms-backups.php": "2053e7387404ca58c97a931c9ae7027ec8d049660d19fa89bb180857efb67662",
@@ -51,7 +51,8 @@
         "resources/views/admin/consent/service-show.blade.php": "7c01e41ec6b291995396de0950b0b4acc8cee087261507c92dd6353918208281",
         "resources/views/admin/consent/services.blade.php": "358c953e089e36622a65df48923b29dcaca90b36d10108d191d60dc226f8476b",
         "resources/views/admin/consent/settings.blade.php": "52184d488114e14b7f9b2623e55138b175e799b1dc9eb01a70e3637e4305a6e4",
-        "resources/views/admin/dashboard.blade.php": "bd0bdb5ab70565c802285afd91b147ac16a7cb065e061f6672757ef067da10b6",
+        "resources/views/admin/dashboard.blade.php": "63f3a78fbdcdb6f0a4e0dd789efefc62a2db700d8c129dc7d62d568ed4c61afd",
+        "resources/views/admin/dashboard/two-factor-notice.blade.php": "2d790d1062fe41822521b88fd0bd9e7ce4ea58f9fda0f9a83267f864014959b1",
         "resources/views/admin/email-theme/index.blade.php": "60b6332ef7b111b05fe4d0d20a06704d9e46bc52a2f7a2eb1c92762a4678fe97",
         "resources/views/admin/footer/edit.blade.php": "fe0e00fbf1e0ed66e96c34eaee8d894228eb66b7f80e8652bbc6b667af997d41",
         "resources/views/admin/geography/edit.blade.php": "5016cd33f911b7b4a0a1a8b01aa3c4a4c1cea8a5fb1edba1e122376e0b6c6149",
@@ -183,7 +184,7 @@
         "src/Http/Controllers/Admin/Consent/ConsentScansController.php": "bbf727f494551c9745a190d45d344fcb4b5432161f9bf3be3bb5a40704e85e5e",
         "src/Http/Controllers/Admin/Consent/ConsentServicesController.php": "648fa8b07717186cafc55ec3f2b24e7aa3025b171bb3e7048284b6ac613ac956",
         "src/Http/Controllers/Admin/Consent/ConsentSettingsController.php": "a64c5a7286a08189a42c40ab2bb2ada9c923a1c9770ec48b2d975e62e01d9fe5",
-        "src/Http/Controllers/Admin/DashboardController.php": "a3f4306e4e1aa2ea1a35f98fb01b70939f892f3003482d6f293e61d8e3075450",
+        "src/Http/Controllers/Admin/DashboardController.php": "8cbc63de4b5e5ce62b4f0a3ec58bfa6d21295b48cdb72d53c8c9c1e185318019",
         "src/Http/Controllers/Admin/EmailThemeController.php": "5a05b32f6dd82507f308fa9d1d122e2488466b6886c90e9b3ec00c5114047045",
         "src/Http/Controllers/Admin/FooterSettingsController.php": "dcaaf2d7bdf9031c3444000041617350c04e48bcc20689b1d273fa758602a4e9",
         "src/Http/Controllers/Admin/GeographyController.php": "07b827c86d32a5ac333386b196e0b6ee98de1de37dca7264205ccd11c9814589",

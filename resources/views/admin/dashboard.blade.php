@@ -1,6 +1,9 @@
 @extends('cms-core::admin.layouts.app', ['title' => 'Painel de Administração'])
 
 @section('content')
+    @if ($needsTwoFactorSetup ?? false)
+        @include('cms-core::admin.dashboard.two-factor-notice')
+    @endif
     @foreach ($dashboardNotices ?? [] as $noticeView)
         @include($noticeView)
     @endforeach
