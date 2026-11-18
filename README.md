@@ -1,5 +1,7 @@
 # CMS PCTECKSERV — Core 3
 
+Core **3.4.0**: aviso de segurança no Dashboard para administradores sem autenticação de dois fatores confirmada, com ligação direta à configuração do perfil. [Comportamento e validação](docs/core-3.4.0.md).
+
 Core **3.3.0**: ligação ao Google Drive numa ação, com escolha da conta e autorização após a configuração inicial da aplicação. Credenciais opcionais no alojamento, configuração avançada recolhida e validação da pasta ao trocar de conta. [Configuração, segurança e validação](docs/core-3.3.0.md).
 
 Core **3.1.8**: corrige a atualização e remoção quando os plugins estão em `packages` e os metadados ainda apontam para `vendor`. [Correção e ponte FTP para o atualizador antigo](docs/core-updates-3.1.8.md). Mantém as verificações de integridade e compatibilidade da [auditoria dos quatro projetos](docs/compatibility-audit-2026-11-15.md). O StudioFranco permanece na linha de manutenção **2.9**, com migração obrigatória antes de Core 3.
