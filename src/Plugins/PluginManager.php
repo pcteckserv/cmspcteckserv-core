@@ -20,6 +20,12 @@ class PluginManager
      */
     public function sync(): Collection
     {
+        // Plugins sem provider já não pertencem ao catálogo carregado, mas podem ter registos antigos.
+        foreach (InstalledPlugin::query()->where('status', 'disabled')->whereNotNull('installed_version')->get() as $plugin) {
+            if (is_string($plugin->package) && app(\Pcteckserv\CmsCore\Updates\ComposerInstalledPackageReader::class)->isAbsent($plugin->package)) {
+                $plugin->forceFill(['installed_version' => null, 'installed_at' => null])->save();
+            }
+        }
         return $this->catalog->all()
             ->map(function ($definition): InstalledPlugin {
                 $plugin = InstalledPlugin::query()->firstOrNew(['slug' => $definition->slug]);

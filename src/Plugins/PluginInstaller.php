@@ -26,6 +26,11 @@ class PluginInstaller
             return new PluginInstallResult(false, 'Desative o plugin antes de o eliminar.');
         }
 
+        if (is_string($plugin->package) && $plugin->package !== 'pcteckserv/cms-core' && app(\Pcteckserv\CmsCore\Updates\ComposerInstalledPackageReader::class)->isAbsent($plugin->package)) {
+            $plugin->delete();
+            return new PluginInstallResult(true, 'O plugin já não estava instalado. O registo antigo foi limpo; os dados existentes foram preservados.');
+        }
+
         if ($plugin->installed_version === null || $plugin->package === 'pcteckserv/cms-core') {
             return new PluginInstallResult(false, 'Este package não pode ser eliminado.');
         }

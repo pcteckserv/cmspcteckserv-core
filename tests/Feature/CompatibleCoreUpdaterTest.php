@@ -169,6 +169,13 @@ final class CompatibleCoreUpdaterTest extends TestCase
         } finally {
             $this->app->setBasePath($original);
             $this->app->useStoragePath($storage);
+            // Remover apenas os aliases criados pelo ensaio antes da limpeza recursiva.
+            foreach ([$directory.'/vendor/tests/path-plugin', ...(glob($directory.'/storage/app/core-updates/*/previous-vendor/tests/path-plugin') ?: [])] as $link) {
+                $real = realpath($link); $parent = realpath(dirname($link));
+                $normalize = static fn ($path) => strtolower(str_replace('\\', '/', $path));
+                if (is_link($link)) @unlink($link);
+                elseif (PHP_OS_FAMILY === 'Windows' && $real !== false && $parent !== false && $normalize($real) !== $normalize($parent.'/path-plugin')) @rmdir($link);
+            }
             File::deleteDirectory($directory);
         }
     }
@@ -387,6 +394,62 @@ final class CompatibleCoreUpdaterTest extends TestCase
             $this->assertDirectoryDoesNotExist($directory.'/vendor/tests/path-plugin');
             $this->assertArrayNotHasKey('tests/path-plugin', json_decode(File::get($directory.'/composer.json'), true)['require']);
         }, deployment: true);
+    }
+
+    private function deployedDirectoryLink(string $target, string $link): void
+    {
+        if (@symlink($target, $link)) return;
+        if (PHP_OS_FAMILY !== 'Windows') throw new \RuntimeException('O ensaio exige uma ligação simbólica real.');
+        $quote = static fn ($path) => "'".str_replace("'", "''", $path)."'";
+        (new Process(['powershell.exe', '-NoProfile', '-NonInteractive', '-Command', 'New-Item -ItemType Junction -Path '.$quote($link).' -Target '.$quote($target).' | Out-Null']))->mustRun();
+        clearstatcache(true);
+    }
+
+    public function test_deployment_with_internal_composer_package_link_updates_using_independent_files(): void
+    {
+        $this->fixture(function ($directory, $updater): void {
+            $this->deployedDirectoryLink($directory.'/packages/tests/path-plugin', $directory.'/vendor/tests/path-plugin');
+            $result = $updater->update('3.1.7');
+            $this->assertTrue($result->successful, $result->message);
+            $this->assertSame(realpath($directory.'/vendor/tests').DIRECTORY_SEPARATOR.'path-plugin', realpath($directory.'/vendor/tests/path-plugin'));
+            $this->assertSame('actual-installed-code', File::get($directory.'/vendor/tests/path-plugin/installed-marker.txt'));
+            $this->assertSame('actual-installed-code', File::get($directory.'/packages/tests/path-plugin/installed-marker.txt'));
+        }, deployment: true, releaseMode: 'valid', packaged: true, gitDeployment: true, coreSnapshot: true);
+    }
+
+    public function test_failed_update_restores_original_package_link_and_metadata(): void
+    {
+        $this->fixture(function ($directory, $updater): void {
+            $this->deployedDirectoryLink($directory.'/packages/tests/path-plugin', $directory.'/vendor/tests/path-plugin');
+            $before = [File::get($directory.'/composer.json'), File::get($directory.'/composer.lock'), File::get($directory.'/vendor/composer/installed.json')];
+            File::put($directory.'/fail-migration', 'controlled failure');
+            $result = $updater->update('3.1.7');
+            $this->assertFalse($result->successful);
+            $this->assertSame($before, [File::get($directory.'/composer.json'), File::get($directory.'/composer.lock'), File::get($directory.'/vendor/composer/installed.json')]);
+            $this->assertSame(realpath($directory.'/packages/tests/path-plugin'), realpath($directory.'/vendor/tests/path-plugin'));
+            $this->assertSame('actual-installed-code', File::get($directory.'/packages/tests/path-plugin/installed-marker.txt'));
+            if (PHP_OS_FAMILY === 'Windows') @rmdir($directory.'/vendor/tests/path-plugin');
+            else @unlink($directory.'/vendor/tests/path-plugin');
+        }, deployment: true, releaseMode: 'valid', packaged: true, gitDeployment: true, coreSnapshot: true);
+    }
+
+    public function test_archived_plugins_can_be_removed_after_core_update_with_v_prefixed_version(): void
+    {
+        $this->fixture(function ($directory, $updater): void {
+            $result = $updater->update('3.1.7');
+            $this->assertTrue($result->successful, $result->message);
+            $metadata = json_decode(File::get($directory.'/vendor/composer/installed.json'), true);
+            foreach ($metadata['packages'] as &$package) if ($package['name'] === 'pcteckserv/cms-core') $package['version'] = 'v3.1.7';
+            unset($package);
+            File::put($directory.'/vendor/composer/installed.json', json_encode($metadata));
+            $result = $updater->remove('tests/removable-plugin');
+            $this->assertTrue($result->successful, $result->message);
+            $packages = array_column(json_decode(File::get($directory.'/composer.lock'), true)['packages'], 'version', 'name');
+            $this->assertSame('v3.1.7', $packages['pcteckserv/cms-core']);
+            $this->assertSame('13.42.0', $packages['laravel/framework']);
+            $this->assertArrayNotHasKey('tests/removable-plugin', $packages);
+            $this->assertSame('actual-installed-code', File::get($directory.'/vendor/tests/path-plugin/installed-marker.txt'));
+        }, deployment: true, releaseMode: 'valid', packaged: true, gitDeployment: true, coreSnapshot: true);
     }
 
     public function test_removal_refuses_an_installed_dependency_without_changing_live_files(): void

@@ -98,8 +98,11 @@ class ComposerDeploymentTransaction
             if ((stat($root.'/vendor')['dev'] ?? -1) !== (stat($run)['dev'] ?? -2)) {
                 throw new RuntimeException('A preparação e a instalação têm de estar no mesmo disco.');
             }
-            if ($removing !== null && ($removing === self::PACKAGE || ! preg_match('~^[a-z0-9_.-]+/[a-z0-9_.-]+$~D', $removing) || ! isset($this->packages($installed['packages'] ?? $installed)[$removing]))) {
+            if ($removing !== null && ($removing === self::PACKAGE || ! preg_match('~^[a-z0-9_.-]+/[a-z0-9_.-]+$~D', $removing))) {
                 throw new RuntimeException('O pacote indicado não pode ser removido.');
+            }
+            if ($removing !== null && ! isset($this->packages($installed['packages'] ?? $installed)[$removing])) {
+                throw new RuntimeException('O pacote '.$removing.' não consta do inventário Composer instalado. Recarregue a lista de plugins para reconciliar os registos antigos. Nenhum ficheiro foi removido.');
             }
             $baseline = (new InstalledComposerSnapshot)->baseline($lock, $installed, $run.'/stage', $removing);
             $finalManifest = CoreReleasePolicy::portableRepositories((new InstalledComposerSnapshot)->portableManifest($manifest));
@@ -253,7 +256,8 @@ class ComposerDeploymentTransaction
             throw new RuntimeException('A preparação não selecionou a versão pedida do Core.');
         }
         if ($removing !== null && isset($new[$removing])) {
-            throw new RuntimeException('O plugin continua a ser exigido por outro pacote instalado. Desative ou remova primeiro os dependentes.');
+            $dependents = array_keys(array_filter($new, static fn ($package) => isset($package['require'][$removing]) && ($package['name'] ?? '') !== $removing));
+            throw new RuntimeException('O plugin continua a ser exigido por outro pacote instalado'.($dependents === [] ? '' : ': '.implode(', ', $dependents)).'. Remova primeiro os dependentes; desativá-los não remove as dependências Composer.');
         }
         foreach ($old as $name => $package) {
             if ($name !== $removing && ($name !== self::PACKAGE || $removing !== null) && (! isset($new[$name]) || $this->identity($new[$name]) !== $this->identity($package))) {
@@ -350,24 +354,52 @@ class ComposerDeploymentTransaction
 
     private function copyVendor(string $source, string $target, bool $withoutGit): void
     {
-        File::ensureDirectoryExists($target, 0700);
-        $iterator = new \RecursiveIteratorIterator(new \RecursiveCallbackFilterIterator(new \RecursiveDirectoryIterator($source, \FilesystemIterator::SKIP_DOTS), static function ($file) use ($source, $withoutGit) {
-            $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($source) + 1));
-
-            // Downloads incompletos do Composer não são ficheiros da instalação.
-            return ! ($withoutGit && $file->getFilename() === '.git') && ! preg_match('~^composer/tmp-[a-f0-9]+(?:\.[a-z0-9]+)?(?:/|$)~i', $relative);
-        }), \RecursiveIteratorIterator::SELF_FIRST);
-        foreach ($iterator as $file) {
-            $destination = $target.'/'.substr($file->getPathname(), strlen($source) + 1);
-            if ($file->isLink() && $file->isDir()) {
-                throw new RuntimeException('A preparação contém uma ligação de pastas que exige uma publicação própria.');
+        $normalize = static fn (string $path): string => PHP_OS_FAMILY === 'Windows' ? strtolower(rtrim(str_replace('\\', '/', $path), '/')) : rtrim(str_replace('\\', '/', $path), '/');
+        $inside = static fn (string $path, string $root): bool => str_starts_with($normalize($path).'/', $normalize($root).'/');
+        $application = realpath(base_path());
+        $vendor = realpath($source);
+        if ($application === false || $vendor === false) throw new RuntimeException('Não foi possível confirmar a origem da preparação.');
+        $installed = json_decode(File::get($source.'/composer/installed.json'), true, flags: JSON_THROW_ON_ERROR);
+        $packages = $this->packages($installed['packages'] ?? $installed);
+        $walk = function (string $directory, string $destination, string $prefix, ?string $packageRoot, array $parents) use (&$walk, $normalize, $inside, $application, $vendor, $packages, $withoutGit): void {
+            $resolved = realpath($directory);
+            if ($resolved === false || in_array($normalize($resolved), $parents, true)) {
+                throw new RuntimeException('A ligação cria um ciclo ou não está disponível em vendor/'.$prefix.'. A instalação foi preservada.');
             }
-            if ($file->isDir()) {
-                File::ensureDirectoryExists($destination);
-            } elseif (! File::copy($file->getPathname(), $destination)) {
-                throw new RuntimeException('Não foi possível preparar os ficheiros de execução.');
+            $parents[] = $normalize($resolved);
+            File::ensureDirectoryExists($destination, 0700);
+            foreach (new \FilesystemIterator($directory, \FilesystemIterator::SKIP_DOTS) as $file) {
+                $relative = $prefix === '' ? $file->getFilename() : $prefix.'/'.$file->getFilename();
+                if (($withoutGit && $file->getFilename() === '.git') || preg_match('~^composer/tmp-[a-f0-9]+(?:\.[a-z0-9]+)?(?:/|$)~i', $relative)) continue;
+                $path = $file->getPathname();
+                $actual = realpath($path);
+                $scope = $packageRoot;
+                $registeredRoot = substr_count($relative, '/') === 1 && isset($packages[$relative]) && $file->isDir();
+                if ($registeredRoot) $scope = $actual ?: null;
+                // PHP no Windows resolve junctions em realpath, mas isLink pode devolver false.
+                $parent = PHP_OS_FAMILY === 'Windows' && $file->isDir() ? realpath(dirname($path)) : false;
+                $isLink = $file->isLink() || ($parent !== false && $actual !== false && $normalize($actual) !== $normalize($parent.'/'.$file->getFilename()));
+                if ($isLink) {
+                    $valid = $actual !== false && $inside($actual, $application);
+                    if ($registeredRoot) {
+                        $manifest = $actual === false || ! is_file($actual.'/composer.json') ? null : json_decode(File::get($actual.'/composer.json'), true);
+                        $valid = $valid && is_array($manifest) && ($manifest['name'] ?? null) === $relative;
+                    } elseif (str_starts_with($relative, 'bin/') && $file->isFile()) {
+                        $valid = $valid && $inside($actual, $vendor);
+                    } else {
+                        $valid = $valid && $file->isFile() && $scope !== null && $inside($actual, $scope);
+                    }
+                    if (! $valid) throw new RuntimeException('A ligação em vendor/'.$relative.' não corresponde a uma origem interna válida. É necessária uma publicação própria; a instalação foi preservada.');
+                }
+                if ($file->isDir()) {
+                    $walk($path, $destination.'/'.$file->getFilename(), $relative, $scope, $parents);
+                } elseif (! $file->isFile() || ! File::copy($path, $destination.'/'.$file->getFilename())) {
+                    throw new RuntimeException('Não foi possível preparar vendor/'.$relative.'. A instalação foi preservada.');
+                }
             }
-        }
+        };
+        // As ligações aceites tornam-se cópias independentes; nunca são publicadas como ligações.
+        $walk($source, $target, '', null, []);
     }
 
     protected function composer(array $arguments, string $directory): void

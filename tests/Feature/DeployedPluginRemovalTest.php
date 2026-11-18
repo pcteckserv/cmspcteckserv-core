@@ -22,6 +22,7 @@ final class DeployedPluginRemovalTest extends TestCase
         InstalledPlugin::create(['slug'=>'deployed','name'=>'tests/deployed','package'=>'tests/deployed','label'=>'Distribuído','status'=>'disabled','installed_version'=>'1.0.0']);
         Schema::create('test_plugin_content', fn ($table) => $table->string('content'));
         DB::table('test_plugin_content')->insert(['content'=>'dados a preservar']);
+        $this->mock(ComposerInstalledPackageReader::class)->shouldReceive('isAbsent')->twice()->with('tests/deployed')->andReturn(false);
         $this->mock(ComposerDeploymentTransaction::class)->shouldReceive('remove')->twice()->with('tests/deployed')->andReturn(new UpdateResult(false, 'Dependência instalada.'), new UpdateResult(true, 'Removido.'));
         $this->assertFalse(app(PluginInstaller::class)->uninstall('deployed')->successful);
         $this->assertDatabaseHas('cms_plugins', ['slug'=>'deployed']);

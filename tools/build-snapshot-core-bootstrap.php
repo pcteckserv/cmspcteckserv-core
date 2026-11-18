@@ -7,7 +7,7 @@ use Pcteckserv\CmsCore\Support\ReleaseIntegrity;
 $output = $argv[1] ?? '';
 $site = $argv[2] ?? '';
 $composer = $argv[3] ?? '';
-$target = $argv[4] ?? '3.5.0';
+$target = $argv[4] ?? '3.5.1';
 if (! in_array($site, ['maxihome', 'cglimpezas'], true) || $output === '' || file_exists($output) || ! is_file($composer) || ! preg_match('/^3\.\d+\.\d+$/D', $target)) {
     throw new RuntimeException('Indique ZIP novo, maxihome/cglimpezas, composer.phar e versão Core 3.');
 }
