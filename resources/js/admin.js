@@ -812,4 +812,3 @@ document.querySelectorAll('[data-cms-footer-preview]').forEach((preview) => {
         });
     }
 }
-
