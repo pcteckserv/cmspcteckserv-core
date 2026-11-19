@@ -36,6 +36,17 @@ class SeoModuleTest extends TestCase
         });
     }
 
+    public function test_json_ld_preserves_unicode_and_cannot_close_the_script_element(): void
+    {
+        $text = '🏡 Casa ✨ </script><img src=x onerror=alert(1)> & "contacto"';
+        $schema = ['@context'=>'https://schema.org', '@type'=>'WebPage', 'name'=>$text];
+        $seo = app(SeoManager::class)->for(null, ['schema_data'=>[$schema]]);
+        $html = view('cms-core::components.seo', ['seo'=>$seo])->render();
+        $this->assertStringNotContainsString('</script><img', $html);
+        $this->assertSame(1, preg_match('~<script type="application/ld\+json">(.*?)</script>~s', $html, $matches));
+        $this->assertSame($schema, json_decode($matches[1], true, flags: JSON_THROW_ON_ERROR));
+    }
+
     public function test_seo_manager_aplica_fallbacks_sociais(): void
     {
         $page = SeoTestPage::query()->create(['title' => 'Página de Teste']);

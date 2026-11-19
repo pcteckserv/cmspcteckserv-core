@@ -1,6 +1,6 @@
 {
     "schema": 1,
-    "version": "3.6.0",
+    "version": "3.6.1",
     "files": {
         "composer.json": "ee340446e4cb4b59fcc69d7ad0fda0e32b67fce1a3d444a9c7974096b0e49efc",
         "config/cms-backups.php": "2053e7387404ca58c97a931c9ae7027ec8d049660d19fa89bb180857efb67662",
@@ -104,7 +104,7 @@
         "resources/views/components/partials/footer-markup.blade.php": "498f49d1b97166e9ab530ce2e6ec8107b30c4021b8fa8fbc3d17b8b97b48008e",
         "resources/views/components/public-header.blade.php": "e27f8b819c144606307c172dba94030128a4551188714feb398d849fb5fd213e",
         "resources/views/components/seo-editor.blade.php": "f682c5209f2a7b1897c958925225cfaafb7343ad6716bf6fecf6ce158afa144b",
-        "resources/views/components/seo.blade.php": "74d2af0592ef7b36ea3abd4d57bbedfdafabf6a0f0ffa8a0ec5bf5fb00bba50c",
+        "resources/views/components/seo.blade.php": "f4fdb6e2abc63b62747999ff9a17a69c335d27463708ed474dd7d7dee6546358",
         "resources/views/consent/banner.blade.php": "591c0bd3b199156052887c73545211a94e3b74adaa9008c72aa06e70e532be60",
         "resources/views/emails/footer.blade.php": "997ee2b760ea30df971492984fc324ca1ab8160825bab7175dbd0c10a8b6b740",
         "resources/views/emails/header.blade.php": "f9ad14393435a7e85e9aed3a44bf3fac656b8a3a21adfb8d19b80b63b607100f",

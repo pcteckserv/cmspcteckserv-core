@@ -47,3 +47,7 @@ Uploads de 24 MB por ficheiro, máximo configurável de 240 MB por envio. Valida
 ## Correções 3.0.3
 
 O botão «Ver site» usa o URL configurado em APP_URL, evitando endereços antigos guardados nas opções do CMS. Sem migrations.
+
+## Core 3.6.1
+
+Correção do escaping de JSON-LD, preservando Unicode e impedindo o fecho do elemento script a partir do conteúdo. Ver [notas da versão](docs/core-3.6.1.md). Sem migrations ou atualização de dependências.
