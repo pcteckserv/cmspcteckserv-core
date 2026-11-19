@@ -1,5 +1,7 @@
 # CMS PCTECKSERV — Core 3
 
+Core **3.6.0**: taxas de IVA configuráveis em Opções gerais, sem taxas implícitas nem recálculo histórico. [API e comportamento](docs/core-3.6.0.md).
+
 Core **3.4.0**: aviso de segurança no Dashboard para administradores sem autenticação de dois fatores confirmada, com ligação direta à configuração do perfil. [Comportamento e validação](docs/core-3.4.0.md).
 
 Core **3.3.0**: ligação ao Google Drive numa ação, com escolha da conta e autorização após a configuração inicial da aplicação. Credenciais opcionais no alojamento, configuração avançada recolhida e validação da pasta ao trocar de conta. [Configuração, segurança e validação](docs/core-3.3.0.md).

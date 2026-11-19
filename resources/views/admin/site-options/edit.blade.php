@@ -98,6 +98,12 @@
             </div>
         </div>
 
+        <fieldset class="border rounded p-3 mb-4" id="iva"><legend class="float-none w-auto px-2 h5">IVA</legend>
+            <label class="form-label" for="vat_rates">Taxas de IVA disponíveis (%)</label>
+            <textarea class="form-control @error('vat_rates') is-invalid @enderror" id="vat_rates" name="vat_rates" rows="4" maxlength="500">{{ old('vat_rates', $options['vat_rates'] ?? '') }}</textarea>
+            <p class="form-text">Uma taxa por linha, entre 0 e 100. Configure as taxas aplicáveis à empresa. Alterar esta lista não recalcula acordos guardados. Uma taxa de 0% não define por si só um motivo de isenção fiscal.</p>
+            @error('vat_rates')<div class="invalid-feedback">{{ $message }}</div>@enderror
+        </fieldset>
         <div class="row">
             <div class="offset-lg-2 col-lg-6">
                 <button class="btn btn-primary" type="submit">Guardar alterações</button>

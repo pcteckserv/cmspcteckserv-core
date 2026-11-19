@@ -44,6 +44,7 @@ return [
     ],
 
     'site_options' => [
+        'vat_rates' => '',
         'site_title' => env('CMS_SITE_TITLE', 'CMS PCTECK'),
         'site_description' => env('CMS_SITE_DESCRIPTION', 'Site institucional gerido pelo CMS PCTECK.'),
         'site_icon_url' => env('CMS_SITE_ICON_URL', '/vendor/cms-core/images/favicon.png'),

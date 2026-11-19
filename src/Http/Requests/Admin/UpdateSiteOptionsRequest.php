@@ -16,6 +16,10 @@ class UpdateSiteOptionsRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'vat_rates' => ['sometimes', 'nullable', 'string', 'max:500', function ($attribute, $value, $fail) {
+                try { app(\Pcteckserv\CmsCore\Support\VatRates::class)->parse($value ?? ''); }
+                catch (\InvalidArgumentException $e) { $fail($e->getMessage()); }
+            }],
             'site_title' => ['required', 'string', 'max:120'],
             'site_description' => ['nullable', 'string', 'max:255'],
             'site_icon_url' => ['nullable', 'string', new SiteLink, 'max:2048'],
