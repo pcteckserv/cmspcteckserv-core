@@ -289,4 +289,33 @@ class MediaManagerTest extends TestCase
 
         return $user;
     }
+
+    public function test_media_pagination_uses_bounded_bootstrap_controls_and_preserves_filters(): void
+    {
+        Storage::fake('public');
+        foreach (range(1, 50) as $index) {
+            Media::query()->create([
+                'uuid' => (string) Str::uuid(),
+                'disk' => 'public',
+                'directory' => 'cms/media',
+                'filename' => "manual-$index.pdf",
+                'path' => "cms/media/manual-$index.pdf",
+                'original_filename' => "manual-$index.pdf",
+                'extension' => 'pdf',
+                'mime_type' => 'application/pdf',
+                'media_type' => 'document',
+                'size' => 10,
+                'checksum' => hash('sha256', "manual-$index"),
+                'optimization_status' => Media::STATUS_OPTIMIZED,
+            ]);
+        }
+        $response = $this->actingAs($this->superAdmin())
+            ->get(route('admin.media.index', ['q' => 'manual', 'type' => 'document']));
+        $response->assertOk()
+            ->assertSee('aria-label="Paginação"', false)
+            ->assertSee('class="page-link"', false)
+            ->assertSee('Página seguinte')
+            ->assertDontSee('class="w-5 h-5"', false)
+            ->assertSee('q=manual&amp;type=document&amp;page=2', false);
+    }
 }

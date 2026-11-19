@@ -1,6 +1,6 @@
 {
     "schema": 1,
-    "version": "3.5.1",
+    "version": "3.5.2",
     "files": {
         "composer.json": "ee340446e4cb4b59fcc69d7ad0fda0e32b67fce1a3d444a9c7974096b0e49efc",
         "config/cms-backups.php": "2053e7387404ca58c97a931c9ae7027ec8d049660d19fa89bb180857efb67662",
@@ -61,7 +61,7 @@
         "resources/views/admin/layouts/app.blade.php": "dfab676356608e1ff449b7e36a67d43cb2c6024c36e7043717f370407188379f",
         "resources/views/admin/layouts/guest.blade.php": "8f20365fd01063210ed2ab763a9774caafdd8cc54a5c4ae50b182cb1935c33c8",
         "resources/views/admin/maintenance/edit.blade.php": "bdcf0ebecb6afd97d000c8e3aa5fb8a09c298dc60032a99376c35c694379df0b",
-        "resources/views/admin/media/index.blade.php": "168c40add2efd6c848349fac1b1917b614b37c41459f9be788d07935d86f29e4",
+        "resources/views/admin/media/index.blade.php": "7962ec73fcd0152b1a9c97a2d308109a67b2fba450e273a724f5adff14e609f2",
         "resources/views/admin/partials/help-widget.blade.php": "415fa94485717903e23900f2d7a57521e17c50d63ecbae53661ce09ddf1281e0",
         "resources/views/admin/partials/icon-picker-modal.blade.php": "cccb97439e7c63b7c2f6a5e7b22d7a720bce75cc4ce01ac65c59d182d7c014e4",
         "resources/views/admin/partials/media-picker-modal.blade.php": "40720ce4c078a9e405354e270d1c3e43a8d0976a98cd56fd6179e0d8479de659",

@@ -132,5 +132,5 @@
         @endforeach
     </div>
 
-    <div class="mt-4">{{ $mediaItems->links() }}</div>
+    <div class="mt-4 pb-5">{{ $mediaItems->links('cms-core::admin.partials.pagination') }}</div>
 @endsection
