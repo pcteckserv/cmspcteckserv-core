@@ -15,6 +15,7 @@ final class StarterDependencyPolicy
         'pcteckserv/cms-agenda', 'pcteckserv/cms-realstate', 'pcteckserv/cms-blog',
         'pcteckserv/cms-moloni', 'pcteckserv/cms-easypay', 'pcteckserv/cms-paypal',
         'pcteckserv/cms-shop', 'pcteckserv/cms-ai', 'pcteckserv/cms-product-customization',
+        'pcteckserv/cms-languages',
     ];
 
     public function assertCompatible(string $source, string $destination): void

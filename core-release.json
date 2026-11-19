@@ -1,6 +1,6 @@
 {
     "schema": 1,
-    "version": "3.5.2",
+    "version": "3.5.3",
     "files": {
         "composer.json": "ee340446e4cb4b59fcc69d7ad0fda0e32b67fce1a3d444a9c7974096b0e49efc",
         "config/cms-backups.php": "2053e7387404ca58c97a931c9ae7027ec8d049660d19fa89bb180857efb67662",
@@ -372,7 +372,7 @@
         "src/Updates/InstalledPackage.php": "5cf75195d9bd8261697b41aba1a56da9d44eaf36004c7867afffff117fc0d688",
         "src/Updates/PackageUpdater.php": "cf4515e70bf53802d0626c937da976df5ec6edf130778572072bd5e9bb2b4cc9",
         "src/Updates/PackageVersionRegistry.php": "30bc000f5cf8468d039950984e3601e500c6ced73d77066081a82617e2cf57ce",
-        "src/Updates/StarterDependencyPolicy.php": "e5630b2472c448f48e4b8d086d8113db6495155001c19ca3f87f349807da94c9",
+        "src/Updates/StarterDependencyPolicy.php": "4b7def2b06b613c80c819e4fa77ac0cff07506e5739f441cc1aec060ab2f6220",
         "src/Updates/StarterPackage.php": "07770dcd305b339532b53270af68001c52f4903a860f8eab5ac8e54256691c67",
         "src/Updates/StarterUpdater.php": "87dd20c677e10eefb608b94057debebb7ef6b0f79919c12fa8485492da6561e9",
         "src/Updates/UpdateResult.php": "0698d16cd9c313c4aae52645a79a8bbc45bae624bc56dd475bea6c8595a94cb0",
